@@ -11,6 +11,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <vector>
 
 using namespace std;
 
@@ -64,8 +65,23 @@ int main(int argc, char **argv) {
     cellIterator->GoToNextCell();
   }
 
-  cout << "Number of points: " << pointMap.size() << endl;
-  cout << "Number of cell: " << cellMap.size() << endl;
+  // Collate data
+  vector<double> x;
+  vector<double> y;
+  for(auto const &point : pointMap) {
+    x.push_back(point.second->x);
+    y.push_back(point.second->y);
+  }
+
+  vector<int> elements;
+  for(auto const &elem : cellMap) {
+    elements.push_back(elem.second->points[0]);
+    elements.push_back(elem.second->points[1]);
+    elements.push_back(elem.second->points[2]);
+  }
+
+  cout << "Number of points: " << x.size() << endl;
+  cout << "Number of cell: " << elements.size() << endl;
 
   // Write out CGNS file
   int file;
@@ -92,21 +108,16 @@ int main(int argc, char **argv) {
   cg_zone_write(file, baseIndex, zoneName.c_str(), sizes,
                 CGNS_ENUMV(Unstructured), &zoneIndex);
   // Write grid coordinates
-  double *x = (double *)malloc(sizes[0] * sizeof(double));
-  double *y = (double *)malloc(sizes[0] * sizeof(double));
-  for(auto const &point : pointMap) {
-    int index = point.first;
-    x[index] = point.second->x;
-    y[index] = point.second->y;
-  }
   int coordIndex;
   cg_coord_write(file, baseIndex, zoneIndex, CGNS_ENUMV(RealDouble),
-                 "CoordinateX", x, &coordIndex);
+                 "CoordinateX", x.data(), &coordIndex);
   cg_coord_write(file, baseIndex, zoneIndex, CGNS_ENUMV(RealDouble),
-                 "CoordinateY", y, &coordIndex);
-
+                 "CoordinateY", y.data(), &coordIndex);
+  // Write elements
+  int sectionIndex;
+  int start = 0;
+  int end = sizes[1] - 1;
+  cg_section_write(file, baseIndex, zoneIndex, "Elements", CGNS_ENUMV(TRI_3),
+                   start, end, 0, elements.data(), &sectionIndex);
   cg_close(file);
-
-  free(x);
-  free(y);
 }
