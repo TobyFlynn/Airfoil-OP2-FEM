@@ -28,4 +28,5 @@ if(NOT CGNS_DIR)
   set(CGNS_DIR "/home/u1717021/Code/PhD/CGNS/build")
 endif()
 
+add_subdirectory(tools)
 add_subdirectory(src)
