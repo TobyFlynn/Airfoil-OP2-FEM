@@ -81,7 +81,6 @@ int main(int argc, char **argv) {
   // Collate data
   vector<double> x;
   vector<double> y;
-  //vector<double> z;
   for(auto const &point : pointMap) {
     x.push_back(point.second->x);
     y.push_back(point.second->y);
