@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
     y.push_back(point.second->y);
   }
 
-  vector<int> elements;
+  vector<cgsize_t> elements;
   for(auto const &elem : cellMap) {
     elements.push_back(elem.second->points[0]);
     elements.push_back(elem.second->points[1]);
@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
   cg_base_write(file, baseName.c_str(), cellDim, physicalDim, &baseIndex);
   // Create zone
   string zoneName = "Zone1";
-  int sizes[3];
+  cgsize_t sizes[3];
   // Number of vertices
   sizes[0] = pointMap.size();
   // Number of cells
