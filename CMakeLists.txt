@@ -28,5 +28,10 @@ if(NOT CGNS_DIR)
   set(CGNS_DIR "/home/u1717021/Code/PhD/CGNS/build")
 endif()
 
+# OpenBLAS library for me
+if(NOT OPENBLAS_DIR)
+  set(OPENBLAS_DIR "/opt/OpenBLAS")
+endif()
+
 add_subdirectory(tools)
 add_subdirectory(src)

@@ -1,6 +1,11 @@
 #ifndef __AIRFOIL_CONSTANTSDG_H
 #define __AIRFOIL_CONSTANTSDG_H
 
+// Utils
+double ones[15] = {
+  1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+};
+
 // Constants needed for a 4th order DG FEM method on 2D triangles
 
 // Coordinates of solution points on the reference triangle I (in terms of r and s)
