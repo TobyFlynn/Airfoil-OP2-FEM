@@ -45,9 +45,9 @@ int main(int argc, char **argv) {
     // Structure: {x, y}
   op_dat node_coords = op_decl_dat(nodes, 2, "double", coords, "node_coords");
     // Structure {x_0, x_1, ..}
-  op_dat solution_pt_coords_x = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", solution_pt_coords_x_data, "solution_pt_coords");
+  op_dat solution_pt_coords_x = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", solution_pt_coords_x_data, "solution_pt_coords_x");
     // Structure {y_0, y_1, ..}
-  op_dat solution_pt_coords_y = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", solution_pt_coords_y_data, "solution_pt_coords");
+  op_dat solution_pt_coords_y = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", solution_pt_coords_y_data, "solution_pt_coords_y");
   //op_dat faceNormals = op_decl_dat(cells, 6, "double", NULL, "faceNormals");
 
   // Declare OP2 constants
@@ -70,6 +70,9 @@ int main(int argc, char **argv) {
   }
 
   // Save the solution
+  op_fetch_data_hdf5_file(node_coords, "points.h5");
+  op_fetch_data_hdf5_file(solution_pt_coords_x, "points.h5");
+  op_fetch_data_hdf5_file(solution_pt_coords_y, "points.h5");
 
   // Clean up OP2
   op_exit();

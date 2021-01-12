@@ -2,6 +2,7 @@
 #include "cgnslib.h"
 // Include C++ stuff
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -87,10 +88,14 @@ void load_mesh(string filename, int *numNodes, int *numCells, double **coords, i
   *numCells = elementEnd - elementStart + 1;
   *cgnsCells = (int *)malloc(*numCells * 3 * sizeof(int));
   cgns_load_cells<cgsize_t>(file, baseIndex, zoneIndex, *cgnsCells, *numCells);
-  // cout << "Cell data" << endl;
-  // for(int i = 0; i < *numCells; i++) {
-  //   cout << cgnsCells[3 * i] << " " << cgnsCells[3 * i + 1] << " " << cgnsCells[3 * i + 2] << endl;
-  // }
 
   cg_close(file);
+
+  // Write cell data to text file (for python sanity check)
+  ofstream cellFile;
+  cellFile.open("cells.txt");
+  for(int i = 0; i < *numCells; i++) {
+    cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
+  }
+  cellFile.close();
 }
