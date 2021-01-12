@@ -1,4 +1,4 @@
-set(KERNEL_HEADERS calc_solution_pt_coords.h)
+set(KERNEL_HEADERS calc_solution_pt_coords.h calc_geometric_factors.h)
 
 op2_application(airfoil_seq LIBS op2_seq op2_hdf5 SOURCES airfoil.cpp load_mesh.cpp ${KERNEL_HEADERS})
 
