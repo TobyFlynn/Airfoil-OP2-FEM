@@ -12,6 +12,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <utility>
 
 using namespace std;
 
@@ -26,6 +27,7 @@ struct Cell {
 
 struct Edge {
   int points[2];
+  int cells[2];
 };
 
 int main(int argc, char **argv) {
@@ -39,6 +41,7 @@ int main(int argc, char **argv) {
 
   map<int,unique_ptr<Point2D>> pointMap;
   map<int,unique_ptr<Cell>> cellMap;
+  map<pair<int,int>,unique_ptr<Edge>> internalEdgeMap;
   // Maps for each type of boundary
   map<int,unique_ptr<Edge>> wallBoundaryEdgeMap;
   map<int,unique_ptr<Edge>> inflowBoundaryEdgeMap;
@@ -94,7 +97,62 @@ int main(int argc, char **argv) {
   }
 
   cout << "Number of points: " << x.size() << endl;
+  cout << "VTK Number of points: " << grid->GetNumberOfPoints() << endl;
   cout << "Number of cell: " << elements.size() << endl;
+
+  if(x.size() != grid->GetNumberOfPoints()) {
+    cout << "******* Potential error when generating the grid *******" << endl;
+    cout << "  Difference between number of points in grid and number in VTK file, indices may be wrong" << endl;
+  }
+
+  // Add edges to edge map if not already contained in mapping
+  // If already added then update cell field
+  // Try both combinations
+  for(int i = 0; i < elements.size() / 3; i++) {
+    int ind = i * 3;
+    for(int j = 0; j < 3; j++) {
+      int p1 = elements[ind + j];
+      int p2 = elements[ind + ((j + 1) % 3)];
+      pair<int,int> key1 = make_pair(p1, p2);
+      pair<int,int> key2 = make_pair(p2, p1);
+      if(internalEdgeMap.count(key1) == 0 && internalEdgeMap.count(key2) == 0) {
+        unique_ptr<Edge> edge = make_unique<Edge>();
+        edge->points[0] = p1;
+        edge->points[1] = p2;
+        edge->cells[0] = i;
+        edge->cells[1] = -1;
+        internalEdgeMap.insert(make_pair(key1, move(edge)));
+      } else {
+        if(internalEdgeMap.count(key1) != 0) {
+          if(internalEdgeMap.at(key1)->cells[1] != -1) {
+            cout << "ERROR in edge mapping: " << endl;
+            cout << "  Old values: " << internalEdgeMap.at(key1)->cells[0] << " " << internalEdgeMap.at(key1)->cells[1] << endl;
+            cout << "  New Value: " << i << endl;
+            cout << "  Edges: " << internalEdgeMap.at(key1)->points[0] << " " << internalEdgeMap.at(key1)->points[1] << endl;
+            cout << "  Key: " << key1.first << " " << key1.second << endl;
+          }
+          internalEdgeMap.at(key1)->cells[1] = i;
+        } else {
+          if(internalEdgeMap.at(key2)->cells[1] != -1) {
+            cout << "ERROR in edge mapping"  << endl;
+            cout << "  Old values: " << internalEdgeMap.at(key2)->cells[0] << " " << internalEdgeMap.at(key2)->cells[1] << endl;
+            cout << "  New Value: " << i << endl;
+            cout << "  Edges: " << internalEdgeMap.at(key2)->points[0] << " " << internalEdgeMap.at(key2)->points[1] << endl;
+            cout << "  Key: " << key2.first << " " << key2.second << endl;
+          }
+          internalEdgeMap.at(key2)->cells[1] = i;
+        }
+      }
+    }
+  }
+
+  vector<int> edges;
+  for(auto const &edge : internalEdgeMap) {
+    edges.push_back(edge.second->points[0]);
+    edges.push_back(edge.second->points[1]);
+    edges.push_back(edge.second->cells[0]);
+    edges.push_back(edge.second->cells[1]);
+  }
 
   // Write out CGNS file
   int file;
@@ -132,5 +190,14 @@ int main(int argc, char **argv) {
   int end = sizes[1];
   cg_section_write(file, baseIndex, zoneIndex, "Elements", CGNS_ENUMV(TRI_3),
                    start, end, 0, elements.data(), &sectionIndex);
+  // Write edges
+  // {p1, p2, c1, c2}
+  int numEdges = edges.size() / 4;
+  cgsize_t dim[2] = {4, numEdges};
+  cg_gopath(file, "/Base/Zone1");
+  cg_user_data_write("Edges");
+  cg_gopath(file, "/Base/Zone1/Edges");
+  cg_array_write("EdgesData", CGNS_ENUMV(Integer), 2, dim, edges.data());
+
   cg_close(file);
 }
