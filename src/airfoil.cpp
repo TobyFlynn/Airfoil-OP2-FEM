@@ -17,6 +17,7 @@
 #include "calc_solution_pt_coords.h"
 #include "calc_geometric_factors.h"
 #include "calc_normals.h"
+#include "euler_fluxes.h"
 
 using namespace std;
 
@@ -48,6 +49,9 @@ int main(int argc, char **argv) {
   double *nx_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
   double *ny_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
   double *sJ_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
+  double *q_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *F_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *G_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
 
   // Declare OP2 sets
   op_set nodes = op_decl_set(numNodes, "nodes");
@@ -78,6 +82,10 @@ int main(int argc, char **argv) {
   op_dat ny = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", ny_data, "ny");
     // Surface Jacobian
   op_dat sJ = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", sJ_data, "sJ");
+    // Values for compressible Euler equations in vectos
+  op_dat q  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
+  op_dat F  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", F_data, "F");
+  op_dat G  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", G_data, "G");
 
   // Declare OP2 constants
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
@@ -85,6 +93,7 @@ int main(int argc, char **argv) {
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_s);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dr);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Ds);
+  op_decl_const(1, "double", &gam);
 
   // Initialisation kernels
   op_par_loop(calc_solution_pt_coords, "calc_solution_pt_coords", cells,
@@ -118,7 +127,11 @@ int main(int argc, char **argv) {
 
   // Run the simulation
   for(int i = 0; i < iter; i++) {
-
+    // Calculate vectors F an G from q for each cell
+    op_par_loop(euler_fluxes, "euler_fluxes", cells,
+                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(F, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
+                op_arg_dat(G, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
   }
 
   // Save the solution
@@ -145,4 +158,7 @@ int main(int argc, char **argv) {
   free(nx_data);
   free(ny_data);
   free(sJ_data);
+  free(q_data);
+  free(F_data);
+  free(G_data);
 }

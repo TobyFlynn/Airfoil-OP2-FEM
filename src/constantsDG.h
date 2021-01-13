@@ -1,6 +1,9 @@
 #ifndef __AIRFOIL_CONSTANTSDG_H
 #define __AIRFOIL_CONSTANTSDG_H
 
+// Physics constants (TODO: set to real values)
+double gam = 2.0;
+
 // Utils
 double ones[15] = {
   1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
