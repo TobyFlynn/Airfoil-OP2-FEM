@@ -1,4 +1,5 @@
 #define NUM_SOLUTION_PTS 15
+#define NUM_FACE_PTS 5
 
 // Include OP2 stuff
 #include "op_seq.h"
@@ -15,6 +16,7 @@
 // Include kernels
 #include "calc_solution_pt_coords.h"
 #include "calc_geometric_factors.h"
+#include "calc_normals.h"
 
 using namespace std;
 
@@ -38,11 +40,14 @@ int main(int argc, char **argv) {
   double *yr_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *xs_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *ys_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *J_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *J_data  = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *rx_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *ry_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *sx_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *sy_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *nx_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
+  double *ny_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
+  double *sJ_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
 
   // Declare OP2 sets
   op_set nodes = op_decl_set(numNodes, "nodes");
@@ -62,15 +67,20 @@ int main(int argc, char **argv) {
   op_dat yr = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", yr_data, "yr");
   op_dat xs = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", xs_data, "xs");
   op_dat ys = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", ys_data, "ys");
-  op_dat J = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", J_data, "J");
+    // Jacobian
+  op_dat J  = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", J_data, "J");
   op_dat rx = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", rx_data, "rx");
   op_dat ry = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", ry_data, "ry");
   op_dat sx = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", sx_data, "sx");
   op_dat sy = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", sy_data, "sy");
+    // Normals for each cell (calculated for each node on each edge, nodes can appear on multiple edges)
+  op_dat nx = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", nx_data, "nx");
+  op_dat ny = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", ny_data, "ny");
+    // Surface Jacobian
+  op_dat sJ = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", sJ_data, "sJ");
 
   // Declare OP2 constants
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
-  op_decl_const(NUM_SOLUTION_PTS, "double", zeros);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_r);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_s);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dr);
@@ -97,6 +107,14 @@ int main(int argc, char **argv) {
               op_arg_dat(sx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
               op_arg_dat(sy, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE));
 
+  op_par_loop(calc_normals, "calc_normals", cells,
+              op_arg_dat(xr, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(yr, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(xs, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(ys, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
+              op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
+              op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE));
 
   // Run the simulation
   for(int i = 0; i < iter; i++) {
@@ -124,4 +142,7 @@ int main(int argc, char **argv) {
   free(ry_data);
   free(sx_data);
   free(sy_data);
+  free(nx_data);
+  free(ny_data);
+  free(sJ_data);
 }
