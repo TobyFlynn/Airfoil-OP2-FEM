@@ -1,7 +1,13 @@
 #include <cblas.h>
 
 inline void calc_solution_pt_coords(const double *n0, const double *n1, const double *n2,
-                                    double *x, double *y) {
+                                    double *nodeX, double *nodeY, double *x, double *y) {
+  nodeX[0] = n0[0];
+  nodeX[1] = n1[0];
+  nodeX[2] = n2[0];
+  nodeY[0] = n0[1];
+  nodeY[1] = n1[1];
+  nodeY[2] = n2[1];
   // x = 0.5(-n0_x (r + s) + n1_x(1 + r) + n2_x(1 + s))
   // x = 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s) - 0.5*n0_x * (r + s)
 

@@ -18,6 +18,7 @@
 #include "calc_geometric_factors.h"
 #include "calc_normals.h"
 #include "euler_fluxes.h"
+#include "get_neighbour_q.h"
 
 using namespace std;
 
@@ -41,6 +42,8 @@ int main(int argc, char **argv) {
   int iter = 1;
 
   // Declare memory for data that will be calculated in initialisation kernel
+  double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
+  double *nodeY_data = (double*)malloc(3 * numCells * sizeof(double));
   double *x_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *y_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *xr_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
@@ -58,6 +61,7 @@ int main(int argc, char **argv) {
   double *q_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *F_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *G_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *exteriorQ_data = (double *)malloc(4 * 3 * NUM_FACE_PTS * numCells * sizeof(double));
 
   // Declare OP2 sets
   op_set nodes = op_decl_set(numNodes, "nodes");
@@ -75,6 +79,9 @@ int main(int argc, char **argv) {
   // Declare OP2 datasets
     // Structure: {x, y}
   op_dat node_coords = op_decl_dat(nodes, 2, "double", coords, "node_coords");
+    // Coords of nodes per cell
+  op_dat nodeX = op_decl_dat(cells, 3, "double", nodeX_data, "nodeX");
+  op_dat nodeY = op_decl_dat(cells, 3, "double", nodeY_data, "nodeY");
     // The x and y coordinates of all the solution points in a cell
   op_dat x = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", x_data, "x");
   op_dat y = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", y_data, "y");
@@ -99,6 +106,8 @@ int main(int argc, char **argv) {
   op_dat q  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
   op_dat F  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", F_data, "F");
   op_dat G  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", G_data, "G");
+    // Holds neighbouring values of Q for nodes on faces
+  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * NUM_FACE_PTS, "double", exteriorQ_data, "exteriorQ");
 
   // Declare OP2 constants
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
@@ -113,6 +122,8 @@ int main(int argc, char **argv) {
               op_arg_dat(node_coords, 0, cell2nodes, 2, "double", OP_READ),
               op_arg_dat(node_coords, 1, cell2nodes, 2, "double", OP_READ),
               op_arg_dat(node_coords, 2, cell2nodes, 2, "double", OP_READ),
+              op_arg_dat(nodeX, -1, OP_ID, 3, "double", OP_WRITE),
+              op_arg_dat(nodeY, -1, OP_ID, 3, "double", OP_WRITE),
               op_arg_dat(x, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
               op_arg_dat(y, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE));
 
@@ -145,8 +156,19 @@ int main(int argc, char **argv) {
                 op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(F, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
                 op_arg_dat(G, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
-    // TODO Lax-Friedrichs flux
-
+    // Get neighbouring values of q on internal edges
+    op_par_loop(get_neighbour_q, "get_neighbour_q", edges,
+                op_arg_dat(node_coords, 0, edge2nodes, 2, "double", OP_READ),
+                op_arg_dat(node_coords, 1, edge2nodes, 2, "double", OP_READ),
+                op_arg_dat(nodeX, 0, edge2cells, 3, "double", OP_READ),
+                op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
+                op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
+                op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
+                op_arg_dat(q, 0, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(q, 1, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE),
+                op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
+    // TODO handle boundary conditions
   }
 
   // Save the solution
@@ -159,6 +181,8 @@ int main(int argc, char **argv) {
 
   free(coords);
   free(cgnsCells);
+  free(nodeX_data);
+  free(nodeY_data);
   free(x_data);
   free(y_data);
   free(xr_data);
@@ -180,4 +204,5 @@ int main(int argc, char **argv) {
   free(edge2cell_data);
   free(bedge2node_data);
   free(bedge2cell_data);
+  free(exteriorQ_data);
 }
