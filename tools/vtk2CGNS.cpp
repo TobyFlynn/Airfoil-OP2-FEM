@@ -147,11 +147,18 @@ int main(int argc, char **argv) {
   }
 
   vector<int> edges;
+  vector<int> boundaryEdges;
   for(auto const &edge : internalEdgeMap) {
-    edges.push_back(edge.second->points[0]);
-    edges.push_back(edge.second->points[1]);
-    edges.push_back(edge.second->cells[0]);
-    edges.push_back(edge.second->cells[1]);
+    if(edge.second->cells[1] == -1) {
+      boundaryEdges.push_back(edge.second->points[0]);
+      boundaryEdges.push_back(edge.second->points[1]);
+      boundaryEdges.push_back(edge.second->cells[0]);
+    } else {
+      edges.push_back(edge.second->points[0]);
+      edges.push_back(edge.second->points[1]);
+      edges.push_back(edge.second->cells[0]);
+      edges.push_back(edge.second->cells[1]);
+    }
   }
 
   // Write out CGNS file
@@ -198,6 +205,15 @@ int main(int argc, char **argv) {
   cg_user_data_write("Edges");
   cg_gopath(file, "/Base/Zone1/Edges");
   cg_array_write("EdgesData", CGNS_ENUMV(Integer), 2, dim, edges.data());
+
+  // Write boundary edges
+  // {p1, p2, c1}
+  int numBoundaryEdges = boundaryEdges.size() / 3;
+  cgsize_t boundaryDim[2] = {3, numBoundaryEdges};
+  cg_gopath(file, "/Base/Zone1");
+  cg_user_data_write("BoundaryEdges");
+  cg_gopath(file, "/Base/Zone1/BoundaryEdges");
+  cg_array_write("BoundaryEdgesData", CGNS_ENUMV(Integer), 2, boundaryDim, boundaryEdges.data());
 
   cg_close(file);
 }

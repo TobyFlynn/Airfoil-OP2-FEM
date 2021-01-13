@@ -24,9 +24,15 @@ using namespace std;
 int main(int argc, char **argv) {
   double *coords;
   int *cgnsCells;
-  int numNodes, numCells;
+  int *edge2node_data;
+  int *edge2cell_data;
+  int *bedge2node_data;
+  int *bedge2cell_data;
+  int numNodes, numCells, numEdges, numBoundaryEdges;
 
-  load_mesh("./naca0012.cgns", &numNodes, &numCells, &coords, &cgnsCells);
+  load_mesh("./naca0012.cgns", &numNodes, &numCells, &numEdges,
+            &numBoundaryEdges, &coords, &cgnsCells, &edge2node_data,
+            &edge2cell_data, &bedge2node_data, &bedge2cell_data);
 
   // Initialise OP2
   op_init(argc, argv, 2);
@@ -56,9 +62,15 @@ int main(int argc, char **argv) {
   // Declare OP2 sets
   op_set nodes = op_decl_set(numNodes, "nodes");
   op_set cells = op_decl_set(numCells, "cells");
+  op_set edges = op_decl_set(numEdges, "edges");
+  op_set bedges = op_decl_set(numBoundaryEdges, "bedges");
 
   // Declare OP2 maps
   op_map cell2nodes = op_decl_map(cells, nodes, 3, cgnsCells, "cell2nodes");
+  op_map edge2nodes = op_decl_map(edges, nodes, 2, edge2node_data, "edge2nodes");
+  op_map edge2cells = op_decl_map(edges, cells, 2, edge2cell_data, "edge2cells");
+  op_map bedge2nodes = op_decl_map(bedges, nodes, 2, bedge2node_data, "bedge2nodes");
+  op_map bedge2cells = op_decl_map(bedges, cells, 1, bedge2cell_data, "bedge2cells");
 
   // Declare OP2 datasets
     // Structure: {x, y}
@@ -164,4 +176,8 @@ int main(int argc, char **argv) {
   free(q_data);
   free(F_data);
   free(G_data);
+  free(edge2node_data);
+  free(edge2cell_data);
+  free(bedge2node_data);
+  free(bedge2cell_data);
 }

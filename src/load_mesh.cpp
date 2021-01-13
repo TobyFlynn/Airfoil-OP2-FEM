@@ -33,7 +33,10 @@ void cgns_load_cells<long>(int file, int baseIndex, int zoneIndex, int *cgnsCell
   transform(cells.begin(), cells.end(), cgnsCells, [](long x) { return (int)x - 1;});
 }
 
-void load_mesh(string filename, int *numNodes, int *numCells, double **coords, int **cgnsCells) {
+void load_mesh(std::string filename, int *numNodes, int *numCells,
+               int *numEdges, int *numBoundaryEdges, double **coords,
+               int **cgnsCells, int **edge2node, int **edge2cell,
+               int **bedge2node, int **bedge2cell) {
   // Read CGNS grid
   int file;
   if(cg_open(filename.c_str(), CG_MODE_READ, &file)) {
@@ -88,6 +91,53 @@ void load_mesh(string filename, int *numNodes, int *numCells, double **coords, i
   *numCells = elementEnd - elementStart + 1;
   *cgnsCells = (int *)malloc(*numCells * 3 * sizeof(int));
   cgns_load_cells<cgsize_t>(file, baseIndex, zoneIndex, *cgnsCells, *numCells);
+
+  // Get edge data
+  cg_gopath(file, "/Base/Zone1/Edges");
+  char arrayName[33];
+  DataType_t arrayDataType;
+  int arrayRank;
+  cgsize_t arrayDims[2];
+  cg_array_info(1, arrayName, &arrayDataType, &arrayRank, arrayDims);
+  cout << "Array Name: " << arrayName << endl;
+  cout << "Array Dims: " << arrayDims[0] << " " << arrayDims[1] << endl;
+  *numEdges = arrayDims[1];
+  *edge2node = (int *)malloc(2 * *numEdges * sizeof(int));
+  *edge2cell = (int *)malloc(2 * *numEdges * sizeof(int));
+  vector<int> edgeData(arrayDims[0] * arrayDims[1]);
+  cg_array_read(1, edgeData.data());
+
+  for(int i = 0; i < *numEdges; i++) {
+    // - 1 as CGNS counts points from 1 but OP2 counts from 0
+    // Cell index do start from one in this data
+    (*edge2node)[i * 2]     = edgeData[i * 4] - 1;
+    (*edge2node)[i * 2 + 1] = edgeData[i * 4 + 1] - 1;
+    (*edge2cell)[i * 2]     = edgeData[i * 4 + 2];
+    (*edge2cell)[i * 2 + 1] = edgeData[i * 4 + 3];
+  }
+
+  // Get boundary edge data
+  cg_gopath(file, "/Base/Zone1/BoundaryEdges");
+  char barrayName[33];
+  DataType_t barrayDataType;
+  int barrayRank;
+  cgsize_t barrayDims[2];
+  cg_array_info(1, barrayName, &barrayDataType, &barrayRank, barrayDims);
+  cout << "Array Name: " << barrayName << endl;
+  cout << "Array Dims: " << barrayDims[0] << " " << barrayDims[1] << endl;
+  *numBoundaryEdges = barrayDims[1];
+  *bedge2node = (int *)malloc(2 * *numBoundaryEdges * sizeof(int));
+  *bedge2cell = (int *)malloc(*numBoundaryEdges * sizeof(int));
+  vector<int> bedgeData(barrayDims[0] * barrayDims[1]);
+  cg_array_read(1, bedgeData.data());
+
+  for(int i = 0; i < *numBoundaryEdges; i++) {
+    // - 1 as CGNS counts points from 1 but OP2 counts from 0
+    // Cell index do start from one in this data
+    (*bedge2node)[i * 2]     = bedgeData[i * 3] - 1;
+    (*bedge2node)[i * 2 + 1] = bedgeData[i * 3 + 1] - 1;
+    (*bedge2cell)[i]         = bedgeData[i * 3 + 2];
+  }
 
   cg_close(file);
 
