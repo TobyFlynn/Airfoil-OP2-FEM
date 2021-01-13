@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
   op_dat ny = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", ny_data, "ny");
     // Surface Jacobian
   op_dat sJ = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", sJ_data, "sJ");
-    // Values for compressible Euler equations in vectos
+    // Values for compressible Euler equations in vectors
+    // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_NUM_SOLUTION_PTS}
   op_dat q  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
   op_dat F  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", F_data, "F");
   op_dat G  = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", G_data, "G");
@@ -132,6 +133,8 @@ int main(int argc, char **argv) {
                 op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(F, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
                 op_arg_dat(G, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+    // TODO Lax-Friedrichs flux
+
   }
 
   // Save the solution
