@@ -21,6 +21,7 @@
 #include "euler_rhs.h"
 #include "get_neighbour_q.h"
 #include "get_bedge_q.h"
+#include "set_ic.h"
 
 using namespace std;
 
@@ -121,13 +122,19 @@ int main(int argc, char **argv) {
   op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * NUM_FACE_PTS, "double", exteriorQ_data, "exteriorQ");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
 
-  // Declare OP2 constants
+  // Declare OP2 constants 
+  op_decl_const(1, "double", &gam);
+  op_decl_const(1, "double", &bc_mach);
+  op_decl_const(1, "double", &bc_alpha);
+  op_decl_const(1, "double", &bc_p);
+  op_decl_const(1, "double", &bc_r);
+  op_decl_const(1, "double", &bc_u);
+  op_decl_const(1, "double", &bc_e);
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_r);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_s);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dr);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Ds);
-  op_decl_const(1, "double", &gam);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Drw);
   op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dsw);
   op_decl_const(NUM_FACE_PTS, "int", fmask0);
@@ -166,6 +173,9 @@ int main(int argc, char **argv) {
               op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
               op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
               op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE));
+
+  op_par_loop(set_ic, "set_ic", cells,
+              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
 
   // Run the simulation
   for(int i = 0; i < iter; i++) {
