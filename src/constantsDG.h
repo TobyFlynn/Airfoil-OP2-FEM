@@ -2,7 +2,7 @@
 #define __AIRFOIL_CONSTANTSDG_H
 
 // Physics constants (TODO: set to real values)
-double gam = 2.0;
+double gam, bc_mach, bc_alpha, bc_p, bc_r, bc_u, bc_e;
 
 // Utils
 double ones[15] = {

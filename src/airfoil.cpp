@@ -9,6 +9,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 #include "constantsDG.h"
 #include "load_mesh.h"
@@ -43,6 +44,15 @@ int main(int argc, char **argv) {
 
   // TODO get input from args
   int iter = 1;
+
+  gam = 1.4;
+  bc_mach = 0.4f;
+  bc_alpha = 3.0f * atan(1.0f) / 45.0f;
+  bc_p = 1.0f;
+  bc_r = 1.0f;
+  bc_u = sqrt(gam * bc_p / bc_r) * bc_mach;
+  //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
+  bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * bc_u * bc_u;
 
   // Declare memory for data that will be calculated in initialisation kernel
   double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
