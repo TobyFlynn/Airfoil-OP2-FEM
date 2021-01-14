@@ -22,6 +22,8 @@
 #include "get_neighbour_q.h"
 #include "get_bedge_q.h"
 #include "set_ic.h"
+#include "set_workingQ.h"
+#include "update_Q.h"
 
 using namespace std;
 
@@ -54,6 +56,8 @@ int main(int argc, char **argv) {
   bc_u = sqrt(gam * bc_p / bc_r) * bc_mach;
   //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
   bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * bc_u * bc_u;
+  // TODO set to actual value
+  dt = 0.001;
 
   // Declare memory for data that will be calculated in initialisation kernel
   double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
@@ -73,8 +77,13 @@ int main(int argc, char **argv) {
   double *ny_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
   double *sJ_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
   double *q_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *qRHS_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *workingQ_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
   double *exteriorQ_data = (double *)malloc(4 * 3 * NUM_FACE_PTS * numCells * sizeof(double));
+  // RK4 data
+  double *rk1_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *rk2_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *rk3_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *rk4_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
 
   // Declare OP2 sets
   op_set nodes = op_decl_set(numNodes, "nodes");
@@ -117,12 +126,17 @@ int main(int argc, char **argv) {
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_NUM_SOLUTION_PTS}
   op_dat q    = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
-  op_dat qRHS = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", qRHS_data, "qRHS");
+  op_dat workingQ = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", workingQ_data, "workingQ");
+  op_dat rk[4];
+  rk[0] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk1_data, "rk1");
+  rk[1] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk2_data, "rk2");
+  rk[2] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk3_data, "rk3");
+  rk[3] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk4_data, "rk4");
     // Holds neighbouring values of Q for nodes on faces
   op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * NUM_FACE_PTS, "double", exteriorQ_data, "exteriorQ");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
 
-  // Declare OP2 constants 
+  // Declare OP2 constants
   op_decl_const(1, "double", &gam);
   op_decl_const(1, "double", &bc_mach);
   op_decl_const(1, "double", &bc_alpha);
@@ -130,6 +144,7 @@ int main(int argc, char **argv) {
   op_decl_const(1, "double", &bc_r);
   op_decl_const(1, "double", &bc_u);
   op_decl_const(1, "double", &bc_e);
+  op_decl_const(1, "double", &dt);
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_r);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_s);
@@ -175,48 +190,67 @@ int main(int argc, char **argv) {
               op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE));
 
   op_par_loop(set_ic, "set_ic", cells,
-              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
+              op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
 
+  double rk_frac[3] = {0.5, 0.5, 1.0};
   // Run the simulation
   for(int i = 0; i < iter; i++) {
-    // Get neighbouring values of q on internal edges
-    op_par_loop(get_neighbour_q, "get_neighbour_q", edges,
-                op_arg_dat(node_coords, 0, edge2nodes, 2, "double", OP_READ),
-                op_arg_dat(node_coords, 1, edge2nodes, 2, "double", OP_READ),
-                op_arg_dat(nodeX, 0, edge2cells, 3, "double", OP_READ),
-                op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
-                op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
-                op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
-                op_arg_dat(q, 0, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(q, 1, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE),
-                op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
+    for(int j = 0; j < 4; j++) {
+      // Get neighbouring values of q on internal edges
+      op_par_loop(get_neighbour_q, "get_neighbour_q", edges,
+                  op_arg_dat(node_coords, 0, edge2nodes, 2, "double", OP_READ),
+                  op_arg_dat(node_coords, 1, edge2nodes, 2, "double", OP_READ),
+                  op_arg_dat(nodeX, 0, edge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
+                  op_arg_dat(workingQ, 0, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(workingQ, 1, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE),
+                  op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
 
-    // Enforce boundary conditions
-    op_par_loop(get_bedge_q, "get_bedge_q", bedges,
-                op_arg_dat(bedge_type, -1, OP_ID, 1, "int", OP_READ),
-                op_arg_dat(node_coords, 0, bedge2nodes, 2, "double", OP_READ),
-                op_arg_dat(node_coords, 1, bedge2nodes, 2, "double", OP_READ),
-                op_arg_dat(nodeX, 0, bedge2cells, 3, "double", OP_READ),
-                op_arg_dat(nodeY, 0, bedge2cells, 3, "double", OP_READ),
-                op_arg_dat(nx, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(ny, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(q, 0, bedge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
+      // Enforce boundary conditions
+      op_par_loop(get_bedge_q, "get_bedge_q", bedges,
+                  op_arg_dat(bedge_type, -1, OP_ID, 1, "int", OP_READ),
+                  op_arg_dat(node_coords, 0, bedge2nodes, 2, "double", OP_READ),
+                  op_arg_dat(node_coords, 1, bedge2nodes, 2, "double", OP_READ),
+                  op_arg_dat(nodeX, 0, bedge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nodeY, 0, bedge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nx, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(ny, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(workingQ, 0, bedge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
 
-    // Calculate vectors F an G from q for each cell
-    op_par_loop(euler_rhs, "euler_rhs", cells,
-                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(rx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(ry, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(sx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(sy, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(J, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                op_arg_dat(qRHS, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+      // Calculate vectors F an G from q for each cell
+      op_par_loop(euler_rhs, "euler_rhs", cells,
+                  op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(rx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(ry, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(sx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(sy, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(J, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                  op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+                  op_arg_dat(rk[j], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+
+      if(j != 3) {
+        op_par_loop(set_workingQ, "set_workingQ", cells,
+                    op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                    op_arg_dat(rk[j], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                    op_arg_gbl(&rk_frac[j], 1, "double", OP_READ),
+                    op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+      }
+    }
+    op_par_loop(update_Q, "update_Q", cells,
+                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_RW),
+                op_arg_dat(rk[0], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(rk[1], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(rk[2], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(rk[3], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
   }
 
   // Save the solution
@@ -246,11 +280,15 @@ int main(int argc, char **argv) {
   free(ny_data);
   free(sJ_data);
   free(q_data);
-  free(qRHS_data);
+  free(workingQ_data);
   free(edge2node_data);
   free(edge2cell_data);
   free(bedge2node_data);
   free(bedge2cell_data);
   free(bedge_type_data);
   free(exteriorQ_data);
+  free(rk1_data);
+  free(rk2_data);
+  free(rk3_data);
+  free(rk4_data);
 }
