@@ -140,6 +140,29 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
     (*bedge2cell)[i]         = bedgeData[i * 3 + 2];
     // TODO set boundary type
     // 0 = inflow, 1 = outflow, 2 = wall
+    double x1 = (*coords)[2 * (*bedge2node)[i * 2]];
+    double y1 = (*coords)[2 * (*bedge2node)[i * 2] + 1];
+    double x2 = (*coords)[2 * (*bedge2node)[i * 2 + 1]];
+    double y2 = (*coords)[2 * (*bedge2node)[i * 2 + 1] + 1];
+    if(x1 > -4.0 && x1 < 4.0 && y1 > -2.0 && y1 < 2.0 &&
+       x2 > -4.0 && x2 < 4.0 && y2 > -2.0 && y2 < 2.0) {
+      // Wall boundary
+      (*bedge_type)[i] = 2;
+    } else if(y1 == y2) {
+      // The top and bottom boundaries
+      (*bedge_type)[i] = 2;
+    } else if(x1 == x2) {
+      if(x1 < 0.0) {
+        // Inflow
+        (*bedge_type)[i] = 0;
+      } else {
+        // Outflow
+        (*bedge_type)[i] = 1;
+      }
+    } else {
+      cout << "*** ERROR ***" << endl;
+      cout << "  Unclassified boundary edge" << endl;
+    }
   }
 
   cg_close(file);
