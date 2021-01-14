@@ -42,26 +42,14 @@ inline void get_neighbour_q(const double *n0, const double *n1, const double *xL
   if(edgeL == 1) exInd = 4 * NUM_FACE_PTS;
   else if(edgeL == 2) exInd = 2 * 4 * NUM_FACE_PTS;
 
-  int fmask[NUM_FACE_PTS];
+  int *fmask;
 
   if(edgeR == 0) {
-    fmask[0] = 0;
-    fmask[1] = 1;
-    fmask[2] = 2;
-    fmask[3] = 3;
-    fmask[4] = 4;
+    fmask = fmask0;
   } else if(edgeR == 1) {
-    fmask[0] = 4;
-    fmask[1] = 8;
-    fmask[2] = 11;
-    fmask[3] = 13;
-    fmask[4] = 14;
+    fmask = fmask1;
   } else {
-    fmask[0] = 0;
-    fmask[1] = 5;
-    fmask[2] = 9;
-    fmask[3] = 12;
-    fmask[4] = 14;
+    fmask = fmask2;
   }
 
   // As all edges go around clockwise, have to do reverse order for one side of the copy
@@ -79,23 +67,11 @@ inline void get_neighbour_q(const double *n0, const double *n1, const double *xL
   else if(edgeR == 2) exInd = 2 * 4 * NUM_FACE_PTS;
 
   if(edgeL == 0) {
-    fmask[0] = 0;
-    fmask[1] = 1;
-    fmask[2] = 2;
-    fmask[3] = 3;
-    fmask[4] = 4;
+    fmask = fmask0;
   } else if(edgeL == 1) {
-    fmask[0] = 4;
-    fmask[1] = 8;
-    fmask[2] = 11;
-    fmask[3] = 13;
-    fmask[4] = 14;
+    fmask = fmask1;
   } else {
-    fmask[0] = 0;
-    fmask[1] = 5;
-    fmask[2] = 9;
-    fmask[3] = 12;
-    fmask[4] = 14;
+    fmask = fmask2;
   }
 
   // As all edges go around clockwise, have to do reverse order for one side of the copy

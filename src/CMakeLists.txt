@@ -1,4 +1,4 @@
-set(KERNEL_HEADERS calc_solution_pt_coords.h calc_geometric_factors.h calc_normals.h euler_fluxes.h get_neighbour_q.h)
+set(KERNEL_HEADERS calc_solution_pt_coords.h calc_geometric_factors.h calc_normals.h euler_rhs.h get_neighbour_q.h)
 
 op2_application(airfoil_seq LIBS op2_seq op2_hdf5 SOURCES airfoil.cpp load_mesh.cpp ${KERNEL_HEADERS})
 
