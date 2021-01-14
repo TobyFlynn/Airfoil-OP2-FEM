@@ -36,7 +36,7 @@ void cgns_load_cells<long>(int file, int baseIndex, int zoneIndex, int *cgnsCell
 void load_mesh(std::string filename, int *numNodes, int *numCells,
                int *numEdges, int *numBoundaryEdges, double **coords,
                int **cgnsCells, int **edge2node, int **edge2cell,
-               int **bedge2node, int **bedge2cell) {
+               int **bedge2node, int **bedge2cell, int **bedge_type) {
   // Read CGNS grid
   int file;
   if(cg_open(filename.c_str(), CG_MODE_READ, &file)) {
@@ -128,6 +128,7 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   *numBoundaryEdges = barrayDims[1];
   *bedge2node = (int *)malloc(2 * *numBoundaryEdges * sizeof(int));
   *bedge2cell = (int *)malloc(*numBoundaryEdges * sizeof(int));
+  *bedge_type = (int *)malloc(*numBoundaryEdges * sizeof(int));
   vector<int> bedgeData(barrayDims[0] * barrayDims[1]);
   cg_array_read(1, bedgeData.data());
 
@@ -137,6 +138,8 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
     (*bedge2node)[i * 2]     = bedgeData[i * 3] - 1;
     (*bedge2node)[i * 2 + 1] = bedgeData[i * 3 + 1] - 1;
     (*bedge2cell)[i]         = bedgeData[i * 3 + 2];
+    // TODO set boundary type
+    // 0 = inflow, 1 = outflow, 2 = wall
   }
 
   cg_close(file);

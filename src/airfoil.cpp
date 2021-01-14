@@ -19,6 +19,7 @@
 #include "calc_normals.h"
 #include "euler_rhs.h"
 #include "get_neighbour_q.h"
+#include "get_bedge_q.h"
 
 using namespace std;
 
@@ -29,11 +30,13 @@ int main(int argc, char **argv) {
   int *edge2cell_data;
   int *bedge2node_data;
   int *bedge2cell_data;
+  int *bedge_type_data;
   int numNodes, numCells, numEdges, numBoundaryEdges;
 
   load_mesh("./naca0012.cgns", &numNodes, &numCells, &numEdges,
             &numBoundaryEdges, &coords, &cgnsCells, &edge2node_data,
-            &edge2cell_data, &bedge2node_data, &bedge2cell_data);
+            &edge2cell_data, &bedge2node_data, &bedge2cell_data,
+            &bedge_type_data);
 
   // Initialise OP2
   op_init(argc, argv, 2);
@@ -106,6 +109,7 @@ int main(int argc, char **argv) {
   op_dat qRHS = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", qRHS_data, "qRHS");
     // Holds neighbouring values of Q for nodes on faces
   op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * NUM_FACE_PTS, "double", exteriorQ_data, "exteriorQ");
+  op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
 
   // Declare OP2 constants
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
@@ -167,7 +171,18 @@ int main(int argc, char **argv) {
                 op_arg_dat(q, 1, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE),
                 op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
-    // TODO handle boundary conditions
+
+    // Enforce boundary conditions
+    op_par_loop(get_bedge_q, "get_bedge_q", bedges,
+                op_arg_dat(bedge_type, -1, OP_ID, 1, "int", OP_READ),
+                op_arg_dat(node_coords, 0, bedge2nodes, 2, "double", OP_READ),
+                op_arg_dat(node_coords, 1, bedge2nodes, 2, "double", OP_READ),
+                op_arg_dat(nodeX, 0, bedge2cells, 3, "double", OP_READ),
+                op_arg_dat(nodeY, 0, bedge2cells, 3, "double", OP_READ),
+                op_arg_dat(nx, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
+                op_arg_dat(ny, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
+                op_arg_dat(q, 0, bedge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
 
     // Calculate vectors F an G from q for each cell
     op_par_loop(euler_rhs, "euler_rhs", cells,
@@ -216,5 +231,6 @@ int main(int argc, char **argv) {
   free(edge2cell_data);
   free(bedge2node_data);
   free(bedge2cell_data);
+  free(bedge_type_data);
   free(exteriorQ_data);
 }
