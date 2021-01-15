@@ -68,9 +68,13 @@ int main(int argc, char **argv) {
       }
       // Add cell to map
       unique_ptr<Cell> cell = make_unique<Cell>();
+      // cell->points[0] = ids->GetId(0) + 1;
+      // cell->points[1] = ids->GetId(1) + 1;
+      // cell->points[2] = ids->GetId(2) + 1;
+      // Convert from clockwise to anticlockwise
       cell->points[0] = ids->GetId(0) + 1;
-      cell->points[1] = ids->GetId(1) + 1;
-      cell->points[2] = ids->GetId(2) + 1;
+      cell->points[1] = ids->GetId(2) + 1;
+      cell->points[2] = ids->GetId(1) + 1;
       cellMap.insert(pair<int,unique_ptr<Cell>>(cellIterator->GetCellId(), move(cell)));
       // Check each edge for whether it is a boundary
       for(int j = 0; j < 3; j++) {
