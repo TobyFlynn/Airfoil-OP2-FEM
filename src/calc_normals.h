@@ -24,7 +24,7 @@ inline void calc_normals(const double *xr, const double *yr, const double *xs,
 
   // Normalise
   for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
-    sJ[i] = std::sqrt(nx[i] * nx[i] + ny[i] * ny[i]);
+    sJ[i] = sqrt(nx[i] * nx[i] + ny[i] * ny[i]);
     nx[i] = nx[i] / sJ[i];
     ny[i] = ny[i] / sJ[i];
   }

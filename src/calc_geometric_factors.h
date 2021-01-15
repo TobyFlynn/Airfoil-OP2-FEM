@@ -5,7 +5,6 @@ inline void calc_geometric_factors(const double *x, const double *y,
                                    double *ys, double *J, double *rx,
                                    double *ry, double *sx, double *sy) {
   // xr = Dr * x
-  // cblas_dcopy(NUM_SOLUTION_PTS, zeros, 1, xr, 1); - Apparently not needed if beta set to 0.0
   cblas_dgemv(CblasRowMajor, CblasNoTrans, NUM_SOLUTION_PTS, NUM_SOLUTION_PTS, 1.0, Dr, NUM_SOLUTION_PTS, x, 1, 0.0, xr, 1);
 
   // xs = Ds * x

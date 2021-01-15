@@ -1,5 +1,6 @@
 #define NUM_SOLUTION_PTS 15
 #define NUM_FACE_PTS 5
+#define ORDER 4
 
 // Include OP2 stuff
 #include "op_seq.h"
@@ -24,6 +25,7 @@
 #include "set_ic.h"
 #include "set_workingQ.h"
 #include "update_Q.h"
+#include "calc_dt.h"
 
 using namespace std;
 
@@ -56,8 +58,12 @@ int main(int argc, char **argv) {
   bc_u = sqrt(gam * bc_p / bc_r) * bc_mach;
   //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
   bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * bc_u * bc_u;
-  // TODO set to actual value
-  dt = 0.001;
+  cout << "gam: " << gam << endl;
+  cout << "bc_mach: " << bc_mach << endl;
+  cout << "bc_p: " << bc_p << endl;
+  cout << "bc_r: " << bc_r << endl;
+  cout << "bc_u: " << bc_u << endl;
+  cout << "bc_e: " << bc_e << endl;
 
   // Declare memory for data that will be calculated in initialisation kernel
   double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
@@ -144,7 +150,6 @@ int main(int argc, char **argv) {
   op_decl_const(1, "double", &bc_r);
   op_decl_const(1, "double", &bc_u);
   op_decl_const(1, "double", &bc_e);
-  op_decl_const(1, "double", &dt);
   op_decl_const(NUM_SOLUTION_PTS, "double", ones);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_r);
   op_decl_const(NUM_SOLUTION_PTS, "double", solution_pts_s);
@@ -193,6 +198,16 @@ int main(int argc, char **argv) {
               op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
               op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
 
+  double dt1;
+  op_par_loop(calc_dt, "calc_dt", cells,
+              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(J, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+              op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+              op_arg_gbl(&dt1, 1, "double", OP_MAX));
+
+  dt = 1.0 / dt1;
+  cout << "dt: " << dt << endl;
+
   double rk_frac[3] = {0.5, 0.5, 1.0};
   // Run the simulation
   for(int i = 0; i < iter; i++) {
@@ -238,6 +253,7 @@ int main(int argc, char **argv) {
 
       if(j != 3) {
         op_par_loop(set_workingQ, "set_workingQ", cells,
+                    op_arg_gbl(&dt, 1, "double", OP_READ),
                     op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                     op_arg_dat(rk[j], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                     op_arg_gbl(&rk_frac[j], 1, "double", OP_READ),
@@ -245,18 +261,30 @@ int main(int argc, char **argv) {
       }
     }
     op_par_loop(update_Q, "update_Q", cells,
+                op_arg_gbl(&dt, 1, "double", OP_READ),
                 op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_RW),
                 op_arg_dat(rk[0], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(rk[1], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(rk[2], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(rk[3], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
                 op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+
+    op_par_loop(calc_dt, "calc_dt", cells,
+                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(J, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
+                op_arg_dat(sJ, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+                op_arg_gbl(&dt1, 1, "double", OP_MAX));
+
+    dt = 1.0 / dt1;
+    cout << "dt: " << dt << endl;
   }
 
   // Save the solution
   op_fetch_data_hdf5_file(node_coords, "points.h5");
   op_fetch_data_hdf5_file(x, "points.h5");
   op_fetch_data_hdf5_file(y, "points.h5");
+  op_fetch_data_hdf5_file(nx, "points.h5");
+  op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Clean up OP2
   op_exit();
