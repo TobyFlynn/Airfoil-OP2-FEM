@@ -18,8 +18,8 @@ inline void calc_normals(const double *xr, const double *yr, const double *xs,
   }
   // Face 2
   for(int i = 0; i < NUM_FACE_PTS; i++) {
-    nx[NUM_FACE_PTS + i] = -ys[fmask2[i]];
-    ny[NUM_FACE_PTS + i] = xs[fmask2[i]];
+    nx[2 * NUM_FACE_PTS + i] = -ys[fmask2[i]];
+    ny[2 * NUM_FACE_PTS + i] = xs[fmask2[i]];
   }
 
   // Normalise
