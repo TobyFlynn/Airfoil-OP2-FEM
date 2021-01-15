@@ -199,7 +199,7 @@ int main(int argc, char **argv) {
   int sectionIndex;
   int start = 1;
   int end = sizes[1];
-  cg_section_write(file, baseIndex, zoneIndex, "Elements", CGNS_ENUMV(TRI_3),
+  cg_section_write(file, baseIndex, zoneIndex, "GridElements", CGNS_ENUMV(TRI_3),
                    start, end, 0, elements.data(), &sectionIndex);
   // Write edges
   // {p1, p2, c1, c2}

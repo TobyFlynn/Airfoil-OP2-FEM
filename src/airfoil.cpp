@@ -14,6 +14,7 @@
 
 #include "constantsDG.h"
 #include "load_mesh.h"
+#include "save_solution.h"
 
 // Include kernels
 #include "calc_solution_pt_coords.h"
@@ -279,12 +280,19 @@ int main(int argc, char **argv) {
     cout << "dt: " << dt << endl;
   }
 
-  // Save the solution
+  // Save info for python test script
   op_fetch_data_hdf5_file(node_coords, "points.h5");
   op_fetch_data_hdf5_file(x, "points.h5");
   op_fetch_data_hdf5_file(y, "points.h5");
   op_fetch_data_hdf5_file(nx, "points.h5");
   op_fetch_data_hdf5_file(ny, "points.h5");
+
+  // Save solution to CGNS file
+  double *sol_q = (double *)malloc(4 * NUM_SOLUTION_PTS * op_get_size(cells) * sizeof(double));
+  op_fetch_data(q, sol_q);
+  save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells), sol_q, cgnsCells, gam);
+
+  free(sol_q);
 
   // Clean up OP2
   op_exit();
