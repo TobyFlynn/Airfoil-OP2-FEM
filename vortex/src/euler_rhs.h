@@ -80,8 +80,8 @@ inline void euler_rhs(const double *q, const double *exteriorQ,
     euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  // // Compute local Lax-Friedrichs flux
-  // // Max lamda for each face
+  // Compute local Lax-Friedrichs flux
+  // Max lamda for each face
   // double maxL;
   // double maxLamda[3 * NUM_FACE_PTS];
   // for(int i = 0; i < NUM_FACE_PTS; i++) {

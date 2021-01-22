@@ -145,27 +145,4 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   }
 
   cg_close(file);
-
-  // ofstream bedgeFile;
-  // bedgeFile.open("bedges.txt");
-  // for(int i = 0; i < *numBoundaryEdges; i++) {
-  //   bedgeFile << (*bedge2node)[2 * i] << " " << (*bedge2node)[2 * i + 1] << endl;
-  // }
-  // bedgeFile.close();
-  //
-  // ofstream cellFile;
-  // cellFile.open("cells.txt");
-  // for(int i = 0; i < *numCells; i++) {
-  //   cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
-  // }
-  // cellFile.close();
-  //
-  // cout << "Number of edges: " << *numEdges << endl;
-  //
-  // ofstream edgeFile;
-  // edgeFile.open("edges.txt");
-  // for(int i = 0; i < *numEdges; i++) {
-  //   edgeFile << (*edge2cell)[2 * i] << " " << (*edge2cell)[2 * i + 1] << endl;
-  // }
-  // edgeFile.close();
 }

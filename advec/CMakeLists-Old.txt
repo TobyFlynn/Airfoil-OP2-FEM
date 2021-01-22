@@ -33,7 +33,5 @@ if(NOT OPENBLAS_DIR)
   set(OPENBLAS_DIR "/opt/OpenBLAS")
 endif()
 
-add_subdirectory(advec)
-add_subdirectory(vortex)
 add_subdirectory(tools)
 add_subdirectory(src)
