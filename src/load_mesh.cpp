@@ -35,8 +35,9 @@ void cgns_load_cells<long>(int file, int baseIndex, int zoneIndex, int *cgnsCell
 
 void load_mesh(std::string filename, int *numNodes, int *numCells,
                int *numEdges, int *numBoundaryEdges, double **coords,
-               int **cgnsCells, int **edge2node, int **edge2cell,
-               int **bedge2node, int **bedge2cell, int **bedge_type) {
+               int **cgnsCells, int **edge2node, int **edge2cell, int **edgeNum,
+               int **bedge2node, int **bedge2cell, int **bedgeNum,
+               int **bedge_type) {
   // Read CGNS grid
   int file;
   if(cg_open(filename.c_str(), CG_MODE_READ, &file)) {
@@ -104,16 +105,19 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   *numEdges = arrayDims[1];
   *edge2node = (int *)malloc(2 * *numEdges * sizeof(int));
   *edge2cell = (int *)malloc(2 * *numEdges * sizeof(int));
+  *edgeNum   = (int *)malloc(2 * *numEdges * sizeof(int));
   vector<int> edgeData(arrayDims[0] * arrayDims[1]);
   cg_array_read(1, edgeData.data());
 
   for(int i = 0; i < *numEdges; i++) {
     // - 1 as CGNS counts points from 1 but OP2 counts from 0
     // Cell index do start from one in this data
-    (*edge2node)[i * 2]     = edgeData[i * 4] - 1;
-    (*edge2node)[i * 2 + 1] = edgeData[i * 4 + 1] - 1;
-    (*edge2cell)[i * 2]     = edgeData[i * 4 + 2];
-    (*edge2cell)[i * 2 + 1] = edgeData[i * 4 + 3];
+    (*edge2node)[i * 2]     = edgeData[i * 6] - 1;
+    (*edge2node)[i * 2 + 1] = edgeData[i * 6 + 1] - 1;
+    (*edge2cell)[i * 2]     = edgeData[i * 6 + 2];
+    (*edge2cell)[i * 2 + 1] = edgeData[i * 6 + 3];
+    (*edgeNum)[i * 2]       = edgeData[i * 6 + 4];
+    (*edgeNum)[i * 2 + 1]   = edgeData[i * 6 + 5];
   }
 
   // Get boundary edge data
@@ -128,6 +132,7 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   *numBoundaryEdges = barrayDims[1];
   *bedge2node = (int *)malloc(2 * *numBoundaryEdges * sizeof(int));
   *bedge2cell = (int *)malloc(*numBoundaryEdges * sizeof(int));
+  *bedgeNum   = (int *)malloc(*numBoundaryEdges * sizeof(int));
   *bedge_type = (int *)malloc(*numBoundaryEdges * sizeof(int));
   vector<int> bedgeData(barrayDims[0] * barrayDims[1]);
   cg_array_read(1, bedgeData.data());
@@ -135,17 +140,18 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   for(int i = 0; i < *numBoundaryEdges; i++) {
     // - 1 as CGNS counts points from 1 but OP2 counts from 0
     // Cell index do start from one in this data
-    (*bedge2node)[i * 2]     = bedgeData[i * 3] - 1;
-    (*bedge2node)[i * 2 + 1] = bedgeData[i * 3 + 1] - 1;
-    (*bedge2cell)[i]         = bedgeData[i * 3 + 2];
-    // TODO set boundary type
+    (*bedge2node)[i * 2]     = bedgeData[i * 4] - 1;
+    (*bedge2node)[i * 2 + 1] = bedgeData[i * 4 + 1] - 1;
+    (*bedge2cell)[i]         = bedgeData[i * 4 + 2];
+    (*bedgeNum)[i]           = bedgeData[i * 4 + 3];
+    // Set boundary type
     // 0 = inflow, 1 = outflow, 2 = wall
     double x1 = (*coords)[2 * (*bedge2node)[i * 2]];
     double y1 = (*coords)[2 * (*bedge2node)[i * 2] + 1];
     double x2 = (*coords)[2 * (*bedge2node)[i * 2 + 1]];
     double y2 = (*coords)[2 * (*bedge2node)[i * 2 + 1] + 1];
-    if(x1 > -4.0 && x1 < 4.0 && y1 > -2.0 && y1 < 2.0 &&
-       x2 > -4.0 && x2 < 4.0 && y2 > -2.0 && y2 < 2.0) {
+    if(x1 > -1.0 && x1 < 9.0 && y1 > -1.0 && y1 < 1.0 &&
+       x2 > -1.0 && x2 < 9.0 && y2 > -1.0 && y2 < 1.0) {
       // Wall boundary
       (*bedge_type)[i] = 2;
     } else if(y1 == y2) {
@@ -168,10 +174,19 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   cg_close(file);
 
   // Write cell data to text file (for python sanity check)
-  ofstream cellFile;
-  cellFile.open("cells.txt");
-  for(int i = 0; i < *numCells; i++) {
-    cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
-  }
-  cellFile.close();
+  // ofstream cellFile;
+  // cellFile.open("cells.txt");
+  // for(int i = 0; i < *numCells; i++) {
+  //   cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
+  // }
+  // cellFile.close();
+  //
+  // cout << "Number of edges: " << *numEdges << endl;
+  //
+  // ofstream edgeFile;
+  // cellFile.open("edges.txt");
+  // for(int i = 0; i < *numEdges; i++) {
+  //   cellFile << (*edge2cell)[2 * i] << " " << (*edge2cell)[2 * i + 1] << endl;
+  // }
+  // cellFile.close();
 }

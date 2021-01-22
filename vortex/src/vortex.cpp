@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
   op_dat q    = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
   op_dat error    = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", error_data, "error");
   op_dat workingQ = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", workingQ_data, "workingQ");
-  op_dat rk[4];
+  op_dat rk[3];
   rk[0] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk1_data, "rk1");
   rk[1] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk2_data, "rk2");
   rk[2] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk3_data, "rk3");
