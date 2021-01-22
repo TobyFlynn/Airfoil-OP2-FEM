@@ -150,8 +150,8 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
     double y1 = (*coords)[2 * (*bedge2node)[i * 2] + 1];
     double x2 = (*coords)[2 * (*bedge2node)[i * 2 + 1]];
     double y2 = (*coords)[2 * (*bedge2node)[i * 2 + 1] + 1];
-    if(x1 > -1.0 && x1 < 9.0 && y1 > -1.0 && y1 < 1.0 &&
-       x2 > -1.0 && x2 < 9.0 && y2 > -1.0 && y2 < 1.0) {
+    if(x1 > -1.0 && x1 < 2.0 && y1 > -1.0 && y1 < 1.0 &&
+       x2 > -1.0 && x2 < 2.0 && y2 > -1.0 && y2 < 1.0) {
       // Wall boundary
       (*bedge_type)[i] = 2;
     } else if(y1 == y2) {
