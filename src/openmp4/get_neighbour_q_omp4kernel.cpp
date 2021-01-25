@@ -16,8 +16,14 @@ void get_neighbour_q_omp4_kernel(
   int dat2size,
   double *data5,
   int dat5size,
-  double *data7,
-  int dat7size,
+  double *data6,
+  int dat6size,
+  double *data9,
+  int dat9size,
+  double *data11,
+  int dat11size,
+  double *data13,
+  int dat13size,
   int *col_reord,
   int set_size1,
   int start,
@@ -35,10 +41,16 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   op_arg arg5,
   op_arg arg6,
   op_arg arg7,
-  op_arg arg8){
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 9;
-  op_arg args[9];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -49,6 +61,12 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   args[6] = arg6;
   args[7] = arg7;
   args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -57,8 +75,8 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   OP_kernels[4].name      = name;
   OP_kernels[4].count    += 1;
 
-  int  ninds   = 4;
-  int  inds[9] = {-1,0,1,0,1,2,2,3,3};
+  int  ninds   = 7;
+  int  inds[15] = {-1,0,1,0,1,2,3,2,3,4,4,5,5,6,6};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_neighbour_q\n");
@@ -96,8 +114,14 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
     int dat2size = getSetSizeFromOpArg(&arg2) * arg2.dat->dim;
     double *data5 = (double *)arg5.data_d;
     int dat5size = getSetSizeFromOpArg(&arg5) * arg5.dat->dim;
-    double *data7 = (double *)arg7.data_d;
-    int dat7size = getSetSizeFromOpArg(&arg7) * arg7.dat->dim;
+    double *data6 = (double *)arg6.data_d;
+    int dat6size = getSetSizeFromOpArg(&arg6) * arg6.dat->dim;
+    double *data9 = (double *)arg9.data_d;
+    int dat9size = getSetSizeFromOpArg(&arg9) * arg9.dat->dim;
+    double *data11 = (double *)arg11.data_d;
+    int dat11size = getSetSizeFromOpArg(&arg11) * arg11.dat->dim;
+    double *data13 = (double *)arg13.data_d;
+    int dat13size = getSetSizeFromOpArg(&arg13) * arg13.dat->dim;
 
     op_plan *Plan = op_plan_get_stage(name,set,part_size,nargs,args,ninds,inds,OP_COLOR2);
     ncolors = Plan->ncolors;
@@ -122,8 +146,14 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
         dat2size,
         data5,
         dat5size,
-        data7,
-        dat7size,
+        data6,
+        dat6size,
+        data9,
+        dat9size,
+        data11,
+        dat11size,
+        data13,
+        dat13size,
         col_reord,
         set_size1,
         start,

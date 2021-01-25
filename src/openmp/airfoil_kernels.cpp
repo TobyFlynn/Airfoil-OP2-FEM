@@ -31,7 +31,7 @@ extern double LIFT[225];
 // user kernel files
 #include "init_grid_kernel.cpp"
 #include "set_ic_kernel.cpp"
-#include "neighbour_zero_kernel.cpp"
+#include "flux_zero_kernel.cpp"
 #include "calc_dt_kernel.cpp"
 #include "get_neighbour_q_kernel.cpp"
 #include "get_bedge_q_kernel.cpp"

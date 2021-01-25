@@ -82,7 +82,7 @@ void op_decl_const_char(int dim, char const *type,
 // user kernel files
 #include "init_grid_omp4kernel_func.cpp"
 #include "set_ic_omp4kernel_func.cpp"
-#include "neighbour_zero_omp4kernel_func.cpp"
+#include "flux_zero_omp4kernel_func.cpp"
 #include "calc_dt_omp4kernel_func.cpp"
 #include "get_neighbour_q_omp4kernel_func.cpp"
 #include "get_bedge_q_omp4kernel_func.cpp"

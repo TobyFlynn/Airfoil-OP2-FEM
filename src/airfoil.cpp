@@ -29,7 +29,7 @@
 #include "set_workingQ.h"
 #include "update_Q.h"
 #include "calc_dt.h"
-#include "neighbour_zero.h"
+#include "flux_zero.h"
 
 using namespace std;
 
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   double *fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   double *q_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
+  double *flux_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
   // RK4 data
   double *rk1_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *rk2_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
@@ -175,8 +175,8 @@ int main(int argc, char **argv) {
   rk[0] = op_decl_dat(cells, 4 * 15, "double", rk1_data, "rk1");
   rk[1] = op_decl_dat(cells, 4 * 15, "double", rk2_data, "rk2");
   rk[2] = op_decl_dat(cells, 4 * 15, "double", rk3_data, "rk3");
-    // Holds neighbouring values of Q for nodes on faces
-  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", exteriorQ_data, "exteriorQ");
+
+  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", flux_data, "flux");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -225,8 +225,8 @@ int main(int argc, char **argv) {
               op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_WRITE),
               op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
 
-  op_par_loop(neighbour_zero, "neighbour_zero", cells,
-              op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));
+  op_par_loop(flux_zero, "flux_zero", cells,
+              op_arg_dat(flux, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));
 
   double dt1 = 0.0;
   op_par_loop(calc_dt, "calc_dt", cells,
@@ -259,10 +259,16 @@ int main(int argc, char **argv) {
                   op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
+                  op_arg_dat(nx, 0, edge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(ny, 0, edge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(nx, 1, edge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(ny, 1, edge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(fscale, 0, edge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(fscale, 1, edge2cells, 3 * 5, "double", OP_READ),
                   op_arg_dat(workingQ, 0, edge2cells, 4 * 15, "double", OP_READ),
                   op_arg_dat(workingQ, 1, edge2cells, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * 5, "double", OP_INC),
-                  op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * 5, "double", OP_INC));
+                  op_arg_dat(flux, 0, edge2cells, 4 * 3 * 5, "double", OP_INC),
+                  op_arg_dat(flux, 1, edge2cells, 4 * 3 * 5, "double", OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_neighbour_q_t += wall_loop_2 - wall_loop_1;
 
@@ -273,8 +279,9 @@ int main(int argc, char **argv) {
                   op_arg_dat(bedgeNum, -1, OP_ID, 1, "int", OP_READ),
                   op_arg_dat(nx, 0, bedge2cells, 3 * 5, "double", OP_READ),
                   op_arg_dat(ny, 0, bedge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(fscale, 0, bedge2cells, 3 * 5, "double", OP_READ),
                   op_arg_dat(workingQ, 0, bedge2cells, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * 5, "double", OP_RW));
+                  op_arg_dat(flux, 0, bedge2cells, 4 * 3 * 5, "double", OP_RW));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
@@ -282,14 +289,11 @@ int main(int argc, char **argv) {
       op_timers(&cpu_loop_1, &wall_loop_1);
       op_par_loop(euler_rhs, "euler_rhs", cells,
                   op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_RW),
+                  op_arg_dat(flux, -1, OP_ID, 4 * 3 * 5, "double", OP_RW),
                   op_arg_dat(rx, -1, OP_ID, 15, "double", OP_READ),
                   op_arg_dat(ry, -1, OP_ID, 15, "double", OP_READ),
                   op_arg_dat(sx, -1, OP_ID, 15, "double", OP_READ),
                   op_arg_dat(sy, -1, OP_ID, 15, "double", OP_READ),
-                  op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
-                  op_arg_dat(nx, -1, OP_ID, 3 * 5, "double", OP_READ),
-                  op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_READ),
                   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
@@ -307,7 +311,7 @@ int main(int argc, char **argv) {
         set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
     }
-    op_timers(&cpu_loop_1, &wall_loop_1);
+    // op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop(update_Q, "update_Q", cells,
                 op_arg_gbl(&dt, 1, "double", OP_READ),
                 op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_RW),
@@ -315,8 +319,8 @@ int main(int argc, char **argv) {
                 op_arg_dat(rk[1], -1, OP_ID, 4 * 15, "double", OP_READ),
                 op_arg_dat(rk[2], -1, OP_ID, 4 * 15, "double", OP_READ),
                 op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
-    op_timers(&cpu_loop_2, &wall_loop_2);
-    update_Q_t += wall_loop_2 - wall_loop_1;
+    // op_timers(&cpu_loop_2, &wall_loop_2);
+    // update_Q_t += wall_loop_2 - wall_loop_1;
 
     t += dt;
     dt1 = 0.0;
@@ -404,7 +408,7 @@ int main(int argc, char **argv) {
   free(edge2cell_data);
   free(bedge2node_data);
   free(bedge2cell_data);
-  free(exteriorQ_data);
+  free(flux_data);
   free(rk1_data);
   free(rk2_data);
   free(rk3_data);

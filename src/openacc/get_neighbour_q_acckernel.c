@@ -3,12 +3,20 @@
 //
 
 //user function
+#include <cmath>
+#include "fluxes.h"
+
 //user function
 //#pragma acc routine
 inline void get_neighbour_q_openacc( const int *edgeNum, const double *xL,
-                            const double *yL, const double *xR, const double *yR,
-                            const double *qL, const double *qR,
-                            double *exteriorQL, double *exteriorQR) {
+                            const double *yL, const double *xR,
+                            const double *yR, const double *nxL,
+                            const double *nyL, const double *nxR,
+                            const double *nyR, const double *fscaleL,
+                            const double *fscaleR, const double *qL,
+                            const double *qR, double *fluxL, double *fluxR) {
+  double exteriorQL[4 * 5];
+  double exteriorQR[4 * 5];
 
   int edgeL = edgeNum[0];
   int edgeR = edgeNum[1];
@@ -40,9 +48,15 @@ inline void get_neighbour_q_openacc( const int *edgeNum, const double *xL,
     }
   }
 
-  int exInd = 0;
-  if(edgeL == 1) exInd = 4 * 5;
-  else if(edgeL == 2) exInd = 2 * 4 * 5;
+  int exIndL = 0;
+  int nIndL = 0;
+  if(edgeL == 1) {
+    exIndL = 4 * 5;
+    nIndL = 5;
+  } else if(edgeL == 2) {
+    exIndL = 2 * 4 * 5;
+    nIndL = 2 * 5;
+  }
 
   int *fmask;
 
@@ -61,15 +75,21 @@ inline void get_neighbour_q_openacc( const int *edgeNum, const double *xL,
     } else {
       rInd = 4 * fmask[i];
     }
-    exteriorQL[exInd + 4 * i]     += qR[rInd];
-    exteriorQL[exInd + 4 * i + 1] += qR[rInd + 1];
-    exteriorQL[exInd + 4 * i + 2] += qR[rInd + 2];
-    exteriorQL[exInd + 4 * i + 3] += qR[rInd + 3];
+    exteriorQL[4 * i]     = qR[rInd];
+    exteriorQL[4 * i + 1] = qR[rInd + 1];
+    exteriorQL[4 * i + 2] = qR[rInd + 2];
+    exteriorQL[4 * i + 3] = qR[rInd + 3];
   }
 
-  exInd = 0;
-  if(edgeR == 1) exInd = 4 * 5;
-  else if(edgeR == 2) exInd = 2 * 4 * 5;
+  int exIndR = 0;
+  int nIndR = 0;
+  if(edgeR == 1) {
+    exIndR = 4 * 5;
+    nIndR = 5;
+  } else if(edgeR == 2) {
+    exIndR = 2 * 4 * 5;
+    nIndR = 2 * 5;
+  }
 
   if(edgeL == 0) {
     fmask = FMASK;
@@ -86,11 +106,16 @@ inline void get_neighbour_q_openacc( const int *edgeNum, const double *xL,
     } else {
       lInd = 4 * fmask[i];
     }
-    exteriorQR[exInd + 4 * i]     += qL[lInd];
-    exteriorQR[exInd + 4 * i + 1] += qL[lInd + 1];
-    exteriorQR[exInd + 4 * i + 2] += qL[lInd + 2];
-    exteriorQR[exInd + 4 * i + 3] += qL[lInd + 3];
+    exteriorQR[4 * i]     = qL[lInd];
+    exteriorQR[4 * i + 1] = qL[lInd + 1];
+    exteriorQR[4 * i + 2] = qL[lInd + 2];
+    exteriorQR[4 * i + 3] = qL[lInd + 3];
   }
+
+
+  roe(fluxL + exIndL, nxL + nIndL, nyL + nIndL, fscaleL + nIndL, qL, exteriorQL, nIndL);
+
+  roe(fluxR + exIndR, nxR + nIndR, nyR + nIndR, fscaleR + nIndR, qR, exteriorQR, nIndR);
 }
 
 // host stub function
@@ -103,10 +128,16 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   op_arg arg5,
   op_arg arg6,
   op_arg arg7,
-  op_arg arg8){
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 9;
-  op_arg args[9];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -117,6 +148,12 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   args[6] = arg6;
   args[7] = arg7;
   args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -125,8 +162,8 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   OP_kernels[4].name      = name;
   OP_kernels[4].count    += 1;
 
-  int  ninds   = 4;
-  int  inds[9] = {-1,0,1,0,1,2,2,3,3};
+  int  ninds   = 7;
+  int  inds[15] = {-1,0,1,0,1,2,3,2,3,4,4,5,5,6,6};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_neighbour_q\n");
@@ -154,7 +191,10 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
     double *data1 = (double *)arg1.data_d;
     double *data2 = (double *)arg2.data_d;
     double *data5 = (double *)arg5.data_d;
-    double *data7 = (double *)arg7.data_d;
+    double *data6 = (double *)arg6.data_d;
+    double *data9 = (double *)arg9.data_d;
+    double *data11 = (double *)arg11.data_d;
+    double *data13 = (double *)arg13.data_d;
 
     op_plan *Plan = op_plan_get_stage(name,set,part_size,nargs,args,ninds,inds,OP_COLOR2);
     ncolors = Plan->ncolors;
@@ -169,7 +209,7 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
       int start = Plan->col_offsets[0][col];
       int end = Plan->col_offsets[0][col+1];
 
-      #pragma acc parallel loop independent deviceptr(col_reord,map1,data0,data1,data2,data5,data7)
+      #pragma acc parallel loop independent deviceptr(col_reord,map1,data0,data1,data2,data5,data6,data9,data11,data13)
       for ( int e=start; e<end; e++ ){
         int n = col_reord[e];
         int map1idx;
@@ -184,10 +224,16 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
           &data2[3 * map1idx],
           &data1[3 * map3idx],
           &data2[3 * map3idx],
-          &data5[60 * map1idx],
-          &data5[60 * map3idx],
-          &data7[60 * map1idx],
-          &data7[60 * map3idx]);
+          &data5[15 * map1idx],
+          &data6[15 * map1idx],
+          &data5[15 * map3idx],
+          &data6[15 * map3idx],
+          &data9[15 * map1idx],
+          &data9[15 * map3idx],
+          &data11[60 * map1idx],
+          &data11[60 * map3idx],
+          &data13[60 * map1idx],
+          &data13[60 * map3idx]);
       }
 
     }

@@ -1,7 +1,16 @@
+#include <cmath>
+
+#include "fluxes.h"
+
 inline void get_neighbour_q(const int *edgeNum, const double *xL,
-                            const double *yL, const double *xR, const double *yR,
-                            const double *qL, const double *qR,
-                            double *exteriorQL, double *exteriorQR) {
+                            const double *yL, const double *xR,
+                            const double *yR, const double *nxL,
+                            const double *nyL, const double *nxR,
+                            const double *nyR, const double *fscaleL,
+                            const double *fscaleR, const double *qL,
+                            const double *qR, double *fluxL, double *fluxR) {
+  double exteriorQL[4 * 5];
+  double exteriorQR[4 * 5];
   // Work out which edge for each element
   int edgeL = edgeNum[0];
   int edgeR = edgeNum[1];
@@ -34,9 +43,15 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
   }
 
   // Copy data from R to L
-  int exInd = 0;
-  if(edgeL == 1) exInd = 4 * 5;
-  else if(edgeL == 2) exInd = 2 * 4 * 5;
+  int exIndL = 0;
+  int nIndL = 0;
+  if(edgeL == 1) {
+    exIndL = 4 * 5;
+    nIndL = 5;
+  } else if(edgeL == 2) {
+    exIndL = 2 * 4 * 5;
+    nIndL = 2 * 5;
+  }
 
   int *fmask;
 
@@ -55,16 +70,22 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
     } else {
       rInd = 4 * fmask[i];
     }
-    exteriorQL[exInd + 4 * i]     += qR[rInd];
-    exteriorQL[exInd + 4 * i + 1] += qR[rInd + 1];
-    exteriorQL[exInd + 4 * i + 2] += qR[rInd + 2];
-    exteriorQL[exInd + 4 * i + 3] += qR[rInd + 3];
+    exteriorQL[4 * i]     = qR[rInd];
+    exteriorQL[4 * i + 1] = qR[rInd + 1];
+    exteriorQL[4 * i + 2] = qR[rInd + 2];
+    exteriorQL[4 * i + 3] = qR[rInd + 3];
   }
 
   // Copy data from L to R
-  exInd = 0;
-  if(edgeR == 1) exInd = 4 * 5;
-  else if(edgeR == 2) exInd = 2 * 4 * 5;
+  int exIndR = 0;
+  int nIndR = 0;
+  if(edgeR == 1) {
+    exIndR = 4 * 5;
+    nIndR = 5;
+  } else if(edgeR == 2) {
+    exIndR = 2 * 4 * 5;
+    nIndR = 2 * 5;
+  }
 
   if(edgeL == 0) {
     fmask = FMASK;
@@ -81,9 +102,16 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
     } else {
       lInd = 4 * fmask[i];
     }
-    exteriorQR[exInd + 4 * i]     += qL[lInd];
-    exteriorQR[exInd + 4 * i + 1] += qL[lInd + 1];
-    exteriorQR[exInd + 4 * i + 2] += qL[lInd + 2];
-    exteriorQR[exInd + 4 * i + 3] += qL[lInd + 3];
+    exteriorQR[4 * i]     = qL[lInd];
+    exteriorQR[4 * i + 1] = qL[lInd + 1];
+    exteriorQR[4 * i + 2] = qL[lInd + 2];
+    exteriorQR[4 * i + 3] = qL[lInd + 3];
   }
+
+  // Compute numerical fluxes
+  // lax_friedrichs(fluxL + exIndL, nxL + nIndL, nyL + nIndL, fscaleL + nIndL, qL, exteriorQL, nIndL);
+  roe(fluxL + exIndL, nxL + nIndL, nyL + nIndL, fscaleL + nIndL, qL, exteriorQL, nIndL);
+
+  // lax_friedrichs(fluxR + exIndR, nxR + nIndR, nyR + nIndR, fscaleR + nIndR, qR, exteriorQR, nIndR);
+  roe(fluxR + exIndR, nxR + nIndR, nyR + nIndR, fscaleR + nIndR, qR, exteriorQR, nIndR);
 }

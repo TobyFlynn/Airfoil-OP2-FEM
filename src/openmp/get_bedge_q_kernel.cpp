@@ -12,10 +12,11 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   op_arg arg2,
   op_arg arg3,
   op_arg arg4,
-  op_arg arg5){
+  op_arg arg5,
+  op_arg arg6){
 
-  int nargs = 6;
-  op_arg args[6];
+  int nargs = 7;
+  op_arg args[7];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -23,6 +24,7 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   args[3] = arg3;
   args[4] = arg4;
   args[5] = arg5;
+  args[6] = arg6;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -31,8 +33,8 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   OP_kernels[5].count    += 1;
   op_timers_core(&cpu_t1, &wall_t1);
 
-  int  ninds   = 4;
-  int  inds[6] = {-1,-1,0,1,2,3};
+  int  ninds   = 5;
+  int  inds[7] = {-1,-1,0,1,2,3,4};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_bedge_q\n");
@@ -74,8 +76,9 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
             &((int*)arg1.data)[1 * n],
             &((double*)arg2.data)[15 * map2idx],
             &((double*)arg3.data)[15 * map2idx],
-            &((double*)arg4.data)[60 * map2idx],
-            &((double*)arg5.data)[60 * map2idx]);
+            &((double*)arg4.data)[15 * map2idx],
+            &((double*)arg5.data)[60 * map2idx],
+            &((double*)arg6.data)[60 * map2idx]);
         }
       }
 

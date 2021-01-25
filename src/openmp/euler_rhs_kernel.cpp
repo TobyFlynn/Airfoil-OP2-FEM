@@ -13,13 +13,10 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg3,
   op_arg arg4,
   op_arg arg5,
-  op_arg arg6,
-  op_arg arg7,
-  op_arg arg8,
-  op_arg arg9){
+  op_arg arg6){
 
-  int nargs = 10;
-  op_arg args[10];
+  int nargs = 7;
+  op_arg args[7];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -28,9 +25,6 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[4] = arg4;
   args[5] = arg5;
   args[6] = arg6;
-  args[7] = arg7;
-  args[8] = arg8;
-  args[9] = arg9;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -67,10 +61,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
           &((double*)arg3.data)[15*n],
           &((double*)arg4.data)[15*n],
           &((double*)arg5.data)[15*n],
-          &((double*)arg6.data)[15*n],
-          &((double*)arg7.data)[15*n],
-          &((double*)arg8.data)[15*n],
-          &((double*)arg9.data)[60*n]);
+          &((double*)arg6.data)[60*n]);
       }
     }
   }
@@ -87,8 +78,5 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   OP_kernels[6].transfer += (float)set->size * arg3.size;
   OP_kernels[6].transfer += (float)set->size * arg4.size;
   OP_kernels[6].transfer += (float)set->size * arg5.size;
-  OP_kernels[6].transfer += (float)set->size * arg6.size;
-  OP_kernels[6].transfer += (float)set->size * arg7.size;
-  OP_kernels[6].transfer += (float)set->size * arg8.size;
-  OP_kernels[6].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg6.size * 2.0f;
 }

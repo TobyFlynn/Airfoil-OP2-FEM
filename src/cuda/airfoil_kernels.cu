@@ -109,7 +109,7 @@ int size, char *dat, char const *name){
 //user kernel files
 #include "init_grid_kernel.cu"
 #include "set_ic_kernel.cu"
-#include "neighbour_zero_kernel.cu"
+#include "flux_zero_kernel.cu"
 #include "calc_dt_kernel.cu"
 #include "get_neighbour_q_kernel.cu"
 #include "get_bedge_q_kernel.cu"

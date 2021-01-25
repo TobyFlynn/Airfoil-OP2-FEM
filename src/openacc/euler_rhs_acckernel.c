@@ -4,15 +4,14 @@
 
 //user function
 #include <cblas.h>
-#include <algorithm>
 #include <cmath>
+#include "fluxes.h"
 
 //user function
 //#pragma acc routine
-inline void euler_rhs_openacc( const double *q, double *exteriorQ,
+inline void euler_rhs_openacc( const double *q, double *flux,
                       const double *rx, const double *ry, const double *sx,
-                      const double *sy, const double *fscale, const double *nx,
-                      const double *ny, double *qRHS) {
+                      const double *sy, double *qRHS) {
   double F[4 * 15];
   double G[4 * 15];
   for(int i = 0; i < 15; i++) {
@@ -36,44 +35,12 @@ inline void euler_rhs_openacc( const double *q, double *exteriorQ,
     }
   }
 
-  double mQ[4 * 3 * 5];
-  double mF[4 * 3 * 5];
-  double mG[4 * 3 * 5];
-  double mRho[3 * 5];
-  double mU[3 * 5];
-  double mV[3 * 5];
-  double mP[3 * 5];
-
-  for(int i = 0; i < 3 * 5; i++) {
-    int ind = FMASK[i] * 4;
-    mQ[i * 4]     = q[ind];
-    mQ[i * 4 + 1] = q[ind + 1];
-    mQ[i * 4 + 2] = q[ind + 2];
-    mQ[i * 4 + 3] = q[ind + 3];
-
-    euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
-  }
-
-  double pF[4 * 3 * 5];
-  double pG[4 * 3 * 5];
-  double pRho[3 * 5];
-  double pU[3 * 5];
-  double pV[3 * 5];
-  double pP[3 * 5];
-  for(int i = 0; i < 3 * 5; i++) {
-    euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
-  }
-
-  double flux[4 * 3 * 5];
-
-  roe(flux, nx, ny, fscale, q, exteriorQ);
-
   for(int i = 0; i < 4; i++) {
     cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
   }
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
-    exteriorQ[i] = 0.0;
+    flux[i] = 0.0;
   }
 }
 
@@ -85,13 +52,10 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg3,
   op_arg arg4,
   op_arg arg5,
-  op_arg arg6,
-  op_arg arg7,
-  op_arg arg8,
-  op_arg arg9){
+  op_arg arg6){
 
-  int nargs = 10;
-  op_arg args[10];
+  int nargs = 7;
+  op_arg args[7];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -100,9 +64,6 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[4] = arg4;
   args[5] = arg5;
   args[6] = arg6;
-  args[7] = arg7;
-  args[8] = arg8;
-  args[9] = arg9;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -131,10 +92,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     double* data4 = (double*)arg4.data_d;
     double* data5 = (double*)arg5.data_d;
     double* data6 = (double*)arg6.data_d;
-    double* data7 = (double*)arg7.data_d;
-    double* data8 = (double*)arg8.data_d;
-    double* data9 = (double*)arg9.data_d;
-    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6,data7,data8,data9)
+    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6)
     for ( int n=0; n<set->size; n++ ){
       euler_rhs_openacc(
         &data0[60*n],
@@ -143,10 +101,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
         &data3[15*n],
         &data4[15*n],
         &data5[15*n],
-        &data6[15*n],
-        &data7[15*n],
-        &data8[15*n],
-        &data9[60*n]);
+        &data6[60*n]);
     }
   }
 
@@ -162,8 +117,5 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   OP_kernels[6].transfer += (float)set->size * arg3.size;
   OP_kernels[6].transfer += (float)set->size * arg4.size;
   OP_kernels[6].transfer += (float)set->size * arg5.size;
-  OP_kernels[6].transfer += (float)set->size * arg6.size;
-  OP_kernels[6].transfer += (float)set->size * arg7.size;
-  OP_kernels[6].transfer += (float)set->size * arg8.size;
-  OP_kernels[6].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg6.size * 2.0f;
 }

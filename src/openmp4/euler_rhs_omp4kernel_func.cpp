@@ -3,8 +3,8 @@
 //
 
 #include <cblas.h>
-#include <algorithm>
 #include <cmath>
+#include "fluxes.h"
 
 void euler_rhs_omp4_kernel(
   double *data0,
@@ -21,31 +21,22 @@ void euler_rhs_omp4_kernel(
   int dat5size,
   double *data6,
   int dat6size,
-  double *data7,
-  int dat7size,
-  double *data8,
-  int dat8size,
-  double *data9,
-  int dat9size,
   int count,
   int num_teams,
   int nthread){
 
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size]) \
-    map(to: Drw_ompkernel[:225], Dsw_ompkernel[:225], FMASK_ompkernel[:15], LIFT_ompkernel[:225])
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size]) \
+    map(to: Drw_ompkernel[:225], Dsw_ompkernel[:225], LIFT_ompkernel[:225])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
     const double *q = &data0[60*n_op];
-    double *exteriorQ = &data1[60*n_op];
+    double *flux = &data1[60*n_op];
     const double *rx = &data2[15*n_op];
     const double *ry = &data3[15*n_op];
     const double *sx = &data4[15*n_op];
     const double *sy = &data5[15*n_op];
-    const double *fscale = &data6[15*n_op];
-    const double *nx = &data7[15*n_op];
-    const double *ny = &data8[15*n_op];
-    double *qRHS = &data9[60*n_op];
+    double *qRHS = &data6[60*n_op];
 
     //inline function
     
@@ -72,44 +63,12 @@ void euler_rhs_omp4_kernel(
       }
     }
 
-    double mQ[4 * 3 * 5];
-    double mF[4 * 3 * 5];
-    double mG[4 * 3 * 5];
-    double mRho[3 * 5];
-    double mU[3 * 5];
-    double mV[3 * 5];
-    double mP[3 * 5];
-
-    for(int i = 0; i < 3 * 5; i++) {
-      int ind = FMASK_ompkernel[i] * 4;
-      mQ[i * 4]     = q[ind];
-      mQ[i * 4 + 1] = q[ind + 1];
-      mQ[i * 4 + 2] = q[ind + 2];
-      mQ[i * 4 + 3] = q[ind + 3];
-
-      euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
-    }
-
-    double pF[4 * 3 * 5];
-    double pG[4 * 3 * 5];
-    double pRho[3 * 5];
-    double pU[3 * 5];
-    double pV[3 * 5];
-    double pP[3 * 5];
-    for(int i = 0; i < 3 * 5; i++) {
-      euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
-    }
-
-    double flux[4 * 3 * 5];
-
-    roe(flux, nx, ny, fscale, q, exteriorQ);
-
     for(int i = 0; i < 4; i++) {
       cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT_ompkernel, 15, &flux[i], 4, 1.0, qRHS + i, 4);
     }
 
     for(int i = 0; i < 4 * 3 * 5; i++) {
-      exteriorQ[i] = 0.0;
+      flux[i] = 0.0;
     }
     //end inline func
   }

@@ -1,4 +1,4 @@
-set(KERNEL_HEADERS init_grid.h euler_rhs.h get_neighbour_q.h get_bedge_q.h set_ic.h set_workingQ.h update_Q.h calc_dt.h neighbour_zero.h)
+set(KERNEL_HEADERS init_grid.h euler_rhs.h get_neighbour_q.h get_bedge_q.h set_ic.h set_workingQ.h update_Q.h calc_dt.h flux_zero.h)
 
 # op2_application(airfoil_seq LIBS op2_seq SOURCES airfoil.cpp load_mesh.cpp save_solution.cpp ${KERNEL_HEADERS})
 op2_application(airfoil_seq LIBS op2_seq SOURCES airfoil_op.cpp seq/airfoil_seqkernels.cpp load_mesh.cpp save_solution.cpp ${KERNEL_HEADERS})

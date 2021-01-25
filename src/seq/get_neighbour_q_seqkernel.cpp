@@ -15,10 +15,16 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   op_arg arg5,
   op_arg arg6,
   op_arg arg7,
-  op_arg arg8){
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 9;
-  op_arg args[9];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -29,6 +35,12 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   args[6] = arg6;
   args[7] = arg7;
   args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -59,10 +71,16 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
         &((double*)arg2.data)[3 * map1idx],
         &((double*)arg1.data)[3 * map3idx],
         &((double*)arg2.data)[3 * map3idx],
-        &((double*)arg5.data)[60 * map1idx],
-        &((double*)arg5.data)[60 * map3idx],
-        &((double*)arg7.data)[60 * map1idx],
-        &((double*)arg7.data)[60 * map3idx]);
+        &((double*)arg5.data)[15 * map1idx],
+        &((double*)arg6.data)[15 * map1idx],
+        &((double*)arg5.data)[15 * map3idx],
+        &((double*)arg6.data)[15 * map3idx],
+        &((double*)arg9.data)[15 * map1idx],
+        &((double*)arg9.data)[15 * map3idx],
+        &((double*)arg11.data)[60 * map1idx],
+        &((double*)arg11.data)[60 * map3idx],
+        &((double*)arg13.data)[60 * map1idx],
+        &((double*)arg13.data)[60 * map3idx]);
     }
   }
 
@@ -80,7 +98,10 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   OP_kernels[4].transfer += (float)set->size * arg1.size;
   OP_kernels[4].transfer += (float)set->size * arg2.size;
   OP_kernels[4].transfer += (float)set->size * arg5.size;
-  OP_kernels[4].transfer += (float)set->size * arg7.size * 2.0f;
+  OP_kernels[4].transfer += (float)set->size * arg6.size;
+  OP_kernels[4].transfer += (float)set->size * arg9.size;
+  OP_kernels[4].transfer += (float)set->size * arg11.size;
+  OP_kernels[4].transfer += (float)set->size * arg13.size * 2.0f;
   OP_kernels[4].transfer += (float)set->size * arg0.size;
   OP_kernels[4].transfer += (float)set->size * arg1.map->dim * 4.0f;
 }
