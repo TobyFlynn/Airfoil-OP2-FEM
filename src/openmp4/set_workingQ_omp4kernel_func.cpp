@@ -32,10 +32,7 @@ void set_workingQ_omp4_kernel(
 
     //inline function
     
-
-
-
-    if(stage == 0) {
+    if(*stage == 0) {
       for(int i = 0; i < 4 * 15; i++) {
         workingQ[i] = q[i] + (*dt) * k1[i];
       }

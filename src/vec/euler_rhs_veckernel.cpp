@@ -36,7 +36,7 @@ inline void euler_rhs(const double *q, double *flux,
   }
 
   for(int i = 0; i < 4; i++) {
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, flux + i, 4, 1.0, qRHS + i, 4);
   }
 
   for(int i = 0; i < 4 * 3 * 5; i++) {

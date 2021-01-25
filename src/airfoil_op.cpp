@@ -413,7 +413,7 @@ int main(int argc, char **argv) {
         set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
     }
-    // op_timers(&cpu_loop_1, &wall_loop_1);
+    op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop_update_Q("update_Q",cells,
                 op_arg_gbl(&dt,1,"double",OP_READ),
                 op_arg_dat(q,-1,OP_ID,60,"double",OP_RW),
@@ -421,8 +421,8 @@ int main(int argc, char **argv) {
                 op_arg_dat(rk[1],-1,OP_ID,60,"double",OP_READ),
                 op_arg_dat(rk[2],-1,OP_ID,60,"double",OP_READ),
                 op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
-    // op_timers(&cpu_loop_2, &wall_loop_2);
-    // update_Q_t += wall_loop_2 - wall_loop_1;
+    op_timers(&cpu_loop_2, &wall_loop_2);
+    update_Q_t += wall_loop_2 - wall_loop_1;
 
     t += dt;
     dt1 = 0.0;
