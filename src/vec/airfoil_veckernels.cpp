@@ -29,6 +29,7 @@ extern double bc_alpha;
 extern double bc_p;
 extern double bc_r;
 extern double bc_u;
+extern double bc_v;
 extern double bc_e;
 extern double ones[15];
 extern double r[15];

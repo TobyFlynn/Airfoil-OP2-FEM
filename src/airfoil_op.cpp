@@ -136,6 +136,7 @@ extern char *optarg;
 extern int  optind, opterr, optopt;
 static struct option options[] = {
   {"iter", required_argument, 0, 0},
+  {"alpha", required_argument, 0, 0},
   {0,    0,                  0,  0}
 };
 
@@ -165,26 +166,43 @@ int main(int argc, char **argv) {
 
   // Get input from args
   int iter = 1;
+  bc_alpha = 0.0;
 
   int opt_index = 0;
   while(getopt_long_only(argc, argv, "", options, &opt_index) != -1) {
     if(strcmp((char*)options[opt_index].name,"iter") == 0) iter = atoi(optarg);
+    if(strcmp((char*)options[opt_index].name,"alpha") == 0) bc_alpha = stod(optarg);
   }
 
-  gam = 1.4;
-  bc_mach = 0.4;
-  // bc_mach = 0.1;
-  bc_alpha = 3.0 * atan(1.0) / 45.0;
-  bc_p = 1.0;
-  bc_r = 1.0;
-  bc_u = sqrt(gam * bc_p / bc_r) * bc_mach;
-  //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
-  bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u);
+  if(bc_alpha != 0.0) {
+    gam = 1.4;
+    bc_mach = 0.4;
+    // bc_mach = 0.1;
+    bc_p = 1.0;
+    bc_r = 1.0;
+    bc_u = sin((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
+    bc_v = cos((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
+    //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
+    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u);
+  } else {
+    gam = 1.4;
+    bc_mach = 0.4;
+    // bc_mach = 0.1;
+    bc_p = 1.0;
+    bc_r = 1.0;
+    bc_u = sqrt(gam * bc_p / bc_r) * bc_mach;
+    bc_v = 0.0;
+    //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
+    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u);
+  }
+
   cout << "gam: " << gam << endl;
   cout << "bc_mach: " << bc_mach << endl;
+  cout << "bc_alpha: " << bc_alpha << endl;
   cout << "bc_p: " << bc_p << endl;
   cout << "bc_r: " << bc_r << endl;
   cout << "bc_u: " << bc_u << endl;
+  cout << "bc_v: " << bc_v << endl;
   cout << "bc_e: " << bc_e << endl;
 
   // Declare memory for data that will be calculated in initialisation kernel
@@ -268,6 +286,7 @@ int main(int argc, char **argv) {
   op_decl_const2("bc_p",1,"double",&bc_p);
   op_decl_const2("bc_r",1,"double",&bc_r);
   op_decl_const2("bc_u",1,"double",&bc_u);
+  op_decl_const2("bc_v",1,"double",&bc_v);
   op_decl_const2("bc_e",1,"double",&bc_e);
   op_decl_const2("ones",15,"double",ones);
   op_decl_const2("r",15,"double",r);
@@ -314,7 +333,6 @@ int main(int argc, char **argv) {
               op_arg_gbl(&dt1,1,"double",OP_MAX));
 
   dt = 1.0 / dt1;
-  // dt *= 0.025;
   cout << "dt: " << dt << endl;
   double t = 0.0;
 
@@ -409,7 +427,6 @@ int main(int argc, char **argv) {
     calc_dt_t += wall_loop_2 - wall_loop_1;
 
     dt = 1.0 / dt1;
-    // dt *= 0.025;
     if(i % 1000 == 0)
       cout << "iter: " << i << " time: " << t <<  " dt: " << dt << endl;
   }

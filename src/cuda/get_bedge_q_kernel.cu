@@ -31,7 +31,7 @@ __device__ void get_bedge_q_gpu( const int *bedge_type, const int *bedgeNum,
     for(int i = 0; i < 5; i++) {
       exteriorQ[exInd + i * 4]     += bc_r_cuda;
       exteriorQ[exInd + i * 4 + 1] += bc_r_cuda * bc_u_cuda;
-
+      exteriorQ[exInd + i * 4 + 2] +=  bc_r_cuda * bc_v_cuda;
       exteriorQ[exInd + i * 4 + 3] += bc_e_cuda;
     }
   } else if(*bedge_type == 1) {
@@ -40,7 +40,7 @@ __device__ void get_bedge_q_gpu( const int *bedge_type, const int *bedgeNum,
       int qInd = fmask[i] * 4;
       exteriorQ[exInd + i * 4]     += bc_r_cuda;
       exteriorQ[exInd + i * 4 + 1] += bc_r_cuda * bc_u_cuda;
-
+      exteriorQ[exInd + i * 4 + 2] +=  bc_r_cuda * bc_v_cuda;
       exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
     }
   } else {

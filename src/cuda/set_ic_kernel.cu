@@ -7,7 +7,7 @@ __device__ void set_ic_gpu( double *q, double *workingQ) {
   for(int i = 0; i < 15; i++) {
     q[i * 4]     = bc_r_cuda;
     q[i * 4 + 1] = bc_r_cuda * bc_u_cuda;
-    q[i * 4 + 2] = 0.0;
+    q[i * 4 + 2] = bc_r_cuda * bc_v_cuda;
     q[i * 4 + 3] = bc_e_cuda;
     workingQ[i * 4]     = q[i * 4];
     workingQ[i * 4 + 1] = q[i * 4 + 1];

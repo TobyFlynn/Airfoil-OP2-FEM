@@ -9,6 +9,7 @@ double bc_alpha_ompkernel;
 double bc_p_ompkernel;
 double bc_r_ompkernel;
 double bc_u_ompkernel;
+double bc_v_ompkernel;
 double bc_e_ompkernel;
 double ones_ompkernel[15];
 double r_ompkernel[15];
@@ -43,6 +44,9 @@ void op_decl_const_char(int dim, char const *type,
   } else if(!strcmp(name, "bc_u")) {
     memcpy(&bc_u_ompkernel, dat, dim*size);
   #pragma omp target enter data map(to:bc_u_ompkernel)
+  } else if(!strcmp(name, "bc_v")) {
+    memcpy(&bc_v_ompkernel, dat, dim*size);
+  #pragma omp target enter data map(to:bc_v_ompkernel)
   } else if(!strcmp(name, "bc_e")) {
     memcpy(&bc_e_ompkernel, dat, dim*size);
   #pragma omp target enter data map(to:bc_e_ompkernel)

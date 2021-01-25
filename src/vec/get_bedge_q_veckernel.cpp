@@ -31,7 +31,7 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
     for(int i = 0; i < 5; i++) {
       exteriorQ[exInd + i * 4]     += bc_r;
       exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
-      // exteriorQ[exInd + i * 4 + 2] += 0.0;
+      exteriorQ[exInd + i * 4 + 2] +=  bc_r * bc_v;
       exteriorQ[exInd + i * 4 + 3] += bc_e;
     }
   } else if(*bedge_type == 1) {
@@ -40,7 +40,7 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
       int qInd = fmask[i] * 4;
       exteriorQ[exInd + i * 4]     += bc_r;
       exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
-      // exteriorQ[exInd + i * 4 + 2] += 0.0;
+      exteriorQ[exInd + i * 4 + 2] +=  bc_r * bc_v;
       exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
     }
   } else {
@@ -87,7 +87,7 @@ inline void get_bedge_q_vec( const int bedge_type[][SIMD_VEC], const int bedgeNu
     for(int i = 0; i < 5; i++) {
       exteriorQ[exInd + i * 4][idx]     += bc_r;
       exteriorQ[exInd + i * 4 + 1][idx] += bc_r * bc_u;
-
+      exteriorQ[exInd + i * 4 + 2][idx] +=  bc_r * bc_v;
       exteriorQ[exInd + i * 4 + 3][idx] += bc_e;
     }
   } else if(bedge_type[0][idx]== 1) {
@@ -96,7 +96,7 @@ inline void get_bedge_q_vec( const int bedge_type[][SIMD_VEC], const int bedgeNu
       int qInd = fmask[i] * 4;
       exteriorQ[exInd + i * 4][idx]     += bc_r;
       exteriorQ[exInd + i * 4 + 1][idx] += bc_r * bc_u;
-
+      exteriorQ[exInd + i * 4 + 2][idx] +=  bc_r * bc_v;
       exteriorQ[exInd + i * 4 + 3][idx] += q[qInd + 3][idx];
     }
   } else {

@@ -12,7 +12,7 @@ void set_ic_omp4_kernel(
   int nthread){
 
   #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size]) \
-    map(to: bc_r_ompkernel, bc_u_ompkernel, bc_e_ompkernel, r_ompkernel[:15])
+    map(to: bc_r_ompkernel, bc_u_ompkernel, bc_v_ompkernel, bc_e_ompkernel, r_ompkernel[:15])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
@@ -24,7 +24,7 @@ void set_ic_omp4_kernel(
     for(int i = 0; i < 15; i++) {
       q[i * 4]     = bc_r_ompkernel;
       q[i * 4 + 1] = bc_r_ompkernel * bc_u_ompkernel;
-      q[i * 4 + 2] = 0.0;
+      q[i * 4 + 2] = bc_r_ompkernel * bc_v_ompkernel;
       q[i * 4 + 3] = bc_e_ompkernel;
       workingQ[i * 4]     = q[i * 4];
       workingQ[i * 4 + 1] = q[i * 4 + 1];

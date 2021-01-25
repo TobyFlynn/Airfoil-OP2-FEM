@@ -25,7 +25,7 @@ void get_bedge_q_omp4_kernel(
   int nthread){
 
   #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size]) \
-    map(to: bc_r_ompkernel, bc_u_ompkernel, bc_e_ompkernel, r_ompkernel[:15], FMASK_ompkernel[:15])\
+    map(to: bc_r_ompkernel, bc_u_ompkernel, bc_v_ompkernel, bc_e_ompkernel, r_ompkernel[:15], FMASK_ompkernel[:15])\
     map(to:col_reord[0:set_size1],map2[0:map2size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int e=start; e<end; e++ ){
@@ -68,7 +68,7 @@ void get_bedge_q_omp4_kernel(
       for(int i = 0; i < 5; i++) {
         exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
         exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-
+        exteriorQ[exInd + i * 4 + 2] +=  bc_r_ompkernel * bc_v_ompkernel;
         exteriorQ[exInd + i * 4 + 3] += bc_e_ompkernel;
       }
     } else if(*bedge_type == 1) {
@@ -77,7 +77,7 @@ void get_bedge_q_omp4_kernel(
         int qInd = fmask[i] * 4;
         exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
         exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-
+        exteriorQ[exInd + i * 4 + 2] +=  bc_r_ompkernel * bc_v_ompkernel;
         exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
       }
     } else {
