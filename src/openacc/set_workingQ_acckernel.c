@@ -7,10 +7,7 @@
 //#pragma acc routine
 inline void set_workingQ_openacc( const double *dt, const int *stage, const double *q,
                          const double *k1, const double *k2, double *workingQ) {
-
-
-
-  if(stage == 0) {
+  if(*stage == 0) {
     for(int i = 0; i < 4 * 15; i++) {
       workingQ[i] = q[i] + (*dt) * k1[i];
     }
