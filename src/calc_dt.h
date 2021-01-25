@@ -1,5 +1,4 @@
 #include <cmath>
-#include <iostream>
 
 inline void calc_dt(const double *q, const double *fscale, double *dt1) {
   double dt1_arr[3 * 5];
@@ -13,8 +12,8 @@ inline void calc_dt(const double *q, const double *fscale, double *dt1) {
   }
 
   // Find local max
-  double max = dt1_arr[0];
-  for(int i = 1; i < 3 * 5; i++) {
+  double max = *dt1;
+  for(int i = 0; i < 3 * 5; i++) {
     if(dt1_arr[i] > max) {
       max = dt1_arr[i];
     }
