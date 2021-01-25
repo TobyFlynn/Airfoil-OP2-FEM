@@ -22,7 +22,7 @@ inline void euler_flux(const double *q, double *F, double *G, double *rho,
   G[3] = (*v) * (q[3] + (*p));
 }
 
-inline void euler_rhs(const double *q, const double *exteriorQ,
+inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
                       const double *ny, double *qRHS) {
@@ -218,5 +218,9 @@ inline void euler_rhs(const double *q, const double *exteriorQ,
 
   for(int i = 0; i < 4; i++) {
     cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
+  }
+
+  for(int i = 0; i < 4 * 3 * NUM_FACE_PTS; i++) {
+    exteriorQ[i] = 0.0;
   }
 }
