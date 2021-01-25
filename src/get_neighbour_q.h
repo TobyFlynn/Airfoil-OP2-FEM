@@ -35,23 +35,23 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
 
   // Copy data from R to L
   int exInd = 0;
-  if(edgeL == 1) exInd = 4 * NUM_FACE_PTS;
-  else if(edgeL == 2) exInd = 2 * 4 * NUM_FACE_PTS;
+  if(edgeL == 1) exInd = 4 * 5;
+  else if(edgeL == 2) exInd = 2 * 4 * 5;
 
   int *fmask;
 
   if(edgeR == 0) {
     fmask = FMASK;
   } else if(edgeR == 1) {
-    fmask = &FMASK[NUM_FACE_PTS];
+    fmask = &FMASK[5];
   } else {
-    fmask = &FMASK[2 * NUM_FACE_PTS];
+    fmask = &FMASK[2 * 5];
   }
 
-  for(int i = 0; i < NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 5; i++) {
     int rInd;
     if(reverse) {
-      rInd = 4 * fmask[NUM_FACE_PTS - i - 1];
+      rInd = 4 * fmask[5 - i - 1];
     } else {
       rInd = 4 * fmask[i];
     }
@@ -63,21 +63,21 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
 
   // Copy data from L to R
   exInd = 0;
-  if(edgeR == 1) exInd = 4 * NUM_FACE_PTS;
-  else if(edgeR == 2) exInd = 2 * 4 * NUM_FACE_PTS;
+  if(edgeR == 1) exInd = 4 * 5;
+  else if(edgeR == 2) exInd = 2 * 4 * 5;
 
   if(edgeL == 0) {
     fmask = FMASK;
   } else if(edgeL == 1) {
-    fmask = &FMASK[NUM_FACE_PTS];
+    fmask = &FMASK[5];
   } else {
-    fmask = &FMASK[2 * NUM_FACE_PTS];
+    fmask = &FMASK[2 * 5];
   }
 
-  for(int i = 0; i < NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 5; i++) {
     int lInd;
     if(reverse) {
-      lInd = 4 * fmask[NUM_FACE_PTS - i - 1];
+      lInd = 4 * fmask[5 - i - 1];
     } else {
       lInd = 4 * fmask[i];
     }

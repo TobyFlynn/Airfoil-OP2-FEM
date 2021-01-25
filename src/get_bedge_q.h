@@ -4,11 +4,11 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
   int exInd = 0;
   int nInd = 0;
   if(*bedgeNum == 1) {
-    exInd = 4 * NUM_FACE_PTS;
-    nInd = NUM_FACE_PTS;
+    exInd = 4 * 5;
+    nInd = 5;
   } else if(*bedgeNum == 2) {
-    exInd = 2 * 4 * NUM_FACE_PTS;
-    nInd = 2 * NUM_FACE_PTS;
+    exInd = 2 * 4 * 5;
+    nInd = 2 * 5;
   }
 
   int *fmask;
@@ -16,14 +16,14 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
   if(*bedgeNum == 0) {
     fmask = FMASK;
   } else if(*bedgeNum == 1) {
-    fmask = &FMASK[NUM_FACE_PTS];
+    fmask = &FMASK[5];
   } else {
-    fmask = &FMASK[2 * NUM_FACE_PTS];
+    fmask = &FMASK[2 * 5];
   }
 
   if(*bedge_type == 0) {
     // Inflow
-    for(int i = 0; i < NUM_FACE_PTS; i++) {
+    for(int i = 0; i < 5; i++) {
       exteriorQ[exInd + i * 4]     += bc_r;
       exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
       // exteriorQ[exInd + i * 4 + 2] += 0.0;
@@ -31,7 +31,7 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
     }
   } else if(*bedge_type == 1) {
     // Outflow
-    for(int i = 0; i < NUM_FACE_PTS; i++) {
+    for(int i = 0; i < 5; i++) {
       int qInd = fmask[i] * 4;
       exteriorQ[exInd + i * 4]     += bc_r;
       exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
@@ -40,7 +40,7 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
     }
   } else {
     // Wall
-    for(int i = 0; i < NUM_FACE_PTS; i++) {
+    for(int i = 0; i < 5; i++) {
       int qInd = fmask[i] * 4;
       exteriorQ[exInd + i * 4]     += q[qInd];
       exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];

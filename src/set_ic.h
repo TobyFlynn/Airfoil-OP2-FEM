@@ -1,5 +1,5 @@
 inline void set_ic(double *q, double *workingQ) {
-  for(int i = 0; i < NUM_SOLUTION_PTS; i++) {
+  for(int i = 0; i < 15; i++) {
     q[i * 4]     = bc_r;
     q[i * 4 + 1] = bc_r * bc_u;
     q[i * 4 + 2] = 0.0;

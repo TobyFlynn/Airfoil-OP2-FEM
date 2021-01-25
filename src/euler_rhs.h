@@ -26,15 +26,15 @@ inline void lax_friedrichs(double *flux, const double *nx, const double *ny,
                            const double *fscale, const double *q,
                            const double *pQ) {
   // Compute primative variables and flux functions for interior points on edges
-  double mQ[4 * 3 * NUM_FACE_PTS];
-  double mF[4 * 3 * NUM_FACE_PTS];
-  double mG[4 * 3 * NUM_FACE_PTS];
-  double mRho[3 * NUM_FACE_PTS];
-  double mU[3 * NUM_FACE_PTS];
-  double mV[3 * NUM_FACE_PTS];
-  double mP[3 * NUM_FACE_PTS];
+  double mQ[4 * 3 * 5];
+  double mF[4 * 3 * 5];
+  double mG[4 * 3 * 5];
+  double mRho[3 * 5];
+  double mU[3 * 5];
+  double mV[3 * 5];
+  double mP[3 * 5];
 
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 3 * 5; i++) {
     int ind = FMASK[i] * 4;
     mQ[i * 4]     = q[ind];
     mQ[i * 4 + 1] = q[ind + 1];
@@ -45,21 +45,21 @@ inline void lax_friedrichs(double *flux, const double *nx, const double *ny,
   }
 
   // Compute primative variables and flux functions for exterior points on edges
-  double pF[4 * 3 * NUM_FACE_PTS];
-  double pG[4 * 3 * NUM_FACE_PTS];
-  double pRho[3 * NUM_FACE_PTS];
-  double pU[3 * NUM_FACE_PTS];
-  double pV[3 * NUM_FACE_PTS];
-  double pP[3 * NUM_FACE_PTS];
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  double pF[4 * 3 * 5];
+  double pG[4 * 3 * 5];
+  double pRho[3 * 5];
+  double pU[3 * 5];
+  double pV[3 * 5];
+  double pP[3 * 5];
+  for(int i = 0; i < 3 * 5; i++) {
     euler_flux(&pQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
   // Compute local Lax-Friedrichs flux
   // Max lamda for each face
   double maxL;
-  double maxLamda[3 * NUM_FACE_PTS];
-  for(int i = 0; i < NUM_FACE_PTS; i++) {
+  double maxLamda[3 * 5];
+  for(int i = 0; i < 5; i++) {
     double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
     double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
@@ -68,38 +68,38 @@ inline void lax_friedrichs(double *flux, const double *nx, const double *ny,
     }
   }
 
-  for(int i = 0; i < NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 5; i++) {
     maxLamda[i] = maxL;
   }
 
-  for(int i = NUM_FACE_PTS; i < 2 * NUM_FACE_PTS; i++) {
+  for(int i = 5; i < 2 * 5; i++) {
     double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
     double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
-    if(i == NUM_FACE_PTS || lamda > maxL) {
+    if(i == 5 || lamda > maxL) {
       maxL = lamda;
     }
   }
 
-  for(int i = NUM_FACE_PTS; i < 2 * NUM_FACE_PTS; i++) {
+  for(int i = 5; i < 2 * 5; i++) {
     maxLamda[i] = maxL;
   }
 
-  for(int i = 2 * NUM_FACE_PTS; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 2 * 5; i < 3 * 5; i++) {
     double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
     double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
-    if(i == 2 * NUM_FACE_PTS || lamda > maxL) {
+    if(i == 2 * 5 || lamda > maxL) {
       maxL = lamda;
     }
   }
 
-  for(int i = 2 * NUM_FACE_PTS; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 2 * 5; i < 3 * 5; i++) {
     maxLamda[i] = maxL;
   }
 
-  // double maxLamda[3 * NUM_FACE_PTS];
-  // for(int i = 0; i < NUM_FACE_PTS; i++) {
+  // double maxLamda[3 * 5];
+  // for(int i = 0; i < 5; i++) {
   //   double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
   //   double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
   //   maxLamda[i] = max(m, p);
@@ -107,8 +107,8 @@ inline void lax_friedrichs(double *flux, const double *nx, const double *ny,
 
   // Lift fluxes
   for(int i = 0; i < 4; i++) {
-    double nflux[3 * NUM_FACE_PTS];
-    for(int j = 0; j < 3 * NUM_FACE_PTS; j++) {
+    double nflux[3 * 5];
+    for(int j = 0; j < 3 * 5; j++) {
       flux[i + 4 * j] = nx[j] * (pF[i + 4 * j] + mF[i + 4 * j])
                       + ny[j] * (pG[i + 4 * j] + mG[i + 4 * j])
                       + maxLamda[j] * (mQ[i + j * 4] - pQ[i + j * 4]);
@@ -120,15 +120,15 @@ inline void lax_friedrichs(double *flux, const double *nx, const double *ny,
 inline void roe(double *flux, const double *nx, const double *ny,
                 const double *fscale, const double *q, const double *pQ) {
   // Compute primative variables and flux functions for interior points on edges
-  double mQ[4 * 3 * NUM_FACE_PTS];
-  double mF[4 * 3 * NUM_FACE_PTS];
-  double mG[4 * 3 * NUM_FACE_PTS];
-  double mRho[3 * NUM_FACE_PTS];
-  double mU[3 * NUM_FACE_PTS];
-  double mV[3 * NUM_FACE_PTS];
-  double mP[3 * NUM_FACE_PTS];
+  double mQ[4 * 3 * 5];
+  double mF[4 * 3 * 5];
+  double mG[4 * 3 * 5];
+  double mRho[3 * 5];
+  double mU[3 * 5];
+  double mV[3 * 5];
+  double mP[3 * 5];
 
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 3 * 5; i++) {
     int ind = FMASK[i] * 4;
     mQ[i * 4]     = q[ind];
     mQ[i * 4 + 1] = q[ind + 1];
@@ -139,17 +139,17 @@ inline void roe(double *flux, const double *nx, const double *ny,
   }
 
   // Compute primative variables and flux functions for exterior points on edges
-  double pF[4 * 3 * NUM_FACE_PTS];
-  double pG[4 * 3 * NUM_FACE_PTS];
-  double pRho[3 * NUM_FACE_PTS];
-  double pU[3 * NUM_FACE_PTS];
-  double pV[3 * NUM_FACE_PTS];
-  double pP[3 * NUM_FACE_PTS];
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  double pF[4 * 3 * 5];
+  double pG[4 * 3 * 5];
+  double pRho[3 * 5];
+  double pU[3 * 5];
+  double pV[3 * 5];
+  double pP[3 * 5];
+  for(int i = 0; i < 3 * 5; i++) {
     euler_flux(&pQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 3 * 5; i++) {
     double mRoeQ[4];
     mRoeQ[0] = mQ[i * 4];
     mRoeQ[1] = nx[i] * mQ[i * 4 + 1] + ny[i] * mQ[i * 4 + 2];
@@ -223,40 +223,40 @@ inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
                       const double *ny, double *qRHS) {
-  double F[4 * NUM_SOLUTION_PTS];
-  double G[4 * NUM_SOLUTION_PTS];
-  for(int i = 0; i < NUM_SOLUTION_PTS; i++) {
+  double F[4 * 15];
+  double G[4 * 15];
+  for(int i = 0; i < 15; i++) {
     double rho, u, v, p;
     euler_flux(&q[i * 4], &F[i * 4], &G[i * 4], &rho, &u, &v, &p);
   }
 
   // Compute weak derivatives
   for(int i = 0; i < 4; i++) {
-    double dFdr[NUM_SOLUTION_PTS];
-    double dFds[NUM_SOLUTION_PTS];
-    double dGdr[NUM_SOLUTION_PTS];
-    double dGds[NUM_SOLUTION_PTS];
+    double dFdr[15];
+    double dFds[15];
+    double dGdr[15];
+    double dGds[15];
 
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, NUM_SOLUTION_PTS, NUM_SOLUTION_PTS, 1.0, Drw, NUM_SOLUTION_PTS, &F[i], 4, 0.0, dFdr, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, NUM_SOLUTION_PTS, NUM_SOLUTION_PTS, 1.0, Dsw, NUM_SOLUTION_PTS, &F[i], 4, 0.0, dFds, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, NUM_SOLUTION_PTS, NUM_SOLUTION_PTS, 1.0, Drw, NUM_SOLUTION_PTS, &G[i], 4, 0.0, dGdr, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, NUM_SOLUTION_PTS, NUM_SOLUTION_PTS, 1.0, Dsw, NUM_SOLUTION_PTS, &G[i], 4, 0.0, dGds, 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &F[i], 4, 0.0, dFdr, 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &F[i], 4, 0.0, dFds, 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &G[i], 4, 0.0, dGdr, 1);
+    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &G[i], 4, 0.0, dGds, 1);
 
-    for(int j = 0; j < NUM_SOLUTION_PTS; j++) {
+    for(int j = 0; j < 15; j++) {
       qRHS[i + j * 4] = (rx[j] * dFdr[j] + sx[j] * dFds[j]) + (ry[j] * dGdr[j] + sy[j] * dGds[j]);
     }
   }
 
   // Compute primative variables and flux functions for interior points on edges
-  double mQ[4 * 3 * NUM_FACE_PTS];
-  double mF[4 * 3 * NUM_FACE_PTS];
-  double mG[4 * 3 * NUM_FACE_PTS];
-  double mRho[3 * NUM_FACE_PTS];
-  double mU[3 * NUM_FACE_PTS];
-  double mV[3 * NUM_FACE_PTS];
-  double mP[3 * NUM_FACE_PTS];
+  double mQ[4 * 3 * 5];
+  double mF[4 * 3 * 5];
+  double mG[4 * 3 * 5];
+  double mRho[3 * 5];
+  double mU[3 * 5];
+  double mV[3 * 5];
+  double mP[3 * 5];
 
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 3 * 5; i++) {
     int ind = FMASK[i] * 4;
     mQ[i * 4]     = q[ind];
     mQ[i * 4 + 1] = q[ind + 1];
@@ -267,17 +267,17 @@ inline void euler_rhs(const double *q, double *exteriorQ,
   }
 
   // Compute primative variables and flux functions for exterior points on edges
-  double pF[4 * 3 * NUM_FACE_PTS];
-  double pG[4 * 3 * NUM_FACE_PTS];
-  double pRho[3 * NUM_FACE_PTS];
-  double pU[3 * NUM_FACE_PTS];
-  double pV[3 * NUM_FACE_PTS];
-  double pP[3 * NUM_FACE_PTS];
-  for(int i = 0; i < 3 * NUM_FACE_PTS; i++) {
+  double pF[4 * 3 * 5];
+  double pG[4 * 3 * 5];
+  double pRho[3 * 5];
+  double pU[3 * 5];
+  double pV[3 * 5];
+  double pP[3 * 5];
+  for(int i = 0; i < 3 * 5; i++) {
     euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  double flux[4 * 3 * NUM_FACE_PTS];
+  double flux[4 * 3 * 5];
   // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
@@ -285,7 +285,7 @@ inline void euler_rhs(const double *q, double *exteriorQ,
     cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
   }
 
-  for(int i = 0; i < 4 * 3 * NUM_FACE_PTS; i++) {
+  for(int i = 0; i < 4 * 3 * 5; i++) {
     exteriorQ[i] = 0.0;
   }
 }

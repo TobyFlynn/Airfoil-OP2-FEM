@@ -1,7 +1,3 @@
-#define NUM_SOLUTION_PTS 15
-#define NUM_FACE_PTS 5
-#define ORDER 4
-
 // Include OP2 stuff
 #include "op_seq.h"
 // Include C++ stuff
@@ -96,26 +92,26 @@ int main(int argc, char **argv) {
   // Declare memory for data that will be calculated in initialisation kernel
   double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
   double *nodeY_data = (double*)malloc(3 * numCells * sizeof(double));
-  double *x_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *y_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *xr_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *yr_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *xs_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *ys_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *rx_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *ry_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *sx_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *sy_data = (double *)malloc(NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *nx_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
-  double *ny_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
-  double *fscale_data = (double *)malloc(3 * NUM_FACE_PTS * numCells * sizeof(double));
-  double *q_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *workingQ_data  = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *exteriorQ_data = (double *)malloc(4 * 3 * NUM_FACE_PTS * numCells * sizeof(double));
+  double *x_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *y_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *xr_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *yr_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *xs_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *ys_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *rx_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *ry_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *sx_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *sy_data = (double *)malloc(15 * numCells * sizeof(double));
+  double *nx_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
+  double *ny_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
+  double *fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
+  double *q_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
   // RK4 data
-  double *rk1_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *rk2_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
-  double *rk3_data = (double *)malloc(4 * NUM_SOLUTION_PTS * numCells * sizeof(double));
+  double *rk1_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *rk2_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *rk3_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
 
   // Declare OP2 sets
   op_set nodes  = op_decl_set(numNodes, "nodes");
@@ -137,32 +133,32 @@ int main(int argc, char **argv) {
   op_dat nodeX = op_decl_dat(cells, 3, "double", nodeX_data, "nodeX");
   op_dat nodeY = op_decl_dat(cells, 3, "double", nodeY_data, "nodeY");
     // The x and y coordinates of all the solution points in a cell
-  op_dat x = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", x_data, "x");
-  op_dat y = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", y_data, "y");
+  op_dat x = op_decl_dat(cells, 15, "double", x_data, "x");
+  op_dat y = op_decl_dat(cells, 15, "double", y_data, "y");
     // Geometric factors that relate to mapping between global and local (cell) coordinates
-  op_dat xr = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", xr_data, "xr");
-  op_dat yr = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", yr_data, "yr");
-  op_dat xs = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", xs_data, "xs");
-  op_dat ys = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", ys_data, "ys");
-  op_dat rx = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", rx_data, "rx");
-  op_dat ry = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", ry_data, "ry");
-  op_dat sx = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", sx_data, "sx");
-  op_dat sy = op_decl_dat(cells, NUM_SOLUTION_PTS, "double", sy_data, "sy");
+  op_dat xr = op_decl_dat(cells, 15, "double", xr_data, "xr");
+  op_dat yr = op_decl_dat(cells, 15, "double", yr_data, "yr");
+  op_dat xs = op_decl_dat(cells, 15, "double", xs_data, "xs");
+  op_dat ys = op_decl_dat(cells, 15, "double", ys_data, "ys");
+  op_dat rx = op_decl_dat(cells, 15, "double", rx_data, "rx");
+  op_dat ry = op_decl_dat(cells, 15, "double", ry_data, "ry");
+  op_dat sx = op_decl_dat(cells, 15, "double", sx_data, "sx");
+  op_dat sy = op_decl_dat(cells, 15, "double", sy_data, "sy");
     // Normals for each cell (calculated for each node on each edge, nodes can appear on multiple edges)
-  op_dat nx = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", nx_data, "nx");
-  op_dat ny = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", ny_data, "ny");
+  op_dat nx = op_decl_dat(cells, 3 * 5, "double", nx_data, "nx");
+  op_dat ny = op_decl_dat(cells, 3 * 5, "double", ny_data, "ny");
     // surface Jacobian / Jacobian (used when lifting the boundary fluxes)
-  op_dat fscale = op_decl_dat(cells, 3 * NUM_FACE_PTS, "double", fscale_data, "fscale");
+  op_dat fscale = op_decl_dat(cells, 3 * 5, "double", fscale_data, "fscale");
     // Values for compressible Euler equations in vectors
-    // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_NUM_SOLUTION_PTS}
-  op_dat q    = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", q_data, "q");
-  op_dat workingQ = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", workingQ_data, "workingQ");
+    // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
+  op_dat q    = op_decl_dat(cells, 4 * 15, "double", q_data, "q");
+  op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", workingQ_data, "workingQ");
   op_dat rk[3];
-  rk[0] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk1_data, "rk1");
-  rk[1] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk2_data, "rk2");
-  rk[2] = op_decl_dat(cells, 4 * NUM_SOLUTION_PTS, "double", rk3_data, "rk3");
+  rk[0] = op_decl_dat(cells, 4 * 15, "double", rk1_data, "rk1");
+  rk[1] = op_decl_dat(cells, 4 * 15, "double", rk2_data, "rk2");
+  rk[2] = op_decl_dat(cells, 4 * 15, "double", rk3_data, "rk3");
     // Holds neighbouring values of Q for nodes on faces
-  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * NUM_FACE_PTS, "double", exteriorQ_data, "exteriorQ");
+  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", exteriorQ_data, "exteriorQ");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -175,15 +171,15 @@ int main(int argc, char **argv) {
   op_decl_const(1, "double", &bc_r);
   op_decl_const(1, "double", &bc_u);
   op_decl_const(1, "double", &bc_e);
-  op_decl_const(NUM_SOLUTION_PTS, "double", ones);
-  op_decl_const(NUM_SOLUTION_PTS, "double", r);
-  op_decl_const(NUM_SOLUTION_PTS, "double", s);
-  op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dr);
-  op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Ds);
-  op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Drw);
-  op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", Dsw);
-  op_decl_const(3 * NUM_FACE_PTS, "int", FMASK);
-  op_decl_const(NUM_SOLUTION_PTS * NUM_SOLUTION_PTS, "double", LIFT);
+  op_decl_const(15, "double", ones);
+  op_decl_const(15, "double", r);
+  op_decl_const(15, "double", s);
+  op_decl_const(15 * 15, "double", Dr);
+  op_decl_const(15 * 15, "double", Ds);
+  op_decl_const(15 * 15, "double", Drw);
+  op_decl_const(15 * 15, "double", Dsw);
+  op_decl_const(3 * 5, "int", FMASK);
+  op_decl_const(15 * 15, "double", LIFT);
 
   // Initialisation kernels
   op_par_loop(init_grid, "init_grid", cells,
@@ -192,31 +188,31 @@ int main(int argc, char **argv) {
               op_arg_dat(node_coords, 2, cell2nodes, 2, "double", OP_READ),
               op_arg_dat(nodeX, -1, OP_ID, 3, "double", OP_WRITE),
               op_arg_dat(nodeY, -1, OP_ID, 3, "double", OP_WRITE),
-              op_arg_dat(x, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(y, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(xr, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(yr, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(xs, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(ys, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(rx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(ry, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(sx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(sy, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
-              op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE),
-              op_arg_dat(fscale, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_WRITE));
+              op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(rx, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(ry, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(sx, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(sy, -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(nx, -1, OP_ID, 3 * 5, "double", OP_WRITE),
+              op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_WRITE),
+              op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_WRITE));
 
   op_par_loop(set_ic, "set_ic", cells,
-              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE),
-              op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+              op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+              op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
 
   op_par_loop(neighbour_zero, "neighbour_zero", cells,
-              op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
+              op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));
 
   double dt1;
   op_par_loop(calc_dt, "calc_dt", cells,
-              op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-              op_arg_dat(fscale, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+              op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
+              op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
               op_arg_gbl(&dt1, 1, "double", OP_MAX));
 
   dt = 1.0 / dt1;
@@ -240,7 +236,7 @@ int main(int argc, char **argv) {
     for(int j = 0; j < 3; j++) {
       // op_timers(&cpu_loop_1, &wall_loop_1);
       // op_par_loop(neighbour_zero, "neighbour_zero", cells,
-      //             op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * NUM_FACE_PTS, "double", OP_WRITE));
+      //             op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));
       // op_timers(&cpu_loop_2, &wall_loop_2);
       // neighbour_zero_t += wall_loop_2 - wall_loop_1;
 
@@ -252,10 +248,10 @@ int main(int argc, char **argv) {
                   op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
-                  op_arg_dat(workingQ, 0, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(workingQ, 1, edge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_INC),
-                  op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_INC));
+                  op_arg_dat(workingQ, 0, edge2cells, 4 * 15, "double", OP_READ),
+                  op_arg_dat(workingQ, 1, edge2cells, 4 * 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * 5, "double", OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_neighbour_q_t += wall_loop_2 - wall_loop_1;
 
@@ -264,26 +260,26 @@ int main(int argc, char **argv) {
       op_par_loop(get_bedge_q, "get_bedge_q", bedges,
                   op_arg_dat(bedge_type, -1, OP_ID, 1, "int", OP_READ),
                   op_arg_dat(bedgeNum, -1, OP_ID, 1, "int", OP_READ),
-                  op_arg_dat(nx, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
-                  op_arg_dat(ny, 0, bedge2cells, 3 * NUM_FACE_PTS, "double", OP_READ),
-                  op_arg_dat(workingQ, 0, bedge2cells, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * NUM_FACE_PTS, "double", OP_RW));
+                  op_arg_dat(nx, 0, bedge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(ny, 0, bedge2cells, 3 * 5, "double", OP_READ),
+                  op_arg_dat(workingQ, 0, bedge2cells, 4 * 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * 5, "double", OP_RW));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
       op_par_loop(euler_rhs, "euler_rhs", cells,
-                  op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * NUM_FACE_PTS, "double", OP_RW),
-                  op_arg_dat(rx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(ry, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(sx, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(sy, -1, OP_ID, NUM_SOLUTION_PTS, "double", OP_READ),
-                  op_arg_dat(fscale, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                  op_arg_dat(nx, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                  op_arg_dat(ny, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
-                  op_arg_dat(rk[j], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+                  op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_RW),
+                  op_arg_dat(rx, -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(ry, -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(sx, -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(sy, -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
+                  op_arg_dat(nx, -1, OP_ID, 3 * 5, "double", OP_READ),
+                  op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_READ),
+                  op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
@@ -292,10 +288,10 @@ int main(int argc, char **argv) {
         op_par_loop(set_workingQ, "set_workingQ", cells,
                     op_arg_gbl(&dt, 1, "double", OP_READ),
                     op_arg_gbl(&j, 1, "int", OP_READ),
-                    op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                    op_arg_dat(rk[0], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                    op_arg_dat(rk[1], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                    op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+                    op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
+                    op_arg_dat(rk[0], -1, OP_ID, 4 * 15, "double", OP_READ),
+                    op_arg_dat(rk[1], -1, OP_ID, 4 * 15, "double", OP_READ),
+                    op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
@@ -303,19 +299,19 @@ int main(int argc, char **argv) {
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop(update_Q, "update_Q", cells,
                 op_arg_gbl(&dt, 1, "double", OP_READ),
-                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_RW),
-                op_arg_dat(rk[0], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(rk[1], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(rk[2], -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(workingQ, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_WRITE));
+                op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_RW),
+                op_arg_dat(rk[0], -1, OP_ID, 4 * 15, "double", OP_READ),
+                op_arg_dat(rk[1], -1, OP_ID, 4 * 15, "double", OP_READ),
+                op_arg_dat(rk[2], -1, OP_ID, 4 * 15, "double", OP_READ),
+                op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
     op_timers(&cpu_loop_2, &wall_loop_2);
     update_Q_t += wall_loop_2 - wall_loop_1;
 
     t += dt;
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop(calc_dt, "calc_dt", cells,
-                op_arg_dat(q, -1, OP_ID, 4 * NUM_SOLUTION_PTS, "double", OP_READ),
-                op_arg_dat(fscale, -1, OP_ID, 3 * NUM_FACE_PTS, "double", OP_READ),
+                op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
+                op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
                 op_arg_gbl(&dt1, 1, "double", OP_MAX));
     op_timers(&cpu_loop_2, &wall_loop_2);
     calc_dt_t += wall_loop_2 - wall_loop_1;
@@ -337,7 +333,7 @@ int main(int argc, char **argv) {
   // op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Save solution to CGNS file
-  double *sol_q = (double *)malloc(4 * NUM_SOLUTION_PTS * op_get_size(cells) * sizeof(double));
+  double *sol_q = (double *)malloc(4 * 15 * op_get_size(cells) * sizeof(double));
   op_fetch_data(q, sol_q);
   save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells), sol_q, cgnsCells, gam);
 
