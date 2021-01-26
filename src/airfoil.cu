@@ -49,6 +49,7 @@ static struct option options[] = {
 int main(int argc, char **argv) {
   cublasHandle_t cublas_handle;
   cublasCreate(&cublas_handle);
+  cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
 
   double cpu_1, wall_1, cpu_2, wall_2;
 
@@ -222,7 +223,6 @@ int main(int argc, char **argv) {
   op_decl_const(15 * 15, "double", LIFT);
 
   // Matrix multiplications using cuBLAS
-  // TODO set pointer mode to CUBLAS_POINTER_MODE_HOST
   init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
                      (int *)cell2nodes->map, (double *)x->data_d,
                      (double *)y->data_d, (double *)xr->data_d,

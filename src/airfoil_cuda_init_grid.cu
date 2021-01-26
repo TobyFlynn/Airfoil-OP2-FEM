@@ -4,6 +4,7 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
                         const double *node_coords, const int *cell2nodes,
                         double *x_d, double *y_d, double *xr_d, double *xs_d,
                         double *yr_d, double *ys_d) {
+  cudaDeviceSynchronize();
   double *ones_d;
   cudaMalloc((void**)&ones_d, 15 * sizeof(double));
   cudaMemcpy(ones_d, ones, 15 * sizeof(double), cudaMemcpyHostToDevice);
@@ -90,4 +91,5 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
   cudaFree(temp_d);
   cudaFree(Dr_d);
   cudaFree(Ds_d);
+  cudaDeviceSynchronize();
 }

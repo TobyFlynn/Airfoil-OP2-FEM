@@ -2,6 +2,7 @@
 
 void face_fluxes_matrices(cublasHandle_t handle, const int numCells,
                           const double *flux_d, double *qRHS_d) {
+  cudaDeviceSynchronize();
   double *LIFT_d;
   cudaMalloc((void**)&LIFT_d, 15 * 15 * sizeof(double));
   cudaMemcpy(LIFT_d, LIFT, 15 * 15 * sizeof(double), cudaMemcpyHostToDevice);
@@ -17,4 +18,5 @@ void face_fluxes_matrices(cublasHandle_t handle, const int numCells,
   }
 
   cudaFree(LIFT_d);
+  cudaDeviceSynchronize();
 }

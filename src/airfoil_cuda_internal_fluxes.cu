@@ -4,6 +4,7 @@ void internal_fluxes_matrices(cublasHandle_t handle, const int numCells,
                               const double *F_d, const double *G_d,
                               double *dFdr_d, double *dFds_d, double *dGdr_d,
                               double *dGds_d) {
+  cudaDeviceSynchronize();
   double *Drw_d;
   cudaMalloc((void**)&Drw_d, 15 * 15 * sizeof(double));
   cudaMemcpy(Drw_d, Drw, 15 * 15 * sizeof(double), cudaMemcpyHostToDevice);
@@ -32,4 +33,5 @@ void internal_fluxes_matrices(cublasHandle_t handle, const int numCells,
 
   cudaFree(Drw_d);
   cudaFree(Dsw_d);
+  cudaDeviceSynchronize();
 }
