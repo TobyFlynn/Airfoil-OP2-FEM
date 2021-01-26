@@ -30,8 +30,6 @@ void op_par_loop_init_grid(char const *, op_set,
   op_arg,
   op_arg,
   op_arg,
-  op_arg,
-  op_arg,
   op_arg );
 
 void op_par_loop_set_ic(char const *, op_set,
@@ -107,7 +105,7 @@ void op_par_loop_update_Q(char const *, op_set,
 #include <cmath>
 #include <getopt.h>
 
-#include <cublas.h>
+#include "cublas_v2.h"
 
 #include "constants/constant_r.h"
 #include "constants/constant_s.h"
@@ -119,6 +117,7 @@ void op_par_loop_update_Q(char const *, op_set,
 #include "constants/constant_util.h"
 #include "load_mesh.h"
 #include "save_solution.h"
+#include "airfoil_cuda_matrices.h"
 
 // Include kernels
 #include "init_grid.h"
@@ -305,12 +304,18 @@ int main(int argc, char **argv) {
 
   // Matrix multiplications using cuBLAS
   // TODO set pointer mode to CUBLAS_POINTER_MODE_HOST
-  for(int c = 0; c < numCells; c++) {
-    // Get nodes for this cell (on host)
-    double *n0 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c]];
-    double *n1 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 1]];
-    double *n2 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 2]];
-  }
+  init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
+                     (int *)cell2nodes->map, (double *)x->data_d,
+                     (double *)y->data_d, (double *)xr->data_d,
+                     (double *)xs->data_d, (double *)yr->data_d,
+                     (double *)ys->data_d);
+  // Check this
+  x->dirty_hd = 2;
+  y->dirty_hd = 2;
+  xr->dirty_hd = 2;
+  xs->dirty_hd = 2;
+  yr->dirty_hd = 2;
+  ys->dirty_hd = 2;
 
   // Initialisation kernels
   op_par_loop_init_grid("init_grid",cells,
@@ -319,12 +324,10 @@ int main(int argc, char **argv) {
               op_arg_dat(node_coords,2,cell2nodes,2,"double",OP_READ),
               op_arg_dat(nodeX,-1,OP_ID,3,"double",OP_WRITE),
               op_arg_dat(nodeY,-1,OP_ID,3,"double",OP_WRITE),
-              op_arg_dat(x,-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(y,-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(xr,-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(yr,-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(xs,-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(ys,-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(xr,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(yr,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(xs,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(ys,-1,OP_ID,15,"double",OP_READ),
               op_arg_dat(rx,-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(ry,-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(sx,-1,OP_ID,15,"double",OP_WRITE),
@@ -333,9 +336,10 @@ int main(int argc, char **argv) {
               op_arg_dat(ny,-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_WRITE));
 
-  / op_par_loop_set_ic("set_ic",cells,
-                op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
-                op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
+  /*
+  op_par_loop_set_ic("set_ic",cells,
+              op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
+              op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
 
   op_par_loop_neighbour_zero("neighbour_zero",cells,
               op_arg_dat(exteriorQ,-1,OP_ID,60,"double",OP_WRITE));
@@ -344,7 +348,7 @@ int main(int argc, char **argv) {
   op_par_loop_calc_dt("calc_dt",cells,
               op_arg_dat(q,-1,OP_ID,60,"double",OP_READ),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
-              op_arg_gbl(&dt1,1,"double",OP_MAX));*/
+              op_arg_gbl(&dt1,1,"double",OP_MAX));
 
   dt = 1.0 / dt1;
   cout << "dt: " << dt << endl;
@@ -359,7 +363,7 @@ int main(int argc, char **argv) {
   double set_workingQ_t = 0.0;
   double update_Q_t = 0.0;
   double calc_dt_t = 0.0;
-  /*op_timers(&cpu_loop_start, &wall_loop_start);
+  op_timers(&cpu_loop_start, &wall_loop_start);
   // Run the simulation
   for(int i = 0; i < iter; i++) {
     for(int j = 0; j < 3; j++) {
@@ -444,9 +448,9 @@ int main(int argc, char **argv) {
     if(i % 1000 == 0)
       cout << "iter: " << i << " time: " << t <<  " dt: " << dt << endl;
   }
-  op_timers(&cpu_loop_end, &wall_loop_end);*/
+  op_timers(&cpu_loop_end, &wall_loop_end);
 
-  cout << "Time: " << t << endl;
+  cout << "Time: " << t << endl;*/
 
   // Save info for python test script
   // op_fetch_data_hdf5_file(node_coords, "points.h5");

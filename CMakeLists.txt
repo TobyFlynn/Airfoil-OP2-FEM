@@ -34,7 +34,11 @@ if(NOT OPENBLAS_DIR)
   set(OPENBLAS_DIR "/opt/OpenBLAS")
 endif()
 
+enable_language(CUDA)
 find_package(CUDAToolkit)
+include_directories(${CUDAToolkit_INCLUDE_DIRS})
+set(CMAKE_CUDA_COMPILER ${CUDAToolkit_NVCC_EXECUTABLE})
+
 
 #add_subdirectory(advec)
 #add_subdirectory(vortex)

@@ -3,8 +3,9 @@
 //
 
 // #include <cblas.h>
-#include <algorithm>
+// #include <algorithm>
 #include <cmath>
+#include "../fluxes.h"
 
 //user function
 __device__ void euler_rhs_gpu( const double *q, double *exteriorQ,

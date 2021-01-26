@@ -13,8 +13,9 @@ set(KERNEL_HEADERS init_grid.h euler_rhs.h get_neighbour_q.h get_bedge_q.h set_i
 #target_include_directories(airfoil_openmp PUBLIC ${CGNS_DIR}/include ${OPENBLAS_DIR}/include)
 #target_link_libraries(airfoil_openmp ${CGNS_DIR}/lib/libcgns.so -L${OPENBLAS_DIR}/lib -lopenblas)
 
-op2_application(airfoil_cuda LIBS op2_cuda SOURCES airfoil_op.cpp cuda/airfoil_kernels.cu load_mesh.cpp save_solution.cpp ${KERNEL_HEADERS})
+op2_application(airfoil_cuda LIBS op2_cuda SOURCES airfoil_op.cu airfoil_cuda_init_grid.cu cuda/airfoil_kernels.cu load_mesh.cpp save_solution.cpp ${KERNEL_HEADERS})
 target_compile_definitions(airfoil_cuda PUBLIC -DBUILD_CUDA)
 # Link CGNS Library
-target_include_directories(airfoil_cuda PUBLIC ${CGNS_DIR}/include)
-target_link_libraries(airfoil_cuda ${CGNS_DIR}/lib/libcgns.so CUDA::cublas)
+target_include_directories(airfoil_cuda PUBLIC ${CGNS_DIR}/include ${CUDAToolkit_INCLUDE_DIRS})
+target_link_libraries(airfoil_cuda ${CGNS_DIR}/lib/libcgns.so CUDA::cudart_static CUDA::cublas)
+set_property(TARGET airfoil_cuda PROPERTY CUDA_ARCHITECTURES OFF)

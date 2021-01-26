@@ -6,8 +6,8 @@
 // #include <cblas.h>
 
 inline void init_grid(const double *n0, const double *n1, const double *n2,
-                      double *nodeX, double *nodeY, double *x, double *y,
-                      double *xr, double *yr, double *xs, double *ys,
+                      double *nodeX, double *nodeY, const double *xr,
+                      const double *yr, const double *xs, const double *ys,
                       double *rx, double *ry, double *sx, double *sy,
                       double *nx, double *ny, double *fscale) {
   // Calculate the solution point coordinates
@@ -18,56 +18,6 @@ inline void init_grid(const double *n0, const double *n1, const double *n2,
   nodeY[0] = n0[1];
   nodeY[1] = n1[1];
   nodeY[2] = n2[1];
-  // x = 0.5(-n0_x (r + s) + n1_x(1 + r) + n2_x(1 + s))
-  // x = 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s) - 0.5*n0_x * (r + s)
-
-  // x <- 0.5*n1_x * (1 + r)
-  // cblas_dcopy(15, ones, 1, x, 1);
-  // cblas_daxpy(15, 1.0, r, 1, x, 1);
-  // cblas_dscal(15, 0.5 * n1[0], x, 1);
-  // // temp <- 1 + s
-  // double temp[15];
-  // cblas_dcopy(15, ones, 1, temp, 1);
-  // cblas_daxpy(15, 1.0, s, 1, temp, 1);
-  // // x <- 0.5*n2_x * temp + x (i.e. 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s))
-  // cblas_daxpy(15, 0.5 * n2[0], temp, 1, x, 1);
-  // // temp <- r + s
-  // cblas_dcopy(15, s, 1, temp, 1);
-  // cblas_daxpy(15, 1.0, r, 1, temp, 1);
-  // // x <- -0.5 * n0_x * temp + x (i.e. final target)
-  // cblas_daxpy(15, -0.5 * n0[0], temp, 1, x, 1);
-  //
-  // // y = 0.5(-n0_y (r + s) + n1_y(1 + r) + n2_y(1 + s))
-  // // y = 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s) - 0.5*n0_y * (r + s)
-  //
-  // // y <- 0.5*n1_y * (1 + r)
-  // cblas_dcopy(15, ones, 1, y, 1);
-  // cblas_daxpy(15, 1.0, r, 1, y, 1);
-  // cblas_dscal(15, 0.5 * n1[1], y, 1);
-  // // temp <- 1 + s
-  // cblas_dcopy(15, ones, 1, temp, 1);
-  // cblas_daxpy(15, 1.0, s, 1, temp, 1);
-  // // y <- 0.5*n2_y * temp + y (i.e. 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s))
-  // cblas_daxpy(15, 0.5 * n2[1], temp, 1, y, 1);
-  // // temp <- r + s
-  // cblas_dcopy(15, s, 1, temp, 1);
-  // cblas_daxpy(15, 1.0, r, 1, temp, 1);
-  // // x <- -0.5 * n0_y * temp + x (i.e. final target)
-  // cblas_daxpy(15, -0.5 * n0[1], temp, 1, y, 1);
-  //
-  // // Calculate geometric factors
-  //
-  // // xr = Dr * x
-  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, x, 1, 0.0, xr, 1);
-  //
-  // // xs = Ds * x
-  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, x, 1, 0.0, xs, 1);
-  //
-  // // yr = Dr * y
-  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, y, 1, 0.0, yr, 1);
-  //
-  // // ys = Ds * y
-  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, y, 1, 0.0, ys, 1);
 
   // J = -xs.*yr + xr.*ys
   double J[15];
@@ -114,7 +64,7 @@ inline void init_grid(const double *n0, const double *n1, const double *n2,
 #if defined __clang__ || defined __GNUC__
 __attribute__((always_inline))
 #endif
-inline void init_grid_vec( const double n0[][SIMD_VEC], const double n1[][SIMD_VEC], const double n2[][SIMD_VEC], double nodeX[][SIMD_VEC], double nodeY[][SIMD_VEC], double x[][SIMD_VEC], double y[][SIMD_VEC], double xr[][SIMD_VEC], double yr[][SIMD_VEC], double xs[][SIMD_VEC], double ys[][SIMD_VEC], double rx[][SIMD_VEC], double ry[][SIMD_VEC], double sx[][SIMD_VEC], double sy[][SIMD_VEC], double nx[][SIMD_VEC], double ny[][SIMD_VEC], double fscale[][SIMD_VEC], int idx ) {
+inline void init_grid_vec( const double n0[][SIMD_VEC], const double n1[][SIMD_VEC], const double n2[][SIMD_VEC], double nodeX[][SIMD_VEC], double nodeY[][SIMD_VEC], const double xr[][SIMD_VEC], const double yr[][SIMD_VEC], const double xs[][SIMD_VEC], const double ys[][SIMD_VEC], double rx[][SIMD_VEC], double ry[][SIMD_VEC], double sx[][SIMD_VEC], double sy[][SIMD_VEC], double nx[][SIMD_VEC], double ny[][SIMD_VEC], double fscale[][SIMD_VEC], int idx ) {
 
 
   nodeX[0][idx] = n0[0][idx];
@@ -124,87 +74,38 @@ inline void init_grid_vec( const double n0[][SIMD_VEC], const double n1[][SIMD_V
   nodeY[1][idx] = n1[1][idx];
   nodeY[2][idx] = n2[1][idx];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   double J[15];
   for(int i = 0; i < 15; i++) {
     J[i] = -xs[i][idx] * yr[i][idx] + xr[i][idx] * ys[i][idx];
   }
 
   for(int i = 0; i < 15; i++) {
-    rx[i][idx][idx] = ys[i][idx] / J[i];
-    sx[i][idx][idx] = -yr[i][idx] / J[i];
-    ry[i][idx][idx] = -xs[i][idx] / J[i];
-    sy[i][idx][idx] = xr[i][idx] / J[i];
+    rx[i][idx] = ys[i][idx] / J[i];
+    sx[i][idx] = -yr[i][idx] / J[i];
+    ry[i][idx] = -xs[i][idx] / J[i];
+    sy[i][idx] = xr[i][idx] / J[i];
   }
 
 
   for(int i = 0; i < 5; i++) {
-    nx[i][idx][idx] = yr[FMASK[i]];
-    ny[i][idx][idx] = -xr[FMASK[i]];
+    nx[i][idx] = yr[FMASK[i]];
+    ny[i][idx] = -xr[FMASK[i]];
   }
 
   for(int i = 0; i < 5; i++) {
-    nx[5 + i][idx][idx] = ys[FMASK[5 + i]] - yr[FMASK[5 + i]];
-    ny[5 + i][idx][idx] = xr[FMASK[5 + i]] - xs[FMASK[5 + i]];
+    nx[5 + i][idx] = ys[FMASK[5 + i]] - yr[FMASK[5 + i]];
+    ny[5 + i][idx] = xr[FMASK[5 + i]] - xs[FMASK[5 + i]];
   }
 
   for(int i = 0; i < 5; i++) {
-    nx[2 * 5 + i][idx][idx] = -ys[FMASK[2 * 5 + i]];
-    ny[2 * 5 + i][idx][idx] = xs[FMASK[2 * 5 + i]];
+    nx[2 * 5 + i][idx] = -ys[FMASK[2 * 5 + i]];
+    ny[2 * 5 + i][idx] = xs[FMASK[2 * 5 + i]];
   }
 
   for(int i = 0; i < 3 * 5; i++) {
-    double sJ = sqrt(nx[i][idx][idx] * nx[i][idx][idx] + ny[i][idx][idx] * ny[i][idx][idx]);
-    nx[i][idx][idx] = nx[i][idx][idx] / sJ;
-    ny[i][idx][idx] = ny[i][idx][idx] / sJ;
+    double sJ = sqrt(nx[i][idx] * nx[i][idx] + ny[i][idx] * ny[i][idx]);
+    nx[i][idx] = nx[i][idx] / sJ;
+    ny[i][idx] = ny[i][idx] / sJ;
     fscale[i][idx] = sJ / J[FMASK[i]];
   }
 
@@ -228,12 +129,10 @@ void op_par_loop_init_grid(char const *name, op_set set,
   op_arg arg12,
   op_arg arg13,
   op_arg arg14,
-  op_arg arg15,
-  op_arg arg16,
-  op_arg arg17){
+  op_arg arg15){
 
-  int nargs = 18;
-  op_arg args[18];
+  int nargs = 16;
+  op_arg args[16];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -251,8 +150,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
   args[13] = arg13;
   args[14] = arg14;
   args[15] = arg15;
-  args[16] = arg16;
-  args[17] = arg17;
   //create aligned pointers for dats
   ALIGNED_double const double * __restrict__ ptr0 = (double *) arg0.data;
   DECLARE_PTR_ALIGNED(ptr0,double_ALIGN);
@@ -264,13 +161,13 @@ void op_par_loop_init_grid(char const *name, op_set set,
   DECLARE_PTR_ALIGNED(ptr3,double_ALIGN);
   ALIGNED_double       double * __restrict__ ptr4 = (double *) arg4.data;
   DECLARE_PTR_ALIGNED(ptr4,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr5 = (double *) arg5.data;
+  ALIGNED_double const double * __restrict__ ptr5 = (double *) arg5.data;
   DECLARE_PTR_ALIGNED(ptr5,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr6 = (double *) arg6.data;
+  ALIGNED_double const double * __restrict__ ptr6 = (double *) arg6.data;
   DECLARE_PTR_ALIGNED(ptr6,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr7 = (double *) arg7.data;
+  ALIGNED_double const double * __restrict__ ptr7 = (double *) arg7.data;
   DECLARE_PTR_ALIGNED(ptr7,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr8 = (double *) arg8.data;
+  ALIGNED_double const double * __restrict__ ptr8 = (double *) arg8.data;
   DECLARE_PTR_ALIGNED(ptr8,double_ALIGN);
   ALIGNED_double       double * __restrict__ ptr9 = (double *) arg9.data;
   DECLARE_PTR_ALIGNED(ptr9,double_ALIGN);
@@ -286,10 +183,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
   DECLARE_PTR_ALIGNED(ptr14,double_ALIGN);
   ALIGNED_double       double * __restrict__ ptr15 = (double *) arg15.data;
   DECLARE_PTR_ALIGNED(ptr15,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr16 = (double *) arg16.data;
-  DECLARE_PTR_ALIGNED(ptr16,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr17 = (double *) arg17.data;
-  DECLARE_PTR_ALIGNED(ptr17,double_ALIGN);
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -326,8 +219,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
       ALIGNED_double double dat13[15][SIMD_VEC];
       ALIGNED_double double dat14[15][SIMD_VEC];
       ALIGNED_double double dat15[15][SIMD_VEC];
-      ALIGNED_double double dat16[15][SIMD_VEC];
-      ALIGNED_double double dat17[15][SIMD_VEC];
       #pragma omp simd simdlen(SIMD_VEC)
       for ( int i=0; i<SIMD_VEC; i++ ){
         int idx0_2 = 2 * arg0.map_data[(n+i) * arg0.map->dim + 0];
@@ -346,8 +237,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
         int idx13_15 = 15 * (n+i);
         int idx14_15 = 15 * (n+i);
         int idx15_15 = 15 * (n+i);
-        int idx16_15 = 15 * (n+i);
-        int idx17_15 = 15 * (n+i);
 
         dat0[0][i] = (ptr0)[idx0_2 + 0];
         dat0[1][i] = (ptr0)[idx0_2 + 1];
@@ -357,6 +246,70 @@ void op_par_loop_init_grid(char const *name, op_set set,
 
         dat2[0][i] = (ptr2)[idx2_2 + 0];
         dat2[1][i] = (ptr2)[idx2_2 + 1];
+
+        dat5[0][i] = (ptr5)[idx5_15 + 0];
+        dat5[1][i] = (ptr5)[idx5_15 + 1];
+        dat5[2][i] = (ptr5)[idx5_15 + 2];
+        dat5[3][i] = (ptr5)[idx5_15 + 3];
+        dat5[4][i] = (ptr5)[idx5_15 + 4];
+        dat5[5][i] = (ptr5)[idx5_15 + 5];
+        dat5[6][i] = (ptr5)[idx5_15 + 6];
+        dat5[7][i] = (ptr5)[idx5_15 + 7];
+        dat5[8][i] = (ptr5)[idx5_15 + 8];
+        dat5[9][i] = (ptr5)[idx5_15 + 9];
+        dat5[10][i] = (ptr5)[idx5_15 + 10];
+        dat5[11][i] = (ptr5)[idx5_15 + 11];
+        dat5[12][i] = (ptr5)[idx5_15 + 12];
+        dat5[13][i] = (ptr5)[idx5_15 + 13];
+        dat5[14][i] = (ptr5)[idx5_15 + 14];
+
+        dat6[0][i] = (ptr6)[idx6_15 + 0];
+        dat6[1][i] = (ptr6)[idx6_15 + 1];
+        dat6[2][i] = (ptr6)[idx6_15 + 2];
+        dat6[3][i] = (ptr6)[idx6_15 + 3];
+        dat6[4][i] = (ptr6)[idx6_15 + 4];
+        dat6[5][i] = (ptr6)[idx6_15 + 5];
+        dat6[6][i] = (ptr6)[idx6_15 + 6];
+        dat6[7][i] = (ptr6)[idx6_15 + 7];
+        dat6[8][i] = (ptr6)[idx6_15 + 8];
+        dat6[9][i] = (ptr6)[idx6_15 + 9];
+        dat6[10][i] = (ptr6)[idx6_15 + 10];
+        dat6[11][i] = (ptr6)[idx6_15 + 11];
+        dat6[12][i] = (ptr6)[idx6_15 + 12];
+        dat6[13][i] = (ptr6)[idx6_15 + 13];
+        dat6[14][i] = (ptr6)[idx6_15 + 14];
+
+        dat7[0][i] = (ptr7)[idx7_15 + 0];
+        dat7[1][i] = (ptr7)[idx7_15 + 1];
+        dat7[2][i] = (ptr7)[idx7_15 + 2];
+        dat7[3][i] = (ptr7)[idx7_15 + 3];
+        dat7[4][i] = (ptr7)[idx7_15 + 4];
+        dat7[5][i] = (ptr7)[idx7_15 + 5];
+        dat7[6][i] = (ptr7)[idx7_15 + 6];
+        dat7[7][i] = (ptr7)[idx7_15 + 7];
+        dat7[8][i] = (ptr7)[idx7_15 + 8];
+        dat7[9][i] = (ptr7)[idx7_15 + 9];
+        dat7[10][i] = (ptr7)[idx7_15 + 10];
+        dat7[11][i] = (ptr7)[idx7_15 + 11];
+        dat7[12][i] = (ptr7)[idx7_15 + 12];
+        dat7[13][i] = (ptr7)[idx7_15 + 13];
+        dat7[14][i] = (ptr7)[idx7_15 + 14];
+
+        dat8[0][i] = (ptr8)[idx8_15 + 0];
+        dat8[1][i] = (ptr8)[idx8_15 + 1];
+        dat8[2][i] = (ptr8)[idx8_15 + 2];
+        dat8[3][i] = (ptr8)[idx8_15 + 3];
+        dat8[4][i] = (ptr8)[idx8_15 + 4];
+        dat8[5][i] = (ptr8)[idx8_15 + 5];
+        dat8[6][i] = (ptr8)[idx8_15 + 6];
+        dat8[7][i] = (ptr8)[idx8_15 + 7];
+        dat8[8][i] = (ptr8)[idx8_15 + 8];
+        dat8[9][i] = (ptr8)[idx8_15 + 9];
+        dat8[10][i] = (ptr8)[idx8_15 + 10];
+        dat8[11][i] = (ptr8)[idx8_15 + 11];
+        dat8[12][i] = (ptr8)[idx8_15 + 12];
+        dat8[13][i] = (ptr8)[idx8_15 + 13];
+        dat8[14][i] = (ptr8)[idx8_15 + 14];
 
       }
       #pragma omp simd simdlen(SIMD_VEC)
@@ -378,17 +331,11 @@ void op_par_loop_init_grid(char const *name, op_set set,
           dat13,
           dat14,
           dat15,
-          dat16,
-          dat17,
           i);
       }
       for ( int i=0; i<SIMD_VEC; i++ ){
         int idx3_3 = 3 * (n+i);
         int idx4_3 = 3 * (n+i);
-        int idx5_15 = 15 * (n+i);
-        int idx6_15 = 15 * (n+i);
-        int idx7_15 = 15 * (n+i);
-        int idx8_15 = 15 * (n+i);
         int idx9_15 = 15 * (n+i);
         int idx10_15 = 15 * (n+i);
         int idx11_15 = 15 * (n+i);
@@ -396,8 +343,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
         int idx13_15 = 15 * (n+i);
         int idx14_15 = 15 * (n+i);
         int idx15_15 = 15 * (n+i);
-        int idx16_15 = 15 * (n+i);
-        int idx17_15 = 15 * (n+i);
 
         (ptr3)[idx3_3 + 0] = dat3[0][i];
         (ptr3)[idx3_3 + 1] = dat3[1][i];
@@ -406,70 +351,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
         (ptr4)[idx4_3 + 0] = dat4[0][i];
         (ptr4)[idx4_3 + 1] = dat4[1][i];
         (ptr4)[idx4_3 + 2] = dat4[2][i];
-
-        (ptr5)[idx5_15 + 0] = dat5[0][i];
-        (ptr5)[idx5_15 + 1] = dat5[1][i];
-        (ptr5)[idx5_15 + 2] = dat5[2][i];
-        (ptr5)[idx5_15 + 3] = dat5[3][i];
-        (ptr5)[idx5_15 + 4] = dat5[4][i];
-        (ptr5)[idx5_15 + 5] = dat5[5][i];
-        (ptr5)[idx5_15 + 6] = dat5[6][i];
-        (ptr5)[idx5_15 + 7] = dat5[7][i];
-        (ptr5)[idx5_15 + 8] = dat5[8][i];
-        (ptr5)[idx5_15 + 9] = dat5[9][i];
-        (ptr5)[idx5_15 + 10] = dat5[10][i];
-        (ptr5)[idx5_15 + 11] = dat5[11][i];
-        (ptr5)[idx5_15 + 12] = dat5[12][i];
-        (ptr5)[idx5_15 + 13] = dat5[13][i];
-        (ptr5)[idx5_15 + 14] = dat5[14][i];
-
-        (ptr6)[idx6_15 + 0] = dat6[0][i];
-        (ptr6)[idx6_15 + 1] = dat6[1][i];
-        (ptr6)[idx6_15 + 2] = dat6[2][i];
-        (ptr6)[idx6_15 + 3] = dat6[3][i];
-        (ptr6)[idx6_15 + 4] = dat6[4][i];
-        (ptr6)[idx6_15 + 5] = dat6[5][i];
-        (ptr6)[idx6_15 + 6] = dat6[6][i];
-        (ptr6)[idx6_15 + 7] = dat6[7][i];
-        (ptr6)[idx6_15 + 8] = dat6[8][i];
-        (ptr6)[idx6_15 + 9] = dat6[9][i];
-        (ptr6)[idx6_15 + 10] = dat6[10][i];
-        (ptr6)[idx6_15 + 11] = dat6[11][i];
-        (ptr6)[idx6_15 + 12] = dat6[12][i];
-        (ptr6)[idx6_15 + 13] = dat6[13][i];
-        (ptr6)[idx6_15 + 14] = dat6[14][i];
-
-        (ptr7)[idx7_15 + 0] = dat7[0][i];
-        (ptr7)[idx7_15 + 1] = dat7[1][i];
-        (ptr7)[idx7_15 + 2] = dat7[2][i];
-        (ptr7)[idx7_15 + 3] = dat7[3][i];
-        (ptr7)[idx7_15 + 4] = dat7[4][i];
-        (ptr7)[idx7_15 + 5] = dat7[5][i];
-        (ptr7)[idx7_15 + 6] = dat7[6][i];
-        (ptr7)[idx7_15 + 7] = dat7[7][i];
-        (ptr7)[idx7_15 + 8] = dat7[8][i];
-        (ptr7)[idx7_15 + 9] = dat7[9][i];
-        (ptr7)[idx7_15 + 10] = dat7[10][i];
-        (ptr7)[idx7_15 + 11] = dat7[11][i];
-        (ptr7)[idx7_15 + 12] = dat7[12][i];
-        (ptr7)[idx7_15 + 13] = dat7[13][i];
-        (ptr7)[idx7_15 + 14] = dat7[14][i];
-
-        (ptr8)[idx8_15 + 0] = dat8[0][i];
-        (ptr8)[idx8_15 + 1] = dat8[1][i];
-        (ptr8)[idx8_15 + 2] = dat8[2][i];
-        (ptr8)[idx8_15 + 3] = dat8[3][i];
-        (ptr8)[idx8_15 + 4] = dat8[4][i];
-        (ptr8)[idx8_15 + 5] = dat8[5][i];
-        (ptr8)[idx8_15 + 6] = dat8[6][i];
-        (ptr8)[idx8_15 + 7] = dat8[7][i];
-        (ptr8)[idx8_15 + 8] = dat8[8][i];
-        (ptr8)[idx8_15 + 9] = dat8[9][i];
-        (ptr8)[idx8_15 + 10] = dat8[10][i];
-        (ptr8)[idx8_15 + 11] = dat8[11][i];
-        (ptr8)[idx8_15 + 12] = dat8[12][i];
-        (ptr8)[idx8_15 + 13] = dat8[13][i];
-        (ptr8)[idx8_15 + 14] = dat8[14][i];
 
         (ptr9)[idx9_15 + 0] = dat9[0][i];
         (ptr9)[idx9_15 + 1] = dat9[1][i];
@@ -583,38 +464,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
         (ptr15)[idx15_15 + 13] = dat15[13][i];
         (ptr15)[idx15_15 + 14] = dat15[14][i];
 
-        (ptr16)[idx16_15 + 0] = dat16[0][i];
-        (ptr16)[idx16_15 + 1] = dat16[1][i];
-        (ptr16)[idx16_15 + 2] = dat16[2][i];
-        (ptr16)[idx16_15 + 3] = dat16[3][i];
-        (ptr16)[idx16_15 + 4] = dat16[4][i];
-        (ptr16)[idx16_15 + 5] = dat16[5][i];
-        (ptr16)[idx16_15 + 6] = dat16[6][i];
-        (ptr16)[idx16_15 + 7] = dat16[7][i];
-        (ptr16)[idx16_15 + 8] = dat16[8][i];
-        (ptr16)[idx16_15 + 9] = dat16[9][i];
-        (ptr16)[idx16_15 + 10] = dat16[10][i];
-        (ptr16)[idx16_15 + 11] = dat16[11][i];
-        (ptr16)[idx16_15 + 12] = dat16[12][i];
-        (ptr16)[idx16_15 + 13] = dat16[13][i];
-        (ptr16)[idx16_15 + 14] = dat16[14][i];
-
-        (ptr17)[idx17_15 + 0] = dat17[0][i];
-        (ptr17)[idx17_15 + 1] = dat17[1][i];
-        (ptr17)[idx17_15 + 2] = dat17[2][i];
-        (ptr17)[idx17_15 + 3] = dat17[3][i];
-        (ptr17)[idx17_15 + 4] = dat17[4][i];
-        (ptr17)[idx17_15 + 5] = dat17[5][i];
-        (ptr17)[idx17_15 + 6] = dat17[6][i];
-        (ptr17)[idx17_15 + 7] = dat17[7][i];
-        (ptr17)[idx17_15 + 8] = dat17[8][i];
-        (ptr17)[idx17_15 + 9] = dat17[9][i];
-        (ptr17)[idx17_15 + 10] = dat17[10][i];
-        (ptr17)[idx17_15 + 11] = dat17[11][i];
-        (ptr17)[idx17_15 + 12] = dat17[12][i];
-        (ptr17)[idx17_15 + 13] = dat17[13][i];
-        (ptr17)[idx17_15 + 14] = dat17[14][i];
-
       }
     }
 
@@ -649,9 +498,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
         &(ptr12)[15 * n],
         &(ptr13)[15 * n],
         &(ptr14)[15 * n],
-        &(ptr15)[15 * n],
-        &(ptr16)[15 * n],
-        &(ptr17)[15 * n]);
+        &(ptr15)[15 * n]);
     }
   }
 
@@ -680,7 +527,5 @@ void op_par_loop_init_grid(char const *name, op_set set,
   OP_kernels[0].transfer += (float)set->size * arg13.size;
   OP_kernels[0].transfer += (float)set->size * arg14.size;
   OP_kernels[0].transfer += (float)set->size * arg15.size;
-  OP_kernels[0].transfer += (float)set->size * arg16.size;
-  OP_kernels[0].transfer += (float)set->size * arg17.size;
   OP_kernels[0].transfer += (float)set->size * arg0.map->dim * 4.0f;
 }

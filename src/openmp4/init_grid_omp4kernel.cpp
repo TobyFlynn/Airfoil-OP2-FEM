@@ -34,10 +34,6 @@ void init_grid_omp4_kernel(
   int dat14size,
   double *data15,
   int dat15size,
-  double *data16,
-  int dat16size,
-  double *data17,
-  int dat17size,
   double *data0,
   int dat0size,
   int *col_reord,
@@ -64,12 +60,10 @@ void op_par_loop_init_grid(char const *name, op_set set,
   op_arg arg12,
   op_arg arg13,
   op_arg arg14,
-  op_arg arg15,
-  op_arg arg16,
-  op_arg arg17){
+  op_arg arg15){
 
-  int nargs = 18;
-  op_arg args[18];
+  int nargs = 16;
+  op_arg args[16];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -87,8 +81,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
   args[13] = arg13;
   args[14] = arg14;
   args[15] = arg15;
-  args[16] = arg16;
-  args[17] = arg17;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -98,7 +90,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
   OP_kernels[0].count    += 1;
 
   int  ninds   = 1;
-  int  inds[18] = {0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
+  int  inds[16] = {0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: init_grid\n");
@@ -154,10 +146,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
     int dat14size = getSetSizeFromOpArg(&arg14) * arg14.dat->dim;
     double* data15 = (double*)arg15.data_d;
     int dat15size = getSetSizeFromOpArg(&arg15) * arg15.dat->dim;
-    double* data16 = (double*)arg16.data_d;
-    int dat16size = getSetSizeFromOpArg(&arg16) * arg16.dat->dim;
-    double* data17 = (double*)arg17.data_d;
-    int dat17size = getSetSizeFromOpArg(&arg17) * arg17.dat->dim;
     double *data0 = (double *)arg0.data_d;
     int dat0size = getSetSizeFromOpArg(&arg0) * arg0.dat->dim;
 
@@ -202,10 +190,6 @@ void op_par_loop_init_grid(char const *name, op_set set,
         dat14size,
         data15,
         dat15size,
-        data16,
-        dat16size,
-        data17,
-        dat17size,
         data0,
         dat0size,
         col_reord,

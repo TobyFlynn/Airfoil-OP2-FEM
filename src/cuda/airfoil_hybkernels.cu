@@ -62,9 +62,7 @@ void op_par_loop_init_grid_gpu(char const *name, op_set set,
   op_arg arg12,
   op_arg arg13,
   op_arg arg14,
-  op_arg arg15,
-  op_arg arg16,
-  op_arg arg17);
+  op_arg arg15);
 
 //GPU host stub function
 #if OP_HYBRID_GPU
@@ -84,9 +82,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
   op_arg arg12,
   op_arg arg13,
   op_arg arg14,
-  op_arg arg15,
-  op_arg arg16,
-  op_arg arg17){
+  op_arg arg15){
 
   if (OP_hybrid_gpu) {
     op_par_loop_init_grid_gpu(name, set,
@@ -105,9 +101,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
       arg12,
       arg13,
       arg14,
-      arg15,
-      arg16,
-      arg17);
+      arg15);
 
     }else{
     op_par_loop_init_grid_cpu(name, set,
@@ -126,9 +120,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
       arg12,
       arg13,
       arg14,
-      arg15,
-      arg16,
-      arg17);
+      arg15);
 
   }
 }
@@ -149,9 +141,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
   op_arg arg12,
   op_arg arg13,
   op_arg arg14,
-  op_arg arg15,
-  op_arg arg16,
-  op_arg arg17){
+  op_arg arg15){
 
   op_par_loop_init_grid_gpu(name, set,
     arg0,
@@ -169,9 +159,7 @@ void op_par_loop_init_grid(char const *name, op_set set,
     arg12,
     arg13,
     arg14,
-    arg15,
-    arg16,
-    arg17);
+    arg15);
 
   }
 #endif //OP_HYBRID_GPU

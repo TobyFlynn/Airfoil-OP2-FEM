@@ -4,8 +4,9 @@
 
 //user function
 // #include <cblas.h>
-#include <algorithm>
+// #include <algorithm>
 #include <cmath>
+#include "fluxes.h"
 
 //user function
 //#pragma acc routine
