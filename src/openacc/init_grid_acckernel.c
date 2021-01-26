@@ -3,7 +3,7 @@
 //
 
 //user function
-#include <cblas.h>
+// #include <cblas.h>
 
 //user function
 //#pragma acc routine
@@ -23,45 +23,52 @@ inline void init_grid_openacc( const double *n0, const double *n1, const double 
 
 
 
-  cblas_dcopy(15, ones, 1, x, 1);
-  cblas_daxpy(15, 1.0, r, 1, x, 1);
-  cblas_dscal(15, 0.5 * n1[0], x, 1);
-
-  double temp[15];
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-
-  cblas_daxpy(15, 0.5 * n2[0], temp, 1, x, 1);
-
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-
-  cblas_daxpy(15, -0.5 * n0[0], temp, 1, x, 1);
 
 
 
-  cblas_dcopy(15, ones, 1, y, 1);
-  cblas_daxpy(15, 1.0, r, 1, y, 1);
-  cblas_dscal(15, 0.5 * n1[1], y, 1);
-
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-
-  cblas_daxpy(15, 0.5 * n2[1], temp, 1, y, 1);
-
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-
-  cblas_daxpy(15, -0.5 * n0[1], temp, 1, y, 1);
 
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, x, 1, 0.0, xr, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, x, 1, 0.0, xs, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, y, 1, 0.0, yr, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, y, 1, 0.0, ys, 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   double J[15];
   for(int i = 0; i < 15; i++) {

@@ -107,6 +107,8 @@ void op_par_loop_update_Q(char const *, op_set,
 #include <cmath>
 #include <getopt.h>
 
+#include <cublas.h>
+
 #include "constants/constant_r.h"
 #include "constants/constant_s.h"
 #include "constants/constant_Dr.h"
@@ -120,14 +122,14 @@ void op_par_loop_update_Q(char const *, op_set,
 
 // Include kernels
 #include "init_grid.h"
-#include "euler_rhs.h"
-#include "get_neighbour_q.h"
-#include "get_bedge_q.h"
-#include "set_ic.h"
-#include "set_workingQ.h"
-#include "update_Q.h"
-#include "calc_dt.h"
-#include "neighbour_zero.h"
+// #include "euler_rhs.h"
+// #include "get_neighbour_q.h"
+// #include "get_bedge_q.h"
+// #include "set_ic.h"
+// #include "set_workingQ.h"
+// #include "update_Q.h"
+// #include "calc_dt.h"
+// #include "neighbour_zero.h"
 
 using namespace std;
 
@@ -141,6 +143,9 @@ static struct option options[] = {
 };
 
 int main(int argc, char **argv) {
+  cublasHandle_t cublas_handle;
+  cublasCreate(&cublas_handle);
+
   double cpu_1, wall_1, cpu_2, wall_2;
 
   op_timers(&cpu_1, &wall_1);
@@ -298,6 +303,15 @@ int main(int argc, char **argv) {
   op_decl_const2("FMASK",15,"int",FMASK);
   op_decl_const2("LIFT",225,"double",LIFT);
 
+  // Matrix multiplications using cuBLAS
+  // TODO set pointer mode to CUBLAS_POINTER_MODE_HOST
+  for(int c = 0; c < numCells; c++) {
+    // Get nodes for this cell (on host)
+    double *n0 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c]];
+    double *n1 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 1]];
+    double *n2 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 2]];
+  }
+
   // Initialisation kernels
   op_par_loop_init_grid("init_grid",cells,
               op_arg_dat(node_coords,0,cell2nodes,2,"double",OP_READ),
@@ -319,9 +333,9 @@ int main(int argc, char **argv) {
               op_arg_dat(ny,-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_WRITE));
 
-  op_par_loop_set_ic("set_ic",cells,
-              op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
-              op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
+  / op_par_loop_set_ic("set_ic",cells,
+                op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
+                op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
 
   op_par_loop_neighbour_zero("neighbour_zero",cells,
               op_arg_dat(exteriorQ,-1,OP_ID,60,"double",OP_WRITE));
@@ -330,7 +344,7 @@ int main(int argc, char **argv) {
   op_par_loop_calc_dt("calc_dt",cells,
               op_arg_dat(q,-1,OP_ID,60,"double",OP_READ),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
-              op_arg_gbl(&dt1,1,"double",OP_MAX));
+              op_arg_gbl(&dt1,1,"double",OP_MAX));*/
 
   dt = 1.0 / dt1;
   cout << "dt: " << dt << endl;
@@ -345,7 +359,7 @@ int main(int argc, char **argv) {
   double set_workingQ_t = 0.0;
   double update_Q_t = 0.0;
   double calc_dt_t = 0.0;
-  op_timers(&cpu_loop_start, &wall_loop_start);
+  /*op_timers(&cpu_loop_start, &wall_loop_start);
   // Run the simulation
   for(int i = 0; i < iter; i++) {
     for(int j = 0; j < 3; j++) {
@@ -430,7 +444,7 @@ int main(int argc, char **argv) {
     if(i % 1000 == 0)
       cout << "iter: " << i << " time: " << t <<  " dt: " << dt << endl;
   }
-  op_timers(&cpu_loop_end, &wall_loop_end);
+  op_timers(&cpu_loop_end, &wall_loop_end);*/
 
   cout << "Time: " << t << endl;
 
@@ -450,7 +464,7 @@ int main(int argc, char **argv) {
 
   op_timers(&cpu_2, &wall_2);
 
-  op_timing_output();
+  /*op_timing_output();
   cout << endl << "Total execution time: " << wall_2 - wall_1 << endl;
   cout << "Total time in main loop: " << wall_loop_end - wall_loop_start << endl;
   cout << "Average time per iteration: " << (wall_loop_end - wall_loop_start) / iter << endl;
@@ -474,7 +488,7 @@ int main(int argc, char **argv) {
   cout << "  Total: " << calc_dt_t << endl;
   // cout << "  Per iter: " << calc_dt_t / iter << endl;
 
-  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;
+  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;*/
 
   // Clean up OP2
   op_exit();
@@ -509,4 +523,6 @@ int main(int argc, char **argv) {
   free(edgeNum_data);
   free(bedgeNum_data);
   free(bedge_type_data);
+
+  cublasDestroy(cublas_handle);
 }

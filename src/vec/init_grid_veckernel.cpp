@@ -3,7 +3,7 @@
 //
 
 //user function
-#include <cblas.h>
+// #include <cblas.h>
 
 inline void init_grid(const double *n0, const double *n1, const double *n2,
                       double *nodeX, double *nodeY, double *x, double *y,
@@ -22,52 +22,52 @@ inline void init_grid(const double *n0, const double *n1, const double *n2,
   // x = 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s) - 0.5*n0_x * (r + s)
 
   // x <- 0.5*n1_x * (1 + r)
-  cblas_dcopy(15, ones, 1, x, 1);
-  cblas_daxpy(15, 1.0, r, 1, x, 1);
-  cblas_dscal(15, 0.5 * n1[0], x, 1);
-  // temp <- 1 + s
-  double temp[15];
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-  // x <- 0.5*n2_x * temp + x (i.e. 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s))
-  cblas_daxpy(15, 0.5 * n2[0], temp, 1, x, 1);
-  // temp <- r + s
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-  // x <- -0.5 * n0_x * temp + x (i.e. final target)
-  cblas_daxpy(15, -0.5 * n0[0], temp, 1, x, 1);
-
-  // y = 0.5(-n0_y (r + s) + n1_y(1 + r) + n2_y(1 + s))
-  // y = 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s) - 0.5*n0_y * (r + s)
-
-  // y <- 0.5*n1_y * (1 + r)
-  cblas_dcopy(15, ones, 1, y, 1);
-  cblas_daxpy(15, 1.0, r, 1, y, 1);
-  cblas_dscal(15, 0.5 * n1[1], y, 1);
-  // temp <- 1 + s
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-  // y <- 0.5*n2_y * temp + y (i.e. 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s))
-  cblas_daxpy(15, 0.5 * n2[1], temp, 1, y, 1);
-  // temp <- r + s
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-  // x <- -0.5 * n0_y * temp + x (i.e. final target)
-  cblas_daxpy(15, -0.5 * n0[1], temp, 1, y, 1);
-
-  // Calculate geometric factors
-
-  // xr = Dr * x
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, x, 1, 0.0, xr, 1);
-
-  // xs = Ds * x
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, x, 1, 0.0, xs, 1);
-
-  // yr = Dr * y
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, y, 1, 0.0, yr, 1);
-
-  // ys = Ds * y
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, y, 1, 0.0, ys, 1);
+  // cblas_dcopy(15, ones, 1, x, 1);
+  // cblas_daxpy(15, 1.0, r, 1, x, 1);
+  // cblas_dscal(15, 0.5 * n1[0], x, 1);
+  // // temp <- 1 + s
+  // double temp[15];
+  // cblas_dcopy(15, ones, 1, temp, 1);
+  // cblas_daxpy(15, 1.0, s, 1, temp, 1);
+  // // x <- 0.5*n2_x * temp + x (i.e. 0.5*n1_x * (1 + r) + 0.5*n2_x * (1 + s))
+  // cblas_daxpy(15, 0.5 * n2[0], temp, 1, x, 1);
+  // // temp <- r + s
+  // cblas_dcopy(15, s, 1, temp, 1);
+  // cblas_daxpy(15, 1.0, r, 1, temp, 1);
+  // // x <- -0.5 * n0_x * temp + x (i.e. final target)
+  // cblas_daxpy(15, -0.5 * n0[0], temp, 1, x, 1);
+  //
+  // // y = 0.5(-n0_y (r + s) + n1_y(1 + r) + n2_y(1 + s))
+  // // y = 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s) - 0.5*n0_y * (r + s)
+  //
+  // // y <- 0.5*n1_y * (1 + r)
+  // cblas_dcopy(15, ones, 1, y, 1);
+  // cblas_daxpy(15, 1.0, r, 1, y, 1);
+  // cblas_dscal(15, 0.5 * n1[1], y, 1);
+  // // temp <- 1 + s
+  // cblas_dcopy(15, ones, 1, temp, 1);
+  // cblas_daxpy(15, 1.0, s, 1, temp, 1);
+  // // y <- 0.5*n2_y * temp + y (i.e. 0.5*n1_y * (1 + r) + 0.5*n2_y * (1 + s))
+  // cblas_daxpy(15, 0.5 * n2[1], temp, 1, y, 1);
+  // // temp <- r + s
+  // cblas_dcopy(15, s, 1, temp, 1);
+  // cblas_daxpy(15, 1.0, r, 1, temp, 1);
+  // // x <- -0.5 * n0_y * temp + x (i.e. final target)
+  // cblas_daxpy(15, -0.5 * n0[1], temp, 1, y, 1);
+  //
+  // // Calculate geometric factors
+  //
+  // // xr = Dr * x
+  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, x, 1, 0.0, xr, 1);
+  //
+  // // xs = Ds * x
+  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, x, 1, 0.0, xs, 1);
+  //
+  // // yr = Dr * y
+  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, y, 1, 0.0, yr, 1);
+  //
+  // // ys = Ds * y
+  // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, y, 1, 0.0, ys, 1);
 
   // J = -xs.*yr + xr.*ys
   double J[15];
@@ -126,45 +126,52 @@ inline void init_grid_vec( const double n0[][SIMD_VEC], const double n1[][SIMD_V
 
 
 
-  cblas_dcopy(15, ones, 1, x, 1);
-  cblas_daxpy(15, 1.0, r, 1, x, 1);
-  cblas_dscal(15, 0.5 * n1[0][idx], x, 1);
-
-  double temp[15];
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-
-  cblas_daxpy(15, 0.5 * n2[0][idx], temp, 1, x, 1);
-
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-
-  cblas_daxpy(15, -0.5 * n0[0][idx], temp, 1, x, 1);
 
 
 
-  cblas_dcopy(15, ones, 1, y, 1);
-  cblas_daxpy(15, 1.0, r, 1, y, 1);
-  cblas_dscal(15, 0.5 * n1[1][idx], y, 1);
-
-  cblas_dcopy(15, ones, 1, temp, 1);
-  cblas_daxpy(15, 1.0, s, 1, temp, 1);
-
-  cblas_daxpy(15, 0.5 * n2[1][idx], temp, 1, y, 1);
-
-  cblas_dcopy(15, s, 1, temp, 1);
-  cblas_daxpy(15, 1.0, r, 1, temp, 1);
-
-  cblas_daxpy(15, -0.5 * n0[1][idx], temp, 1, y, 1);
 
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, x, 1, 0.0, xr, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, x, 1, 0.0, xs, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dr, 15, y, 1, 0.0, yr, 1);
 
-  cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Ds, 15, y, 1, 0.0, ys, 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   double J[15];
   for(int i = 0; i < 15; i++) {

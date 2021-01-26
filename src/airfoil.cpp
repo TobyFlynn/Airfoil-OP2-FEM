@@ -9,6 +9,8 @@
 #include <cmath>
 #include <getopt.h>
 
+#include <cublas.h>
+
 #include "constants/constant_r.h"
 #include "constants/constant_s.h"
 #include "constants/constant_Dr.h"
@@ -22,14 +24,14 @@
 
 // Include kernels
 #include "init_grid.h"
-#include "euler_rhs.h"
-#include "get_neighbour_q.h"
-#include "get_bedge_q.h"
-#include "set_ic.h"
-#include "set_workingQ.h"
-#include "update_Q.h"
-#include "calc_dt.h"
-#include "neighbour_zero.h"
+// #include "euler_rhs.h"
+// #include "get_neighbour_q.h"
+// #include "get_bedge_q.h"
+// #include "set_ic.h"
+// #include "set_workingQ.h"
+// #include "update_Q.h"
+// #include "calc_dt.h"
+// #include "neighbour_zero.h"
 
 using namespace std;
 
@@ -43,6 +45,9 @@ static struct option options[] = {
 };
 
 int main(int argc, char **argv) {
+  cublasHandle_t cublas_handle;
+  cublasCreate(&cublas_handle);
+
   double cpu_1, wall_1, cpu_2, wall_2;
 
   op_timers(&cpu_1, &wall_1);
@@ -230,7 +235,7 @@ int main(int argc, char **argv) {
               op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_WRITE),
               op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_WRITE));
 
-  op_par_loop(set_ic, "set_ic", cells,
+  /*op_par_loop(set_ic, "set_ic", cells,
               op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_WRITE),
               op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
 
@@ -241,7 +246,7 @@ int main(int argc, char **argv) {
   op_par_loop(calc_dt, "calc_dt", cells,
               op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
               op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
-              op_arg_gbl(&dt1, 1, "double", OP_MAX));
+              op_arg_gbl(&dt1, 1, "double", OP_MAX));*/
 
   dt = 1.0 / dt1;
   cout << "dt: " << dt << endl;
@@ -420,4 +425,6 @@ int main(int argc, char **argv) {
   free(edgeNum_data);
   free(bedgeNum_data);
   free(bedge_type_data);
+
+  cublasDestroy(cublas_handle);
 }

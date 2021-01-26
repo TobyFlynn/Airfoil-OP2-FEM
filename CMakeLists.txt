@@ -17,6 +17,7 @@ find_package(OP2 REQUIRED PATHS
 # Import compiler flags for all build types
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OP2_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OP2_C_FLAGS}")
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -allow-unsupported-compiler -arch=sm_75")
 
 include_directories(${OP2_INCLUDE_DIRS})
 add_definitions(${OP2_USER_DEFINITIONS})
@@ -33,7 +34,9 @@ if(NOT OPENBLAS_DIR)
   set(OPENBLAS_DIR "/opt/OpenBLAS")
 endif()
 
-add_subdirectory(advec)
-add_subdirectory(vortex)
+find_package(CUDAToolkit)
+
+#add_subdirectory(advec)
+#add_subdirectory(vortex)
 add_subdirectory(tools)
 add_subdirectory(src)

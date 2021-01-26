@@ -3,7 +3,7 @@
 //
 
 //user function
-#include <cblas.h>
+// #include <cblas.h>
 #include <algorithm>
 #include <cmath>
 
@@ -26,13 +26,12 @@ inline void euler_rhs_openacc( const double *q, double *exteriorQ,
     double dGdr[15];
     double dGds[15];
 
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &F[i], 4, 0.0, dFdr, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &F[i], 4, 0.0, dFds, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &G[i], 4, 0.0, dGdr, 1);
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &G[i], 4, 0.0, dGds, 1);
+
+
+
 
     for(int j = 0; j < 15; j++) {
-      qRHS[i + j * 4] = (rx[j] * dFdr[j] + sx[j] * dFds[j]) + (ry[j] * dGdr[j] + sy[j] * dGds[j]);
+
     }
   }
 
@@ -69,7 +68,7 @@ inline void euler_rhs_openacc( const double *q, double *exteriorQ,
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
   for(int i = 0; i < 4; i++) {
-    cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
+
   }
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
