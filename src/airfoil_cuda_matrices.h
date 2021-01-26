@@ -14,4 +14,9 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
                         double *x_d, double *y_d, double *xr_d, double *xs_d,
                         double *yr_d, double *ys_d);
 
+void internal_fluxes_matrices(cublasHandle_t handle, const int numCells,
+                              const double *F_d, const double *G_d,
+                              double *dFdr_d, double *dFds_d, double *dGdr_d,
+                              double *dGds_d);
+
 #endif

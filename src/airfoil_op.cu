@@ -336,7 +336,7 @@ int main(int argc, char **argv) {
               op_arg_dat(ny,-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_WRITE));
 
-  /*
+
   op_par_loop_set_ic("set_ic",cells,
               op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
               op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
@@ -396,6 +396,7 @@ int main(int argc, char **argv) {
 
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
+      /*
       op_par_loop_euler_rhs("euler_rhs",cells,
                   op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_READ),
                   op_arg_dat(exteriorQ,-1,OP_ID,60,"double",OP_RW),
@@ -406,7 +407,7 @@ int main(int argc, char **argv) {
                   op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(nx,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(ny,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(rk[j],-1,OP_ID,60,"double",OP_WRITE));
+                  op_arg_dat(rk[j],-1,OP_ID,60,"double",OP_WRITE));*/
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
@@ -450,7 +451,7 @@ int main(int argc, char **argv) {
   }
   op_timers(&cpu_loop_end, &wall_loop_end);
 
-  cout << "Time: " << t << endl;*/
+  cout << "Time: " << t << endl;
 
   // Save info for python test script
   // op_fetch_data_hdf5_file(node_coords, "points.h5");

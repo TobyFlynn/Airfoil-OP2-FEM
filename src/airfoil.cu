@@ -26,13 +26,14 @@
 // Include kernels
 #include "init_grid.h"
 // #include "euler_rhs.h"
-// #include "get_neighbour_q.h"
-// #include "get_bedge_q.h"
-// #include "set_ic.h"
-// #include "set_workingQ.h"
-// #include "update_Q.h"
-// #include "calc_dt.h"
-// #include "neighbour_zero.h"
+#include "get_neighbour_q.h"
+#include "get_bedge_q.h"
+#include "set_ic.h"
+#include "set_workingQ.h"
+#include "update_Q.h"
+#include "calc_dt.h"
+#include "neighbour_zero.h"
+#include "internal_fluxes.h"
 
 using namespace std;
 
@@ -130,6 +131,12 @@ int main(int argc, char **argv) {
   double *ny_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   double *fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   double *q_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *F_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *G_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *dFdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *dFds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *dGdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  double *dGds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
   // RK4 data
@@ -176,6 +183,12 @@ int main(int argc, char **argv) {
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
   op_dat q    = op_decl_dat(cells, 4 * 15, "double", q_data, "q");
+  op_dat F    = op_decl_dat(cells, 4 * 15, "double", F_data, "F");
+  op_dat G    = op_decl_dat(cells, 4 * 15, "double", G_data, "G");
+  op_dat dFdr = op_decl_dat(cells, 4 * 15, "double", dFdr_data, "dFdr");
+  op_dat dFds = op_decl_dat(cells, 4 * 15, "double", dFds_data, "dFds");
+  op_dat dGdr = op_decl_dat(cells, 4 * 15, "double", dGdr_data, "dGdr");
+  op_dat dGds = op_decl_dat(cells, 4 * 15, "double", dGds_data, "dGds");
   op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", workingQ_data, "workingQ");
   op_dat rk[3];
   rk[0] = op_decl_dat(cells, 4 * 15, "double", rk1_data, "rk1");
@@ -240,7 +253,7 @@ int main(int argc, char **argv) {
               op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_WRITE),
               op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_WRITE));
 
-  /*
+
   op_par_loop(set_ic, "set_ic", cells,
               op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_WRITE),
               op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
@@ -298,8 +311,16 @@ int main(int argc, char **argv) {
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
+      op_par_loop(internal_fluxes, "internal_fluxes", cells,
+                  op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+                  op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+
+      // TODO matrix mult
+
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
+
       op_par_loop(euler_rhs, "euler_rhs", cells,
                   op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
                   op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_RW),
@@ -310,9 +331,15 @@ int main(int argc, char **argv) {
                   op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
                   op_arg_dat(nx, -1, OP_ID, 3 * 5, "double", OP_READ),
                   op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_READ),
+                  op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_READ),
                   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
+
+      // TODO matrix mult
 
       if(j != 2) {
         op_timers(&cpu_loop_1, &wall_loop_1);
@@ -354,7 +381,7 @@ int main(int argc, char **argv) {
   }
   op_timers(&cpu_loop_end, &wall_loop_end);
 
-  cout << "Time: " << t << endl;*/
+  cout << "Time: " << t << endl;
 
   // Save info for python test script
   // op_fetch_data_hdf5_file(node_coords, "points.h5");
@@ -431,6 +458,12 @@ int main(int argc, char **argv) {
   free(edgeNum_data);
   free(bedgeNum_data);
   free(bedge_type_data);
+  free(F_data);
+  free(G_data);
+  free(dFdr_data);
+  free(dFds_data);
+  free(dGdr_data);
+  free(dGds_data);
 
   cublasDestroy(cublas_handle);
 }
