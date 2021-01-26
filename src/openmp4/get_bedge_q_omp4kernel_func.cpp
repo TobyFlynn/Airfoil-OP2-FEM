@@ -87,8 +87,6 @@ void get_bedge_q_omp4_kernel(
         exteriorQ[exInd + i * 4]     += q[qInd];
         exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
         exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
-
-
         exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
       }
     }
