@@ -9,7 +9,8 @@ inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
                       const double *ny, const double *dFdr, const double *dFds,
-                      const double *dGdr, const double *dGds, double *qRHS) {
+                      const double *dGdr, const double *dGds, double *flux,
+                      double *qRHS) {
   // Compute weak derivatives
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 15; j++) {
@@ -47,7 +48,6 @@ inline void euler_rhs(const double *q, double *exteriorQ,
     euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  double flux[4 * 3 * 5];
   // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
   roe(flux, nx, ny, fscale, q, exteriorQ);
 

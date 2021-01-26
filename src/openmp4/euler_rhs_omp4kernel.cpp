@@ -34,6 +34,8 @@ void euler_rhs_omp4_kernel(
   int dat12size,
   double *data13,
   int dat13size,
+  double *data14,
+  int dat14size,
   int count,
   int num_teams,
   int nthread);
@@ -53,10 +55,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13){
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 14;
-  op_arg args[14];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -72,6 +75,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[11] = arg11;
   args[12] = arg12;
   args[13] = arg13;
+  args[14] = arg14;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -131,6 +135,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     int dat12size = getSetSizeFromOpArg(&arg12) * arg12.dat->dim;
     double* data13 = (double*)arg13.data_d;
     int dat13size = getSetSizeFromOpArg(&arg13) * arg13.dat->dim;
+    double* data14 = (double*)arg14.data_d;
+    int dat14size = getSetSizeFromOpArg(&arg14) * arg14.dat->dim;
     euler_rhs_omp4_kernel(
       data0,
       dat0size,
@@ -160,6 +166,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       dat12size,
       data13,
       dat13size,
+      data14,
+      dat14size,
       set->size,
       part_size!=0?(set->size-1)/part_size+1:(set->size-1)/nthread,
       nthread);
@@ -187,4 +195,5 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   OP_kernels[7].transfer += (float)set->size * arg11.size;
   OP_kernels[7].transfer += (float)set->size * arg12.size;
   OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg14.size * 2.0f;
 }

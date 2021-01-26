@@ -33,11 +33,13 @@ void euler_rhs_omp4_kernel(
   int dat12size,
   double *data13,
   int dat13size,
+  double *data14,
+  int dat14size,
   int count,
   int num_teams,
   int nthread){
 
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size],data12[0:dat12size],data13[0:dat13size]) \
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size],data12[0:dat12size],data13[0:dat13size],data14[0:dat14size]) \
     map(to: FMASK_ompkernel[:15])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
@@ -55,7 +57,8 @@ void euler_rhs_omp4_kernel(
     const double *dFds = &data10[60*n_op];
     const double *dGdr = &data11[60*n_op];
     const double *dGds = &data12[60*n_op];
-    double *qRHS = &data13[60*n_op];
+    double *flux = &data13[60*n_op];
+    double *qRHS = &data14[60*n_op];
 
     //inline function
     
@@ -93,8 +96,6 @@ void euler_rhs_omp4_kernel(
     for(int i = 0; i < 3 * 5; i++) {
       euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
     }
-
-    double flux[4 * 3 * 5];
 
     roe(flux, nx, ny, fscale, q, exteriorQ);
 

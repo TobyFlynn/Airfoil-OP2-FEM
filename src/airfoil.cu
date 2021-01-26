@@ -139,6 +139,7 @@ int main(int argc, char **argv) {
   double *dGds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
+  double *flux_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
   // RK4 data
   double *rk1_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
   double *rk2_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
@@ -196,6 +197,7 @@ int main(int argc, char **argv) {
   rk[2] = op_decl_dat(cells, 4 * 15, "double", rk3_data, "rk3");
     // Holds neighbouring values of Q for nodes on faces
   op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", exteriorQ_data, "exteriorQ");
+  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", flux_data, "flux");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -322,6 +324,12 @@ int main(int argc, char **argv) {
                                (double *)dFds->data_d, (double *)dGdr->data_d,
                                (double *)dGds->data_d);
 
+      // Check this
+      dFdr->dirty_hd = 2;
+      dFds->dirty_hd = 2;
+      dGdr->dirty_hd = 2;
+      dGds->dirty_hd = 2;
+
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
 
@@ -339,11 +347,17 @@ int main(int argc, char **argv) {
                   op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_READ),
                   op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_READ),
                   op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_READ),
+                  op_arg_dat(flux, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE),
                   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
+      face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
+                           (double *)rk[j]->data_d);
+
+      // Check this
+      rk[j]->dirty_hd = 2;
 
       if(j != 2) {
         op_timers(&cpu_loop_1, &wall_loop_1);
@@ -468,6 +482,7 @@ int main(int argc, char **argv) {
   free(dFds_data);
   free(dGdr_data);
   free(dGds_data);
+  free(flux_data);
 
   cublasDestroy(cublas_handle);
 }

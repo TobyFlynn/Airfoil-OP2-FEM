@@ -14,7 +14,8 @@ inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
                       const double *ny, const double *dFdr, const double *dFds,
-                      const double *dGdr, const double *dGds, double *qRHS) {
+                      const double *dGdr, const double *dGds, double *flux,
+                      double *qRHS) {
   // Compute weak derivatives
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 15; j++) {
@@ -52,7 +53,6 @@ inline void euler_rhs(const double *q, double *exteriorQ,
     euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  double flux[4 * 3 * 5];
   // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
@@ -80,10 +80,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13){
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 14;
-  op_arg args[14];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -99,6 +100,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[11] = arg11;
   args[12] = arg12;
   args[13] = arg13;
+  args[14] = arg14;
   //create aligned pointers for dats
   ALIGNED_double const double * __restrict__ ptr0 = (double *) arg0.data;
   DECLARE_PTR_ALIGNED(ptr0,double_ALIGN);
@@ -128,6 +130,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   DECLARE_PTR_ALIGNED(ptr12,double_ALIGN);
   ALIGNED_double       double * __restrict__ ptr13 = (double *) arg13.data;
   DECLARE_PTR_ALIGNED(ptr13,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr14 = (double *) arg14.data;
+  DECLARE_PTR_ALIGNED(ptr14,double_ALIGN);
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -162,7 +166,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
           &(ptr10)[60 * (n+i)],
           &(ptr11)[60 * (n+i)],
           &(ptr12)[60 * (n+i)],
-          &(ptr13)[60 * (n+i)]);
+          &(ptr13)[60 * (n+i)],
+          &(ptr14)[60 * (n+i)]);
       }
     }
     //remainder
@@ -184,7 +189,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
         &(ptr10)[60*n],
         &(ptr11)[60*n],
         &(ptr12)[60*n],
-        &(ptr13)[60*n]);
+        &(ptr13)[60*n],
+        &(ptr14)[60*n]);
     }
   }
 
@@ -210,4 +216,5 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   OP_kernels[7].transfer += (float)set->size * arg11.size;
   OP_kernels[7].transfer += (float)set->size * arg12.size;
   OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg14.size * 2.0f;
 }

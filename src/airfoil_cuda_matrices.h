@@ -10,6 +10,7 @@ extern double Dr[15 * 15];
 extern double Ds[15 * 15];
 extern double Drw[15 * 15];
 extern double Dsw[15 * 15];
+extern double LIFT[15 * 15];
 
 void init_grid_matrices(cublasHandle_t handle, const int numCells,
                         const double *node_coords, const int *cell2nodes,
@@ -21,4 +22,6 @@ void internal_fluxes_matrices(cublasHandle_t handle, const int numCells,
                               double *dFdr_d, double *dFds_d, double *dGdr_d,
                               double *dGds_d);
 
+void face_fluxes_matrices(cublasHandle_t handle, const int numCells,
+                          const double *flux_d, double *qRHS_d);
 #endif

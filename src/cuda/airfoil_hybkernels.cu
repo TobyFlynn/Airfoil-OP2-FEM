@@ -458,7 +458,8 @@ void op_par_loop_euler_rhs_gpu(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13);
+  op_arg arg13,
+  op_arg arg14);
 
 //GPU host stub function
 #if OP_HYBRID_GPU
@@ -476,7 +477,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13){
+  op_arg arg13,
+  op_arg arg14){
 
   if (OP_hybrid_gpu) {
     op_par_loop_euler_rhs_gpu(name, set,
@@ -493,7 +495,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       arg10,
       arg11,
       arg12,
-      arg13);
+      arg13,
+      arg14);
 
     }else{
     op_par_loop_euler_rhs_cpu(name, set,
@@ -510,7 +513,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       arg10,
       arg11,
       arg12,
-      arg13);
+      arg13,
+      arg14);
 
   }
 }
@@ -529,7 +533,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13){
+  op_arg arg13,
+  op_arg arg14){
 
   op_par_loop_euler_rhs_gpu(name, set,
     arg0,
@@ -545,7 +550,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     arg10,
     arg11,
     arg12,
-    arg13);
+    arg13,
+    arg14);
 
   }
 #endif //OP_HYBRID_GPU

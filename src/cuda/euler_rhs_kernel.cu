@@ -12,7 +12,8 @@ __device__ void euler_rhs_gpu( const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
                       const double *ny, const double *dFdr, const double *dFds,
-                      const double *dGdr, const double *dGds, double *qRHS) {
+                      const double *dGdr, const double *dGds, double *flux,
+                      double *qRHS) {
 
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 15; j++) {
@@ -48,8 +49,6 @@ __device__ void euler_rhs_gpu( const double *q, double *exteriorQ,
     euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
   }
 
-  double flux[4 * 3 * 5];
-
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
 
@@ -77,6 +76,7 @@ __global__ void op_cuda_euler_rhs(
   const double *__restrict arg11,
   const double *__restrict arg12,
   double *arg13,
+  double *arg14,
   int   set_size ) {
 
 
@@ -97,7 +97,8 @@ __global__ void op_cuda_euler_rhs(
               arg10+n*60,
               arg11+n*60,
               arg12+n*60,
-              arg13+n*60);
+              arg13+n*60,
+              arg14+n*60);
   }
 }
 
@@ -117,10 +118,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg10,
   op_arg arg11,
   op_arg arg12,
-  op_arg arg13){
+  op_arg arg13,
+  op_arg arg14){
 
-  int nargs = 14;
-  op_arg args[14];
+  int nargs = 15;
+  op_arg args[15];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -136,6 +138,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[11] = arg11;
   args[12] = arg12;
   args[13] = arg13;
+  args[14] = arg14;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -176,6 +179,7 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       (double *) arg11.data_d,
       (double *) arg12.data_d,
       (double *) arg13.data_d,
+      (double *) arg14.data_d,
       set->size );
   }
   op_mpi_set_dirtybit_cuda(nargs, args);
@@ -197,4 +201,5 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   OP_kernels[7].transfer += (float)set->size * arg11.size;
   OP_kernels[7].transfer += (float)set->size * arg12.size;
   OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg14.size * 2.0f;
 }
