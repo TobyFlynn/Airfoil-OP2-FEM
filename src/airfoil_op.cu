@@ -415,7 +415,7 @@ int main(int argc, char **argv) {
                   op_arg_dat(nx,0,bedge2cells,15,"double",OP_READ),
                   op_arg_dat(ny,0,bedge2cells,15,"double",OP_READ),
                   op_arg_dat(workingQ,0,bedge2cells,60,"double",OP_READ),
-                  op_arg_dat(exteriorQ,0,bedge2cells,60,"double",OP_RW));
+                  op_arg_dat(exteriorQ,0,bedge2cells,60,"double",OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 

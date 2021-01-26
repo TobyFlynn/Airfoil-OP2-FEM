@@ -68,7 +68,7 @@ void get_bedge_q_omp4_kernel(
       for(int i = 0; i < 5; i++) {
         exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
         exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-        exteriorQ[exInd + i * 4 + 2] +=  bc_r_ompkernel * bc_v_ompkernel;
+        exteriorQ[exInd + i * 4 + 2] += bc_r_ompkernel * bc_v_ompkernel;
         exteriorQ[exInd + i * 4 + 3] += bc_e_ompkernel;
       }
     } else if(*bedge_type == 1) {
@@ -77,7 +77,7 @@ void get_bedge_q_omp4_kernel(
         int qInd = fmask[i] * 4;
         exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
         exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-        exteriorQ[exInd + i * 4 + 2] +=  bc_r_ompkernel * bc_v_ompkernel;
+        exteriorQ[exInd + i * 4 + 2] += bc_r_ompkernel * bc_v_ompkernel;
         exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
       }
     } else {
