@@ -99,9 +99,6 @@ void euler_rhs_omp4_kernel(
 
     roe(flux, nx, ny, fscale, q, exteriorQ);
 
-
-
-
     for(int i = 0; i < 4 * 3 * 5; i++) {
       exteriorQ[i] = 0.0;
     }

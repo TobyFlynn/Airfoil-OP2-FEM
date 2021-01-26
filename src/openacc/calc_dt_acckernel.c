@@ -3,8 +3,6 @@
 //
 
 //user function
-#include <cmath>
-
 //user function
 //#pragma acc routine
 inline void calc_dt_openacc( const double *q, const double *fscale, double *dt1) {

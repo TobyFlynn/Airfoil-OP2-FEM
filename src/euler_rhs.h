@@ -1,7 +1,3 @@
-// #include <cblas.h>
-// #include <algorithm>
-// #include <cmath>
-
 #include "fluxes.h"
 
 
@@ -50,10 +46,6 @@ inline void euler_rhs(const double *q, double *exteriorQ,
 
   // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
   roe(flux, nx, ny, fscale, q, exteriorQ);
-
-  // for(int i = 0; i < 4; i++) {
-  //   cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
-  // }
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
     exteriorQ[i] = 0.0;

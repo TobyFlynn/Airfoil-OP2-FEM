@@ -12,7 +12,7 @@ void face_fluxes_matrices(cublasHandle_t handle, const int numCells,
     for(int i = 0; i < 4; i++) {
       double alpha = -1.0;
       double beta = 1.0;
-      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, LIFT_d, 15, &flux[i], 4, &beta, qRHS + i, 4);
+      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, LIFT_d, 15, flux + i, 4, &beta, qRHS + i, 4);
     }
   }
 

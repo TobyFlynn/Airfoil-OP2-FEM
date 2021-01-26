@@ -3,8 +3,6 @@
 //
 
 //user function
-#include <cmath>
-
 inline void calc_dt(const double *q, const double *fscale, double *dt1) {
   double dt1_arr[3 * 5];
   for(int i = 0; i < 3 * 5; i++) {

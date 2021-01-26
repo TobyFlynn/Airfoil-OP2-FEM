@@ -50,8 +50,6 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
       exteriorQ[exInd + i * 4]     += q[qInd];
       exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
       exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
-      // exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
-      // exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
       exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
     }
   }
@@ -106,8 +104,6 @@ inline void get_bedge_q_vec( const int bedge_type[][SIMD_VEC], const int bedgeNu
       exteriorQ[exInd + i * 4][idx]     += q[qInd][idx];
       exteriorQ[exInd + i * 4 + 1][idx] += q[qInd + 1][idx] - 2 * (nx[nInd + i][idx] * q[qInd + 1][idx] + ny[nInd + i][idx] * q[qInd + 2][idx]) * nx[nInd + i][idx];
       exteriorQ[exInd + i * 4 + 2][idx] += q[qInd + 2][idx] - 2 * (nx[nInd + i][idx] * q[qInd + 1][idx] + ny[nInd + i][idx] * q[qInd + 2][idx]) * ny[nInd + i][idx];
-
-
       exteriorQ[exInd + i * 4 + 3][idx] += q[qInd + 3][idx];
     }
   }

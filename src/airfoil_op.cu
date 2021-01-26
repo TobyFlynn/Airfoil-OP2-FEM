@@ -523,7 +523,8 @@ int main(int argc, char **argv) {
 
   op_timers(&cpu_2, &wall_2);
 
-  /*op_timing_output();
+  op_timing_output();
+  /*
   cout << endl << "Total execution time: " << wall_2 - wall_1 << endl;
   cout << "Total time in main loop: " << wall_loop_end - wall_loop_start << endl;
   cout << "Average time per iteration: " << (wall_loop_end - wall_loop_start) / iter << endl;
@@ -547,7 +548,8 @@ int main(int argc, char **argv) {
   cout << "  Total: " << calc_dt_t << endl;
   // cout << "  Per iter: " << calc_dt_t / iter << endl;
 
-  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;*/
+  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;
+  */
 
   // Clean up OP2
   op_exit();

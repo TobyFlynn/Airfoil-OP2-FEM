@@ -3,9 +3,6 @@
 //
 
 //user function
-// #include <cblas.h>
-// #include <algorithm>
-// #include <cmath>
 #include "fluxes.h"
 
 //user function
@@ -52,9 +49,6 @@ inline void euler_rhs_openacc( const double *q, double *exteriorQ,
   }
 
   roe(flux, nx, ny, fscale, q, exteriorQ);
-
-
-
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
     exteriorQ[i] = 0.0;
