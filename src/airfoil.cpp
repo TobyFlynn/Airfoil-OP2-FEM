@@ -200,6 +200,15 @@ int main(int argc, char **argv) {
   op_decl_const(3 * 5, "int", FMASK);
   op_decl_const(15 * 15, "double", LIFT);
 
+  // Matrix multiplications using cuBLAS
+  // TODO set pointer mode to CUBLAS_POINTER_MODE_HOST
+  for(int c = 0; c < numCells; c++) {
+    // Get nodes for this cell (on host)
+    double *n0 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c]];
+    double *n1 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 1]];
+    double *n2 = &((double *)node_coords.data)[2 * cell2nodes.map[3 * c + 2]];
+  }
+
   // Initialisation kernels
   op_par_loop(init_grid, "init_grid", cells,
               op_arg_dat(node_coords, 0, cell2nodes, 2, "double", OP_READ),
@@ -247,7 +256,7 @@ int main(int argc, char **argv) {
   double set_workingQ_t = 0.0;
   double update_Q_t = 0.0;
   double calc_dt_t = 0.0;
-  op_timers(&cpu_loop_start, &wall_loop_start);
+  /*op_timers(&cpu_loop_start, &wall_loop_start);
   // Run the simulation
   for(int i = 0; i < iter; i++) {
     for(int j = 0; j < 3; j++) {
@@ -332,7 +341,7 @@ int main(int argc, char **argv) {
     if(i % 1000 == 0)
       cout << "iter: " << i << " time: " << t <<  " dt: " << dt << endl;
   }
-  op_timers(&cpu_loop_end, &wall_loop_end);
+  op_timers(&cpu_loop_end, &wall_loop_end);*/
 
   cout << "Time: " << t << endl;
 
@@ -352,7 +361,7 @@ int main(int argc, char **argv) {
 
   op_timers(&cpu_2, &wall_2);
 
-  op_timing_output();
+  /*op_timing_output();
   cout << endl << "Total execution time: " << wall_2 - wall_1 << endl;
   cout << "Total time in main loop: " << wall_loop_end - wall_loop_start << endl;
   cout << "Average time per iteration: " << (wall_loop_end - wall_loop_start) / iter << endl;
@@ -376,7 +385,7 @@ int main(int argc, char **argv) {
   cout << "  Total: " << calc_dt_t << endl;
   // cout << "  Per iter: " << calc_dt_t / iter << endl;
 
-  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;
+  cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;*/
 
   // Clean up OP2
   op_exit();
