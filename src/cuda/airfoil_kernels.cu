@@ -113,6 +113,7 @@ int size, char *dat, char const *name){
 #include "calc_dt_kernel.cu"
 #include "get_neighbour_q_kernel.cu"
 #include "get_bedge_q_kernel.cu"
+#include "internal_fluxes_kernel.cu"
 #include "euler_rhs_kernel.cu"
 #include "set_workingQ_kernel.cu"
 #include "update_Q_kernel.cu"

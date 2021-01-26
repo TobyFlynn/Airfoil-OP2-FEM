@@ -31,6 +31,7 @@ extern double LIFT[225];
 #include "calc_dt_seqkernel.cpp"
 #include "get_neighbour_q_seqkernel.cpp"
 #include "get_bedge_q_seqkernel.cpp"
+#include "internal_fluxes_seqkernel.cpp"
 #include "euler_rhs_seqkernel.cpp"
 #include "set_workingQ_seqkernel.cpp"
 #include "update_Q_seqkernel.cpp"

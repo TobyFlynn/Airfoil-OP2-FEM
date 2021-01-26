@@ -12,6 +12,7 @@
 #include "calc_dt_omp4kernel.cpp"
 #include "get_neighbour_q_omp4kernel.cpp"
 #include "get_bedge_q_omp4kernel.cpp"
+#include "internal_fluxes_omp4kernel.cpp"
 #include "euler_rhs_omp4kernel.cpp"
 #include "set_workingQ_omp4kernel.cpp"
 #include "update_Q_omp4kernel.cpp"

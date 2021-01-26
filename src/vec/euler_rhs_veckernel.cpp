@@ -5,7 +5,7 @@
 //user function
 // #include <cblas.h>
 // #include <algorithm>
-#include <cmath>
+// #include <cmath>
 
 #include "fluxes.h"
 
@@ -13,28 +13,12 @@
 inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
-                      const double *ny, double *qRHS) {
-  double F[4 * 15];
-  double G[4 * 15];
-  for(int i = 0; i < 15; i++) {
-    double rho, u, v, p;
-    euler_flux(&q[i * 4], &F[i * 4], &G[i * 4], &rho, &u, &v, &p);
-  }
-
+                      const double *ny, const double *dFdr, const double *dFds,
+                      const double *dGdr, const double *dGds, double *qRHS) {
   // Compute weak derivatives
   for(int i = 0; i < 4; i++) {
-    double dFdr[15];
-    double dFds[15];
-    double dGdr[15];
-    double dGds[15];
-
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &F[i], 4, 0.0, dFdr, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &F[i], 4, 0.0, dFds, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &G[i], 4, 0.0, dGdr, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &G[i], 4, 0.0, dGds, 1);
-
     for(int j = 0; j < 15; j++) {
-      // qRHS[i + j * 4] = (rx[j] * dFdr[j] + sx[j] * dFds[j]) + (ry[j] * dGdr[j] + sy[j] * dGds[j]);
+      qRHS[i + j * 4] = (rx[j] * dFdr[i + j * 4] + sx[j] * dFds[i + j * 4]) + (ry[j] * dGdr[i + j * 4] + sy[j] * dGds[i + j * 4]);
     }
   }
 
@@ -72,9 +56,9 @@ inline void euler_rhs(const double *q, double *exteriorQ,
   // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
-  for(int i = 0; i < 4; i++) {
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
-  }
+  // for(int i = 0; i < 4; i++) {
+  //   cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, -1.0, LIFT, 15, &flux[i], 4, 1.0, qRHS + i, 4);
+  // }
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
     exteriorQ[i] = 0.0;
@@ -92,10 +76,14 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg6,
   op_arg arg7,
   op_arg arg8,
-  op_arg arg9){
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13){
 
-  int nargs = 10;
-  op_arg args[10];
+  int nargs = 14;
+  op_arg args[14];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -107,6 +95,10 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[7] = arg7;
   args[8] = arg8;
   args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
   //create aligned pointers for dats
   ALIGNED_double const double * __restrict__ ptr0 = (double *) arg0.data;
   DECLARE_PTR_ALIGNED(ptr0,double_ALIGN);
@@ -126,12 +118,20 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   DECLARE_PTR_ALIGNED(ptr7,double_ALIGN);
   ALIGNED_double const double * __restrict__ ptr8 = (double *) arg8.data;
   DECLARE_PTR_ALIGNED(ptr8,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr9 = (double *) arg9.data;
+  ALIGNED_double const double * __restrict__ ptr9 = (double *) arg9.data;
   DECLARE_PTR_ALIGNED(ptr9,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr10 = (double *) arg10.data;
+  DECLARE_PTR_ALIGNED(ptr10,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr11 = (double *) arg11.data;
+  DECLARE_PTR_ALIGNED(ptr11,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr12 = (double *) arg12.data;
+  DECLARE_PTR_ALIGNED(ptr12,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr13 = (double *) arg13.data;
+  DECLARE_PTR_ALIGNED(ptr13,double_ALIGN);
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(6);
+  op_timing_realloc(7);
   op_timers_core(&cpu_t1, &wall_t1);
 
 
@@ -158,7 +158,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
           &(ptr6)[15 * (n+i)],
           &(ptr7)[15 * (n+i)],
           &(ptr8)[15 * (n+i)],
-          &(ptr9)[60 * (n+i)]);
+          &(ptr9)[60 * (n+i)],
+          &(ptr10)[60 * (n+i)],
+          &(ptr11)[60 * (n+i)],
+          &(ptr12)[60 * (n+i)],
+          &(ptr13)[60 * (n+i)]);
       }
     }
     //remainder
@@ -176,7 +180,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
         &(ptr6)[15*n],
         &(ptr7)[15*n],
         &(ptr8)[15*n],
-        &(ptr9)[60*n]);
+        &(ptr9)[60*n],
+        &(ptr10)[60*n],
+        &(ptr11)[60*n],
+        &(ptr12)[60*n],
+        &(ptr13)[60*n]);
     }
   }
 
@@ -185,17 +193,21 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[6].name      = name;
-  OP_kernels[6].count    += 1;
-  OP_kernels[6].time     += wall_t2 - wall_t1;
-  OP_kernels[6].transfer += (float)set->size * arg0.size;
-  OP_kernels[6].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[6].transfer += (float)set->size * arg2.size;
-  OP_kernels[6].transfer += (float)set->size * arg3.size;
-  OP_kernels[6].transfer += (float)set->size * arg4.size;
-  OP_kernels[6].transfer += (float)set->size * arg5.size;
-  OP_kernels[6].transfer += (float)set->size * arg6.size;
-  OP_kernels[6].transfer += (float)set->size * arg7.size;
-  OP_kernels[6].transfer += (float)set->size * arg8.size;
-  OP_kernels[6].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[7].name      = name;
+  OP_kernels[7].count    += 1;
+  OP_kernels[7].time     += wall_t2 - wall_t1;
+  OP_kernels[7].transfer += (float)set->size * arg0.size;
+  OP_kernels[7].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg2.size;
+  OP_kernels[7].transfer += (float)set->size * arg3.size;
+  OP_kernels[7].transfer += (float)set->size * arg4.size;
+  OP_kernels[7].transfer += (float)set->size * arg5.size;
+  OP_kernels[7].transfer += (float)set->size * arg6.size;
+  OP_kernels[7].transfer += (float)set->size * arg7.size;
+  OP_kernels[7].transfer += (float)set->size * arg8.size;
+  OP_kernels[7].transfer += (float)set->size * arg9.size;
+  OP_kernels[7].transfer += (float)set->size * arg10.size;
+  OP_kernels[7].transfer += (float)set->size * arg11.size;
+  OP_kernels[7].transfer += (float)set->size * arg12.size;
+  OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
 }

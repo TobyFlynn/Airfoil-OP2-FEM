@@ -33,6 +33,7 @@ int size, char *dat, char const *name){}
 #include "calc_dt_acckernel.c"
 #include "get_neighbour_q_acckernel.c"
 #include "get_bedge_q_acckernel.c"
+#include "internal_fluxes_acckernel.c"
 #include "euler_rhs_acckernel.c"
 #include "set_workingQ_acckernel.c"
 #include "update_Q_acckernel.c"

@@ -35,6 +35,7 @@ extern double LIFT[225];
 #include "calc_dt_kernel.cpp"
 #include "get_neighbour_q_kernel.cpp"
 #include "get_bedge_q_kernel.cpp"
+#include "internal_fluxes_kernel.cpp"
 #include "euler_rhs_kernel.cpp"
 #include "set_workingQ_kernel.cpp"
 #include "update_Q_kernel.cpp"

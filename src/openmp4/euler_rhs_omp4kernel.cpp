@@ -26,6 +26,14 @@ void euler_rhs_omp4_kernel(
   int dat8size,
   double *data9,
   int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
+  double *data12,
+  int dat12size,
+  double *data13,
+  int dat13size,
   int count,
   int num_teams,
   int nthread);
@@ -41,10 +49,14 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg6,
   op_arg arg7,
   op_arg arg8,
-  op_arg arg9){
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13){
 
-  int nargs = 10;
-  op_arg args[10];
+  int nargs = 14;
+  op_arg args[14];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -56,13 +68,17 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[7] = arg7;
   args[8] = arg8;
   args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(6);
+  op_timing_realloc(7);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[6].name      = name;
-  OP_kernels[6].count    += 1;
+  OP_kernels[7].name      = name;
+  OP_kernels[7].count    += 1;
 
 
   if (OP_diags>2) {
@@ -71,13 +87,13 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
 
   int set_size = op_mpi_halo_exchanges_cuda(set, nargs, args);
 
-  #ifdef OP_PART_SIZE_6
-    int part_size = OP_PART_SIZE_6;
+  #ifdef OP_PART_SIZE_7
+    int part_size = OP_PART_SIZE_7;
   #else
     int part_size = OP_part_size;
   #endif
-  #ifdef OP_BLOCK_SIZE_6
-    int nthread = OP_BLOCK_SIZE_6;
+  #ifdef OP_BLOCK_SIZE_7
+    int nthread = OP_BLOCK_SIZE_7;
   #else
     int nthread = OP_block_size;
   #endif
@@ -107,6 +123,14 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     int dat8size = getSetSizeFromOpArg(&arg8) * arg8.dat->dim;
     double* data9 = (double*)arg9.data_d;
     int dat9size = getSetSizeFromOpArg(&arg9) * arg9.dat->dim;
+    double* data10 = (double*)arg10.data_d;
+    int dat10size = getSetSizeFromOpArg(&arg10) * arg10.dat->dim;
+    double* data11 = (double*)arg11.data_d;
+    int dat11size = getSetSizeFromOpArg(&arg11) * arg11.dat->dim;
+    double* data12 = (double*)arg12.data_d;
+    int dat12size = getSetSizeFromOpArg(&arg12) * arg12.dat->dim;
+    double* data13 = (double*)arg13.data_d;
+    int dat13size = getSetSizeFromOpArg(&arg13) * arg13.dat->dim;
     euler_rhs_omp4_kernel(
       data0,
       dat0size,
@@ -128,6 +152,14 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       dat8size,
       data9,
       dat9size,
+      data10,
+      dat10size,
+      data11,
+      dat11size,
+      data12,
+      dat12size,
+      data13,
+      dat13size,
       set->size,
       part_size!=0?(set->size-1)/part_size+1:(set->size-1)/nthread,
       nthread);
@@ -140,15 +172,19 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   if (OP_diags>1) deviceSync();
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[6].time     += wall_t2 - wall_t1;
-  OP_kernels[6].transfer += (float)set->size * arg0.size;
-  OP_kernels[6].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[6].transfer += (float)set->size * arg2.size;
-  OP_kernels[6].transfer += (float)set->size * arg3.size;
-  OP_kernels[6].transfer += (float)set->size * arg4.size;
-  OP_kernels[6].transfer += (float)set->size * arg5.size;
-  OP_kernels[6].transfer += (float)set->size * arg6.size;
-  OP_kernels[6].transfer += (float)set->size * arg7.size;
-  OP_kernels[6].transfer += (float)set->size * arg8.size;
-  OP_kernels[6].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[7].time     += wall_t2 - wall_t1;
+  OP_kernels[7].transfer += (float)set->size * arg0.size;
+  OP_kernels[7].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg2.size;
+  OP_kernels[7].transfer += (float)set->size * arg3.size;
+  OP_kernels[7].transfer += (float)set->size * arg4.size;
+  OP_kernels[7].transfer += (float)set->size * arg5.size;
+  OP_kernels[7].transfer += (float)set->size * arg6.size;
+  OP_kernels[7].transfer += (float)set->size * arg7.size;
+  OP_kernels[7].transfer += (float)set->size * arg8.size;
+  OP_kernels[7].transfer += (float)set->size * arg9.size;
+  OP_kernels[7].transfer += (float)set->size * arg10.size;
+  OP_kernels[7].transfer += (float)set->size * arg11.size;
+  OP_kernels[7].transfer += (float)set->size * arg12.size;
+  OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
 }

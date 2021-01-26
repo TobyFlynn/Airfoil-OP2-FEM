@@ -5,7 +5,7 @@
 //user function
 // #include <cblas.h>
 // #include <algorithm>
-#include <cmath>
+// #include <cmath>
 #include "fluxes.h"
 
 //user function
@@ -13,26 +13,12 @@
 inline void euler_rhs_openacc( const double *q, double *exteriorQ,
                       const double *rx, const double *ry, const double *sx,
                       const double *sy, const double *fscale, const double *nx,
-                      const double *ny, double *qRHS) {
-  double F[4 * 15];
-  double G[4 * 15];
-  for(int i = 0; i < 15; i++) {
-    double rho, u, v, p;
-    euler_flux(&q[i * 4], &F[i * 4], &G[i * 4], &rho, &u, &v, &p);
-  }
+                      const double *ny, const double *dFdr, const double *dFds,
+                      const double *dGdr, const double *dGds, double *qRHS) {
 
   for(int i = 0; i < 4; i++) {
-    double dFdr[15];
-    double dFds[15];
-    double dGdr[15];
-    double dGds[15];
-
-
-
-
-
     for(int j = 0; j < 15; j++) {
-
+      qRHS[i + j * 4] = (rx[j] * dFdr[i + j * 4] + sx[j] * dFds[i + j * 4]) + (ry[j] * dGdr[i + j * 4] + sy[j] * dGds[i + j * 4]);
     }
   }
 
@@ -68,9 +54,8 @@ inline void euler_rhs_openacc( const double *q, double *exteriorQ,
 
   roe(flux, nx, ny, fscale, q, exteriorQ);
 
-  for(int i = 0; i < 4; i++) {
 
-  }
+
 
   for(int i = 0; i < 4 * 3 * 5; i++) {
     exteriorQ[i] = 0.0;
@@ -88,10 +73,14 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg6,
   op_arg arg7,
   op_arg arg8,
-  op_arg arg9){
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13){
 
-  int nargs = 10;
-  op_arg args[10];
+  int nargs = 14;
+  op_arg args[14];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -103,13 +92,17 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[7] = arg7;
   args[8] = arg8;
   args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(6);
+  op_timing_realloc(7);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[6].name      = name;
-  OP_kernels[6].count    += 1;
+  OP_kernels[7].name      = name;
+  OP_kernels[7].count    += 1;
 
 
   if (OP_diags>2) {
@@ -134,7 +127,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     double* data7 = (double*)arg7.data_d;
     double* data8 = (double*)arg8.data_d;
     double* data9 = (double*)arg9.data_d;
-    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6,data7,data8,data9)
+    double* data10 = (double*)arg10.data_d;
+    double* data11 = (double*)arg11.data_d;
+    double* data12 = (double*)arg12.data_d;
+    double* data13 = (double*)arg13.data_d;
+    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13)
     for ( int n=0; n<set->size; n++ ){
       euler_rhs_openacc(
         &data0[60*n],
@@ -146,7 +143,11 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
         &data6[15*n],
         &data7[15*n],
         &data8[15*n],
-        &data9[60*n]);
+        &data9[60*n],
+        &data10[60*n],
+        &data11[60*n],
+        &data12[60*n],
+        &data13[60*n]);
     }
   }
 
@@ -155,15 +156,19 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[6].time     += wall_t2 - wall_t1;
-  OP_kernels[6].transfer += (float)set->size * arg0.size;
-  OP_kernels[6].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[6].transfer += (float)set->size * arg2.size;
-  OP_kernels[6].transfer += (float)set->size * arg3.size;
-  OP_kernels[6].transfer += (float)set->size * arg4.size;
-  OP_kernels[6].transfer += (float)set->size * arg5.size;
-  OP_kernels[6].transfer += (float)set->size * arg6.size;
-  OP_kernels[6].transfer += (float)set->size * arg7.size;
-  OP_kernels[6].transfer += (float)set->size * arg8.size;
-  OP_kernels[6].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[7].time     += wall_t2 - wall_t1;
+  OP_kernels[7].transfer += (float)set->size * arg0.size;
+  OP_kernels[7].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg2.size;
+  OP_kernels[7].transfer += (float)set->size * arg3.size;
+  OP_kernels[7].transfer += (float)set->size * arg4.size;
+  OP_kernels[7].transfer += (float)set->size * arg5.size;
+  OP_kernels[7].transfer += (float)set->size * arg6.size;
+  OP_kernels[7].transfer += (float)set->size * arg7.size;
+  OP_kernels[7].transfer += (float)set->size * arg8.size;
+  OP_kernels[7].transfer += (float)set->size * arg9.size;
+  OP_kernels[7].transfer += (float)set->size * arg10.size;
+  OP_kernels[7].transfer += (float)set->size * arg11.size;
+  OP_kernels[7].transfer += (float)set->size * arg12.size;
+  OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
 }

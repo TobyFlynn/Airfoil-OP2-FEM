@@ -24,16 +24,16 @@
 #include "airfoil_cuda_matrices.h"
 
 // Include kernels
-#include "init_grid.h"
+// #include "init_grid.h"
 // #include "euler_rhs.h"
-#include "get_neighbour_q.h"
-#include "get_bedge_q.h"
-#include "set_ic.h"
-#include "set_workingQ.h"
-#include "update_Q.h"
-#include "calc_dt.h"
-#include "neighbour_zero.h"
-#include "internal_fluxes.h"
+// #include "get_neighbour_q.h"
+// #include "get_bedge_q.h"
+// #include "set_ic.h"
+// #include "set_workingQ.h"
+// #include "update_Q.h"
+// #include "calc_dt.h"
+// #include "neighbour_zero.h"
+// #include "internal_fluxes.h"
 
 using namespace std;
 
@@ -317,6 +317,10 @@ int main(int argc, char **argv) {
                   op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_WRITE));
 
       // TODO matrix mult
+      internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
+                               (double *)G->data_d, (double *)dFdr->data_d,
+                               (double *)dFds->data_d, (double *)dGdr->data_d,
+                               (double *)dGds->data_d);
 
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);

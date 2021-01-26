@@ -1,6 +1,6 @@
 // #include <cblas.h>
 // #include <algorithm>
-#include <cmath>
+// #include <cmath>
 
 #include "fluxes.h"
 
@@ -12,18 +12,8 @@ inline void euler_rhs(const double *q, double *exteriorQ,
                       const double *dGdr, const double *dGds, double *qRHS) {
   // Compute weak derivatives
   for(int i = 0; i < 4; i++) {
-    // double dFdr[15];
-    // double dFds[15];
-    // double dGdr[15];
-    // double dGds[15];
-
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &F[i], 4, 0.0, dFdr, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &F[i], 4, 0.0, dFds, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Drw, 15, &G[i], 4, 0.0, dGdr, 1);
-    // cblas_dgemv(CblasRowMajor, CblasNoTrans, 15, 15, 1.0, Dsw, 15, &G[i], 4, 0.0, dGds, 1);
-
     for(int j = 0; j < 15; j++) {
-      qRHS[i + j * 4] = (rx[j] * dFdr[j] + sx[j] * dFds[j]) + (ry[j] * dGdr[j] + sy[j] * dGds[j]);
+      qRHS[i + j * 4] = (rx[j] * dFdr[i + j * 4] + sx[j] * dFds[i + j * 4]) + (ry[j] * dGdr[i + j * 4] + sy[j] * dGds[i + j * 4]);
     }
   }
 
