@@ -10,7 +10,7 @@ __device__ void calc_dt_gpu( const double *q, const double *fscale, double *dt1)
     double u = q[FMASK_cuda[i] * 4 + 1] / rho;
     double v = q[FMASK_cuda[i] * 4 + 2] / rho;
     double p = (gam_cuda - 1.0) * (q[FMASK_cuda[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
-    double c = sqrt(abs(gam_cuda * p / rho));
+    double c = sqrt(fabs(gam_cuda * p / rho));
     dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK_cuda[i]] *(sqrt(u * u + v * v) + c);
   }
 

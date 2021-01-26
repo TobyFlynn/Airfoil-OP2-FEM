@@ -12,7 +12,7 @@ inline void calc_dt_openacc( const double *q, const double *fscale, double *dt1)
     double u = q[FMASK[i] * 4 + 1] / rho;
     double v = q[FMASK[i] * 4 + 2] / rho;
     double p = (gam - 1.0) * (q[FMASK[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
-    double c = sqrt(abs(gam * p / rho));
+    double c = sqrt(fabs(gam * p / rho));
     dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK[i]] *(sqrt(u * u + v * v) + c);
   }
 

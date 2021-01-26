@@ -1,9 +1,6 @@
 #ifndef __AIRFOIL_FLUXES_H
 #define __AIRFOIL_FLUXES_H
 
-#include <cmath>
-#include <algorithm>
-
 using namespace std;
 
 __device__ void euler_flux(const double *q, double *F, double *G, double *rho,
@@ -65,8 +62,8 @@ __device__ void lax_friedrichs(double *flux, const double *nx, const double *ny,
   double maxL;
   double maxLamda[3 * 5];
   for(int i = 0; i < 5; i++) {
-    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
-    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
+    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(fabs(gam * mP[i] / mRho[i]));
+    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(fabs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
     if(i == 0 || lamda > maxL) {
       maxL = lamda;
@@ -78,8 +75,8 @@ __device__ void lax_friedrichs(double *flux, const double *nx, const double *ny,
   }
 
   for(int i = 5; i < 2 * 5; i++) {
-    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
-    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
+    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(fabs(gam * mP[i] / mRho[i]));
+    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(fabs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
     if(i == 5 || lamda > maxL) {
       maxL = lamda;
@@ -91,8 +88,8 @@ __device__ void lax_friedrichs(double *flux, const double *nx, const double *ny,
   }
 
   for(int i = 2 * 5; i < 3 * 5; i++) {
-    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
-    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
+    double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(fabs(gam * mP[i] / mRho[i]));
+    double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(fabs(gam * pP[i] / pRho[i]));
     double lamda = max(m, p);
     if(i == 2 * 5 || lamda > maxL) {
       maxL = lamda;
@@ -198,10 +195,10 @@ __device__ void roe(double *flux, const double *nx, const double *ny,
     double dW3 = rho * (pRoeV - mRoeV);
     double dW4 = 0.5 * rho * (pRoeU - mRoeU) / c + 0.5 * (pRoeP - mRoeP) / c2;
 
-    dW1 = abs(u - c) * dW1;
-    dW2 = abs(u) * dW2;
-    dW3 = abs(u) * dW3;
-    dW4 = abs(u + c) * dW4;
+    dW1 = fabs(u - c) * dW1;
+    dW2 = fabs(u) * dW2;
+    dW3 = fabs(u) * dW3;
+    dW4 = fabs(u + c) * dW4;
 
     double fx[4];
     fx[0] = (fxMQ[0] + fxPQ[0]) / 2.0;

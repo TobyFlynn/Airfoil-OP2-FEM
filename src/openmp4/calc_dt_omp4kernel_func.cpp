@@ -31,7 +31,7 @@ void calc_dt_omp4_kernel(
       double u = q[FMASK_ompkernel[i] * 4 + 1] / rho;
       double v = q[FMASK_ompkernel[i] * 4 + 2] / rho;
       double p = (gam_ompkernel - 1.0) * (q[FMASK_ompkernel[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
-      double c = sqrt(abs(gam_ompkernel * p / rho));
+      double c = sqrt(fabs(gam_ompkernel * p / rho));
       dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK_ompkernel[i]] *(sqrt(u * u + v * v) + c);
     }
 
