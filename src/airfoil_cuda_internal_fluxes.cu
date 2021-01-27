@@ -24,10 +24,10 @@ void internal_fluxes_matrices(cublasHandle_t handle, const int numCells,
       double alpha = 1.0;
       double beta = 0.0;
       // CUBLAS_OP_T because cublas is column major but constants are stored row major
-      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Drw_d, 15, F + i, 4, &beta, dFdr, 4);
-      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Dsw_d, 15, F + i, 4, &beta, dFds, 4);
-      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Drw_d, 15, G + i, 4, &beta, dGdr, 4);
-      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Dsw_d, 15, G + i, 4, &beta, dGds, 4);
+      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Drw_d, 15, F + i, 4, &beta, dFdr + i, 4);
+      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Dsw_d, 15, F + i, 4, &beta, dFds + i, 4);
+      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Drw_d, 15, G + i, 4, &beta, dGdr + i, 4);
+      cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Dsw_d, 15, G + i, 4, &beta, dGds + i, 4);
     }
   }
 
