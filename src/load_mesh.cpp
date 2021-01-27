@@ -174,12 +174,12 @@ void load_mesh(std::string filename, int *numNodes, int *numCells,
   cg_close(file);
 
   // Write cell data to text file (for python sanity check)
-  // ofstream cellFile;
-  // cellFile.open("cells.txt");
-  // for(int i = 0; i < *numCells; i++) {
-  //   cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
-  // }
-  // cellFile.close();
+  ofstream cellFile;
+  cellFile.open("cells.txt");
+  for(int i = 0; i < *numCells; i++) {
+    cellFile << (*cgnsCells)[3 * i] << " " << (*cgnsCells)[3 * i + 1] << " " << (*cgnsCells)[3 * i + 2] << endl;
+  }
+  cellFile.close();
   //
   // cout << "Number of edges: " << *numEdges << endl;
   //

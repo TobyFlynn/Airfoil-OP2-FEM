@@ -329,18 +329,28 @@ int main(int argc, char **argv) {
   op_decl_const2("LIFT",225,"double",LIFT);
 
   // Matrix multiplications using cuBLAS
+  op_arg init_grid_args[] = {
+    op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
   init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
                      (int *)cell2nodes->map, (double *)x->data_d,
                      (double *)y->data_d, (double *)xr->data_d,
                      (double *)xs->data_d, (double *)yr->data_d,
                      (double *)ys->data_d);
   // Check this
-  x->dirty_hd = 2;
-  y->dirty_hd = 2;
-  xr->dirty_hd = 2;
-  xs->dirty_hd = 2;
-  yr->dirty_hd = 2;
-  ys->dirty_hd = 2;
+  op_mpi_set_dirtybit_cuda(6, init_grid_args);
+  // x->dirty_hd = 2;
+  // y->dirty_hd = 2;
+  // xr->dirty_hd = 2;
+  // xs->dirty_hd = 2;
+  // yr->dirty_hd = 2;
+  // ys->dirty_hd = 2;
 
   // Initialisation kernels
   op_par_loop_init_grid("init_grid",cells,
@@ -425,16 +435,26 @@ int main(int argc, char **argv) {
                   op_arg_dat(G,-1,OP_ID,60,"double",OP_WRITE));
 
       // TODO matrix mult
+      op_arg internal_fluxes_args[] = {
+        op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
+        op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
+        op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+        op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+        op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+        op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
+      };
+      op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
       internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
                                (double *)G->data_d, (double *)dFdr->data_d,
                                (double *)dFds->data_d, (double *)dGdr->data_d,
                                (double *)dGds->data_d);
 
       // Check this
-      dFdr->dirty_hd = 2;
-      dFds->dirty_hd = 2;
-      dGdr->dirty_hd = 2;
-      dGds->dirty_hd = 2;
+      op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
+      // dFdr->dirty_hd = 2;
+      // dFds->dirty_hd = 2;
+      // dGdr->dirty_hd = 2;
+      // dGds->dirty_hd = 2;
 
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
@@ -459,11 +479,17 @@ int main(int argc, char **argv) {
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
+      op_arg face_fluxes_args[] = {
+        op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
+        op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
+      };
+      op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
       face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
                            (double *)rk[j]->data_d);
 
       // Check this
-      rk[j]->dirty_hd = 2;
+      op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
+      // rk[j]->dirty_hd = 2;
 
       if(j != 2) {
         op_timers(&cpu_loop_1, &wall_loop_1);
@@ -508,11 +534,11 @@ int main(int argc, char **argv) {
   cout << "Time: " << t << endl;
 
   // Save info for python test script
-  // op_fetch_data_hdf5_file(node_coords, "points.h5");
-  // op_fetch_data_hdf5_file(x, "points.h5");
-  // op_fetch_data_hdf5_file(y, "points.h5");
-  // op_fetch_data_hdf5_file(nx, "points.h5");
-  // op_fetch_data_hdf5_file(ny, "points.h5");
+  op_fetch_data_hdf5_file(node_coords, "points.h5");
+  op_fetch_data_hdf5_file(x, "points.h5");
+  op_fetch_data_hdf5_file(y, "points.h5");
+  op_fetch_data_hdf5_file(nx, "points.h5");
+  op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Save solution to CGNS file
   double *sol_q = (double *)malloc(4 * 15 * op_get_size(cells) * sizeof(double));
