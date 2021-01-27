@@ -4,7 +4,6 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
                         const double *node_coords, const int *cell2nodes,
                         double *x_d, double *y_d, double *xr_d, double *xs_d,
                         double *yr_d, double *ys_d) {
-  cudaDeviceSynchronize();
   double *ones_d;
   cudaMalloc((void**)&ones_d, 15 * sizeof(double));
   cudaMemcpy(ones_d, ones, 15 * sizeof(double), cudaMemcpyHostToDevice);
@@ -27,7 +26,15 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
   double *Ds_d;
   cudaMalloc((void**)&Ds_d, 15 * 15 * sizeof(double));
   cudaMemcpy(Ds_d, Ds, 15 * 15 * sizeof(double), cudaMemcpyHostToDevice);
+
+  cudaDeviceSynchronize();
+  cudaStream_t streams[NUMBER_OF_MATRIX_STREAMS];
+  for(int i = 0; i < NUMBER_OF_MATRIX_STREAMS; i++) {
+    cudaStreamCreate(&streams[i]);
+  }
+
   for(int c = 0; c < numCells; c++) {
+    cublasSetStream(handle, streams[c % NUMBER_OF_MATRIX_STREAMS]);
     // Get nodes for this cell (on host)
     const double *n0 = &node_coords[2 * cell2nodes[3 * c]];
     const double *n1 = &node_coords[2 * cell2nodes[3 * c + 1]];
@@ -84,6 +91,10 @@ void init_grid_matrices(cublasHandle_t handle, const int numCells,
     cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Dr_d, 15, y, 1, &beta, yr, 1);
     // ys = Ds * y
     cublasDgemv(handle, CUBLAS_OP_T, 15, 15, &alpha, Ds_d, 15, y, 1, &beta, ys, 1);
+  }
+
+  for(int i = 0; i < NUMBER_OF_MATRIX_STREAMS; i++) {
+    cudaStreamDestroy(streams[i]);
   }
 
   cudaFree(ones_d);

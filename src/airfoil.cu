@@ -292,6 +292,9 @@ int main(int argc, char **argv) {
   double set_workingQ_t = 0.0;
   double update_Q_t = 0.0;
   double calc_dt_t = 0.0;
+  double internal_fluxes_t = 0.0;
+  double internal_fluxes_mat_t = 0.0;
+  double face_fluxes_mat_t = 0.0;
   op_timers(&cpu_loop_start, &wall_loop_start);
   // Run the simulation
   for(int i = 0; i < iter; i++) {
@@ -323,12 +326,16 @@ int main(int argc, char **argv) {
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
+      op_timers(&cpu_loop_1, &wall_loop_1);
       op_par_loop(internal_fluxes, "internal_fluxes", cells,
                   op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
                   op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_WRITE),
                   op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+      op_timers(&cpu_loop_2, &wall_loop_2);
+      internal_fluxes_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
+      op_timers(&cpu_loop_1, &wall_loop_1);
       op_arg internal_fluxes_args[] = {
         op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
         op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
@@ -349,6 +356,8 @@ int main(int argc, char **argv) {
       // dFds->dirty_hd = 2;
       // dGdr->dirty_hd = 2;
       // dGds->dirty_hd = 2;
+      op_timers(&cpu_loop_2, &wall_loop_2);
+      internal_fluxes_mat_t += wall_loop_2 - wall_loop_1;
 
       // Calculate vectors F an G from q for each cell
       op_timers(&cpu_loop_1, &wall_loop_1);
@@ -373,6 +382,7 @@ int main(int argc, char **argv) {
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
+      op_timers(&cpu_loop_1, &wall_loop_1);
       op_arg face_fluxes_args[] = {
         op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
         op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
@@ -384,6 +394,8 @@ int main(int argc, char **argv) {
       // Check this
       op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
       // rk[j]->dirty_hd = 2;
+      op_timers(&cpu_loop_2, &wall_loop_2);
+      face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
 
       if(j != 2) {
         op_timers(&cpu_loop_1, &wall_loop_1);
@@ -428,11 +440,11 @@ int main(int argc, char **argv) {
   cout << "Time: " << t << endl;
 
   // Save info for python test script
-  op_fetch_data_hdf5_file(node_coords, "points.h5");
-  op_fetch_data_hdf5_file(x, "points.h5");
-  op_fetch_data_hdf5_file(y, "points.h5");
-  op_fetch_data_hdf5_file(nx, "points.h5");
-  op_fetch_data_hdf5_file(ny, "points.h5");
+  // op_fetch_data_hdf5_file(node_coords, "points.h5");
+  // op_fetch_data_hdf5_file(x, "points.h5");
+  // op_fetch_data_hdf5_file(y, "points.h5");
+  // op_fetch_data_hdf5_file(nx, "points.h5");
+  // op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Save solution to CGNS file
   double *sol_q = (double *)malloc(4 * 15 * op_get_size(cells) * sizeof(double));
@@ -444,7 +456,7 @@ int main(int argc, char **argv) {
   op_timers(&cpu_2, &wall_2);
 
   op_timing_output();
-  /*
+
   cout << endl << "Total execution time: " << wall_2 - wall_1 << endl;
   cout << "Total time in main loop: " << wall_loop_end - wall_loop_start << endl;
   cout << "Average time per iteration: " << (wall_loop_end - wall_loop_start) / iter << endl;
@@ -467,9 +479,18 @@ int main(int argc, char **argv) {
   cout << "calc_dt" << endl;
   cout << "  Total: " << calc_dt_t << endl;
   // cout << "  Per iter: " << calc_dt_t / iter << endl;
+  cout << "internal_fluxes" << endl;
+  cout << "  Total: " << internal_fluxes_t << endl;
+  // cout << "  Per iter: " << set_workingQ_t / iter << endl;
+  cout << "internal_fluxes_mat" << endl;
+  cout << "  Total: " << internal_fluxes_mat_t << endl;
+  // cout << "  Per iter: " << update_Q_t / iter << endl;
+  cout << "face_fluxes_mat" << endl;
+  cout << "  Total: " << face_fluxes_mat_t << endl;
+  // cout << "  Per iter: " << calc_dt_t / iter << endl;
 
   cout << endl << "Estimate wall time to simulate 1 second: " << (wall_loop_end - wall_loop_start) / t << endl;
-  */
+
 
   // Clean up OP2
   op_exit();

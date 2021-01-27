@@ -1,6 +1,8 @@
 #ifndef __AIRFOIL_CUDA_MATRICES_H
 #define __AIRFOIL_CUDA_MATRICES_H
 
+#define NUMBER_OF_MATRIX_STREAMS 8
+
 #include "cublas_v2.h"
 
 extern double ones[15];
