@@ -39,7 +39,8 @@ inline void euler_rhs(const double *q0, const double *q1, const double *q2,
     qRHS3[j] = (rx[j] * dFdr3[j] + sx[j] * dFds3[j]) + (ry[j] * dGdr3[j] + sy[j] * dGds3[j]);
   }
 
-  // lax_friedrichs(flux, nx, ny, fscale, q, exteriorQ);
+  // lax_friedrichs(flux0, flux1, flux2, flux3, nx, ny, fscale, q0, q1, q2, q3, exteriorQ0,
+  //     exteriorQ1, exteriorQ2, exteriorQ3);
   roe(flux0, flux1, flux2, flux3, nx, ny, fscale, q0, q1, q2, q3, exteriorQ0,
       exteriorQ1, exteriorQ2, exteriorQ3);
 

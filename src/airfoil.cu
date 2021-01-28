@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
               op_arg_dat(exteriorQ[0], -1, OP_ID, 3 * 5, "double", OP_WRITE),
               op_arg_dat(exteriorQ[1], -1, OP_ID, 3 * 5, "double", OP_WRITE),
               op_arg_dat(exteriorQ[2], -1, OP_ID, 3 * 5, "double", OP_WRITE),
-              op_arg_dat(exteriorQ[3], -1, OP_ID, 3 * 5, "double", OP_WRITE),);
+              op_arg_dat(exteriorQ[3], -1, OP_ID, 3 * 5, "double", OP_WRITE));
 
   double dt1 = 0.0;
   op_par_loop(calc_dt, "calc_dt", cells,

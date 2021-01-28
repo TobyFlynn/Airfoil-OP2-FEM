@@ -37,19 +37,19 @@ __device__ void get_bedge_q_gpu( const int *bedge_type, const int *bedgeNum,
 
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd] += bc_r_cuda;
-      exteriorQ1[exInd] += bc_r_cuda * bc_u_cuda;
-      exteriorQ2[exInd] += bc_r_cuda * bc_v_cuda;
-      exteriorQ3[exInd] += q3[qInd];
+      exteriorQ0[exInd + i] += bc_r_cuda;
+      exteriorQ1[exInd + i] += bc_r_cuda * bc_u_cuda;
+      exteriorQ2[exInd + i] += bc_r_cuda * bc_v_cuda;
+      exteriorQ3[exInd + i] += q3[qInd];
     }
   } else {
 
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd] += q0[qInd];
-      exteriorQ1[exInd] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
-      exteriorQ2[exInd] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
-      exteriorQ3[exInd] += q3[qInd];
+      exteriorQ0[exInd + i] += q0[qInd];
+      exteriorQ1[exInd + i] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
+      exteriorQ2[exInd + i] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
+      exteriorQ3[exInd + i] += q3[qInd];
     }
   }
 

@@ -37,19 +37,19 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
     // Outflow
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd] += bc_r;
-      exteriorQ1[exInd] += bc_r * bc_u;
-      exteriorQ2[exInd] += bc_r * bc_v;
-      exteriorQ3[exInd] += q3[qInd];
+      exteriorQ0[exInd + i] += bc_r;
+      exteriorQ1[exInd + i] += bc_r * bc_u;
+      exteriorQ2[exInd + i] += bc_r * bc_v;
+      exteriorQ3[exInd + i] += q3[qInd];
     }
   } else {
     // Wall
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd] += q0[qInd];
-      exteriorQ1[exInd] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
-      exteriorQ2[exInd] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
-      exteriorQ3[exInd] += q3[qInd];
+      exteriorQ0[exInd + i] += q0[qInd];
+      exteriorQ1[exInd + i] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
+      exteriorQ2[exInd + i] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
+      exteriorQ3[exInd + i] += q3[qInd];
     }
   }
 }
@@ -88,19 +88,19 @@ inline void get_bedge_q_vec( const int bedge_type[][SIMD_VEC], const int bedgeNu
 
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd][idx] = bc_r;
-      exteriorQ1[exInd][idx] = bc_r * bc_u;
-      exteriorQ2[exInd][idx] = bc_r * bc_v;
-      exteriorQ3[exInd][idx] = q3[qInd][idx];
+      exteriorQ0[exInd + i][idx] = bc_r;
+      exteriorQ1[exInd + i][idx] = bc_r * bc_u;
+      exteriorQ2[exInd + i][idx] = bc_r * bc_v;
+      exteriorQ3[exInd + i][idx] = q3[qInd][idx];
     }
   } else {
 
     for(int i = 0; i < 5; i++) {
       int qInd = fmask[i];
-      exteriorQ0[exInd][idx] = q0[qInd][idx];
-      exteriorQ1[exInd][idx] = q1[qInd][idx] - 2 * (nx[exInd + i][idx] * q1[qInd][idx] + ny[exInd + i][idx] * q2[qInd][idx]) * nx[exInd + i][idx];
-      exteriorQ2[exInd][idx] = q2[qInd][idx] - 2 * (nx[exInd + i][idx] * q1[qInd][idx] + ny[exInd + i][idx] * q2[qInd][idx]) * ny[exInd + i][idx];
-      exteriorQ3[exInd][idx] = q3[qInd][idx];
+      exteriorQ0[exInd + i][idx] = q0[qInd][idx];
+      exteriorQ1[exInd + i][idx] = q1[qInd][idx] - 2 * (nx[exInd + i][idx] * q1[qInd][idx] + ny[exInd + i][idx] * q2[qInd][idx]) * nx[exInd + i][idx];
+      exteriorQ2[exInd + i][idx] = q2[qInd][idx] - 2 * (nx[exInd + i][idx] * q1[qInd][idx] + ny[exInd + i][idx] * q2[qInd][idx]) * ny[exInd + i][idx];
+      exteriorQ3[exInd + i][idx] = q3[qInd][idx];
     }
   }
 
