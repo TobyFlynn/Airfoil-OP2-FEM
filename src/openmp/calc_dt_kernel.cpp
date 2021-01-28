@@ -9,21 +9,27 @@
 void op_par_loop_calc_dt(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5){
 
-  double*arg2h = (double *)arg2.data;
-  int nargs = 3;
-  op_arg args[3];
+  double*arg5h = (double *)arg5.data;
+  int nargs = 6;
+  op_arg args[6];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
+  op_timing_realloc(2);
+  OP_kernels[2].name      = name;
+  OP_kernels[2].count    += 1;
   op_timers_core(&cpu_t1, &wall_t1);
 
 
@@ -40,10 +46,10 @@ void op_par_loop_calc_dt(char const *name, op_set set,
   #endif
 
   // allocate and initialise arrays for global reduction
-  double arg2_l[nthreads*64];
+  double arg5_l[nthreads*64];
   for ( int thr=0; thr<nthreads; thr++ ){
     for ( int d=0; d<1; d++ ){
-      arg2_l[d+thr*64]=arg2h[d];
+      arg5_l[d+thr*64]=arg5h[d];
     }
   }
 
@@ -56,9 +62,12 @@ void op_par_loop_calc_dt(char const *name, op_set set,
       int finish = (set->size*(thr+1))/nthreads;
       for ( int n=start; n<finish; n++ ){
         calc_dt(
-          &((double*)arg0.data)[60*n],
+          &((double*)arg0.data)[15*n],
           &((double*)arg1.data)[15*n],
-          &arg2_l[64*omp_get_thread_num()]);
+          &((double*)arg2.data)[15*n],
+          &((double*)arg3.data)[15*n],
+          &((double*)arg4.data)[15*n],
+          &arg5_l[64*omp_get_thread_num()]);
       }
     }
   }
@@ -66,15 +75,18 @@ void op_par_loop_calc_dt(char const *name, op_set set,
   // combine reduction data
   for ( int thr=0; thr<nthreads; thr++ ){
     for ( int d=0; d<1; d++ ){
-      arg2h[d]  = MAX(arg2h[d],arg2_l[d+thr*64]);
+      arg5h[d]  = MAX(arg5h[d],arg5_l[d+thr*64]);
     }
   }
-  op_mpi_reduce(&arg2,arg2h);
+  op_mpi_reduce(&arg5,arg5h);
   op_mpi_set_dirtybit(nargs, args);
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].time     += wall_t2 - wall_t1;
-  OP_kernels[3].transfer += (float)set->size * arg0.size;
-  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].time     += wall_t2 - wall_t1;
+  OP_kernels[2].transfer += (float)set->size * arg0.size;
+  OP_kernels[2].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].transfer += (float)set->size * arg2.size;
+  OP_kernels[2].transfer += (float)set->size * arg3.size;
+  OP_kernels[2].transfer += (float)set->size * arg4.size;
 }

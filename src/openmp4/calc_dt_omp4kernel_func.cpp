@@ -7,30 +7,39 @@ void calc_dt_omp4_kernel(
   int dat0size,
   double *data1,
   int dat1size,
-  double *arg2,
+  double *data2,
+  int dat2size,
+  double *data3,
+  int dat3size,
+  double *data4,
+  int dat4size,
+  double *arg5,
   int count,
   int num_teams,
   int nthread){
 
-  double arg2_l = *arg2;
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size]) \
+  double arg5_l = *arg5;
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size]) \
     map(to: gam_ompkernel, FMASK_ompkernel[:15])\
-    map(tofrom: arg2_l) reduction(max:arg2_l)
-  #pragma omp distribute parallel for schedule(static,1) reduction(max:arg2_l)
+    map(tofrom: arg5_l) reduction(max:arg5_l)
+  #pragma omp distribute parallel for schedule(static,1) reduction(max:arg5_l)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
-    const double *q = &data0[60*n_op];
-    const double *fscale = &data1[15*n_op];
-    double *dt1 = &arg2_l;
+    const double *q0 = &data0[15*n_op];
+    const double *q1 = &data1[15*n_op];
+    const double *q2 = &data2[15*n_op];
+    const double *q3 = &data3[15*n_op];
+    const double *fscale = &data4[15*n_op];
+    double *dt1 = &arg5_l;
 
     //inline function
     
     double dt1_arr[3 * 5];
     for(int i = 0; i < 3 * 5; i++) {
-      double rho = q[FMASK_ompkernel[i] * 4];
-      double u = q[FMASK_ompkernel[i] * 4 + 1] / rho;
-      double v = q[FMASK_ompkernel[i] * 4 + 2] / rho;
-      double p = (gam_ompkernel - 1.0) * (q[FMASK_ompkernel[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
+      double rho = q0[FMASK_ompkernel[i]];
+      double u = q1[FMASK_ompkernel[i]] / rho;
+      double v = q2[FMASK_ompkernel[i]] / rho;
+      double p = (gam_ompkernel - 1.0) * (q3[FMASK_ompkernel[i]] - rho * (u * u + v * v) * 0.5);
       double c = sqrt(fabs(gam_ompkernel * p / rho));
       dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK_ompkernel[i]] *(sqrt(u * u + v * v) + c);
     }
@@ -45,5 +54,5 @@ void calc_dt_omp4_kernel(
     //end inline func
   }
 
-  *arg2 = arg2_l;
+  *arg5 = arg5_l;
 }

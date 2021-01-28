@@ -3,16 +3,23 @@
 //
 
 //user function
-__device__ void set_ic_gpu( double *q, double *workingQ) {
+__device__ void set_ic_gpu( double *q0, double *q1, double *q2, double *q3,
+                   double *workingQ0, double *workingQ1, double *workingQ2,
+                   double *workingQ3, double *exQ0, double *exQ1, double *exQ2,
+                   double *exQ3) {
   for(int i = 0; i < 15; i++) {
-    q[i * 4]     = bc_r_cuda;
-    q[i * 4 + 1] = bc_r_cuda * bc_u_cuda;
-    q[i * 4 + 2] = bc_r_cuda * bc_v_cuda;
-    q[i * 4 + 3] = bc_e_cuda;
-    workingQ[i * 4]     = q[i * 4];
-    workingQ[i * 4 + 1] = q[i * 4 + 1];
-    workingQ[i * 4 + 2] = q[i * 4 + 2];
-    workingQ[i * 4 + 3] = q[i * 4 + 3];
+    q0[i] = bc_r_cuda;
+    q1[i] = bc_r_cuda * bc_u_cuda;
+    q2[i] = bc_r_cuda * bc_v_cuda;
+    q3[i] = bc_e_cuda;
+    workingQ0[i] = q0[i];
+    workingQ1[i] = q1[i];
+    workingQ2[i] = q2[i];
+    workingQ3[i] = q3[i];
+    exQ0[i] = 0.0;
+    exQ1[i] = 0.0;
+    exQ2[i] = 0.0;
+    exQ3[i] = 0.0;
   }
 
 }
@@ -21,6 +28,16 @@ __device__ void set_ic_gpu( double *q, double *workingQ) {
 __global__ void op_cuda_set_ic(
   double *arg0,
   double *arg1,
+  double *arg2,
+  double *arg3,
+  double *arg4,
+  double *arg5,
+  double *arg6,
+  double *arg7,
+  double *arg8,
+  double *arg9,
+  double *arg10,
+  double *arg11,
   int   set_size ) {
 
 
@@ -28,8 +45,18 @@ __global__ void op_cuda_set_ic(
   for ( int n=threadIdx.x+blockIdx.x*blockDim.x; n<set_size; n+=blockDim.x*gridDim.x ){
 
     //user-supplied kernel call
-    set_ic_gpu(arg0+n*60,
-           arg1+n*60);
+    set_ic_gpu(arg0+n*15,
+           arg1+n*15,
+           arg2+n*15,
+           arg3+n*15,
+           arg4+n*15,
+           arg5+n*15,
+           arg6+n*15,
+           arg7+n*15,
+           arg8+n*15,
+           arg9+n*15,
+           arg10+n*15,
+           arg11+n*15);
   }
 }
 
@@ -37,13 +64,33 @@ __global__ void op_cuda_set_ic(
 //host stub function
 void op_par_loop_set_ic(char const *name, op_set set,
   op_arg arg0,
-  op_arg arg1){
+  op_arg arg1,
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11){
 
-  int nargs = 2;
-  op_arg args[2];
+  int nargs = 12;
+  op_arg args[12];
 
   args[0] = arg0;
   args[1] = arg1;
+  args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -72,6 +119,16 @@ void op_par_loop_set_ic(char const *name, op_set set,
     op_cuda_set_ic<<<nblocks,nthread>>>(
       (double *) arg0.data_d,
       (double *) arg1.data_d,
+      (double *) arg2.data_d,
+      (double *) arg3.data_d,
+      (double *) arg4.data_d,
+      (double *) arg5.data_d,
+      (double *) arg6.data_d,
+      (double *) arg7.data_d,
+      (double *) arg8.data_d,
+      (double *) arg9.data_d,
+      (double *) arg10.data_d,
+      (double *) arg11.data_d,
       set->size );
   }
   op_mpi_set_dirtybit_cuda(nargs, args);
@@ -81,4 +138,14 @@ void op_par_loop_set_ic(char const *name, op_set set,
   OP_kernels[1].time     += wall_t2 - wall_t1;
   OP_kernels[1].transfer += (float)set->size * arg0.size * 2.0f;
   OP_kernels[1].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg2.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg3.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg4.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg6.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg7.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg8.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg10.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg11.size * 2.0f;
 }

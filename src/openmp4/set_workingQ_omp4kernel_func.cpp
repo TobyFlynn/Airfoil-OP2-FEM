@@ -13,32 +13,74 @@ void set_workingQ_omp4_kernel(
   int dat4size,
   double *data5,
   int dat5size,
+  double *data6,
+  int dat6size,
+  double *data7,
+  int dat7size,
+  double *data8,
+  int dat8size,
+  double *data9,
+  int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
+  double *data12,
+  int dat12size,
+  double *data13,
+  int dat13size,
+  double *data14,
+  int dat14size,
+  double *data15,
+  int dat15size,
+  double *data16,
+  int dat16size,
+  double *data17,
+  int dat17size,
   int count,
   int num_teams,
   int nthread){
 
   double arg0_l = *arg0;
   int arg1_l = *arg1;
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size])
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size],data12[0:dat12size],data13[0:dat13size],data14[0:dat14size],data15[0:dat15size],data16[0:dat16size],data17[0:dat17size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
     const double *dt = &arg0_l;
     const int *stage = &arg1_l;
-    const double *q = &data2[60*n_op];
-    const double *k1 = &data3[60*n_op];
-    const double *k2 = &data4[60*n_op];
-    double *workingQ = &data5[60*n_op];
+    const double *q0 = &data2[15*n_op];
+    const double *q1 = &data3[15*n_op];
+    const double *q2 = &data4[15*n_op];
+    const double *q3 = &data5[15*n_op];
+    const double *k10 = &data6[15*n_op];
+    const double *k11 = &data7[15*n_op];
+    const double *k12 = &data8[15*n_op];
+    const double *k13 = &data9[15*n_op];
+    const double *k20 = &data10[15*n_op];
+    const double *k21 = &data11[15*n_op];
+    const double *k22 = &data12[15*n_op];
+    const double *k23 = &data13[15*n_op];
+    double *workingQ0 = &data14[15*n_op];
+    double *workingQ1 = &data15[15*n_op];
+    double *workingQ2 = &data16[15*n_op];
+    double *workingQ3 = &data17[15*n_op];
 
     //inline function
     
     if(*stage == 0) {
-      for(int i = 0; i < 4 * 15; i++) {
-        workingQ[i] = q[i] + (*dt) * k1[i];
+      for(int i = 0; i < 15; i++) {
+        workingQ0[i] = q0[i] + (*dt) * k10[i];
+        workingQ1[i] = q1[i] + (*dt) * k11[i];
+        workingQ2[i] = q2[i] + (*dt) * k12[i];
+        workingQ3[i] = q3[i] + (*dt) * k13[i];
       }
     } else {
-      for(int i = 0; i < 4 * 15; i++) {
-        workingQ[i] = q[i] + (*dt) * (k1[i] / 4.0 + k2[i] / 4.0);
+      for(int i = 0; i < 15; i++) {
+        workingQ0[i] = q0[i] + (*dt) * (k10[i] / 4.0 + k20[i] / 4.0);
+        workingQ1[i] = q1[i] + (*dt) * (k11[i] / 4.0 + k21[i] / 4.0);
+        workingQ2[i] = q2[i] + (*dt) * (k12[i] / 4.0 + k22[i] / 4.0);
+        workingQ3[i] = q3[i] + (*dt) * (k13[i] / 4.0 + k23[i] / 4.0);
       }
     }
     //end inline func

@@ -10,7 +10,8 @@
 
 using namespace std;
 
-void save_solution(string filename, int numPts, int numCells, double *q, int *cellMap, int gam) {
+void save_solution(std::string filename, int numPts, int numCells, double *q0,
+                   double *q1, double *q2, double *q3, int *cellMap, int gam) {
   vector<double> velX(numPts);
   vector<double> velY(numPts);
   vector<double> rho(numPts);
@@ -26,20 +27,20 @@ void save_solution(string filename, int numPts, int numCells, double *q, int *ce
     int node1 = cellMap[i * 3 + 1];
     int node2 = cellMap[i * 3 + 2];
 
-    rho[node0]  = q[qCellInd + 4 * qNode0Ind];
-    velX[node0] = q[qCellInd + 4 * qNode0Ind + 1] / rho[node0];
-    velY[node0] = q[qCellInd + 4 * qNode0Ind + 2] / rho[node0];
-    p[node0]    = (gam - 1) * (q[qCellInd + 4 * qNode0Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode0Ind + 1] * velX[node0] + q[qCellInd + 4 * qNode0Ind + 2] * velY[node0]));
+    rho[node0]  = q0[qCellInd + qNode0Ind];
+    velX[node0] = q1[qCellInd + qNode0Ind + 1] / rho[node0];
+    velY[node0] = q2[qCellInd + qNode0Ind + 2] / rho[node0];
+    p[node0]    = (gam - 1) * (q3[qCellInd + qNode0Ind] - 0.5 * (q1[qCellInd + qNode0Ind] * velX[node0] + q2[qCellInd + qNode0Ind] * velY[node0]));
 
-    rho[node1]  = q[qCellInd + 4 * qNode1Ind];
-    velX[node1] = q[qCellInd + 4 * qNode1Ind + 1] / rho[node1];
-    velY[node1] = q[qCellInd + 4 * qNode1Ind + 2] / rho[node1];
-    p[node1]    = (gam - 1) * (q[qCellInd + 4 * qNode1Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode1Ind + 1] * velX[node1] + q[qCellInd + 4 * qNode1Ind + 2] * velY[node1]));
+    rho[node1]  = q0[qCellInd + qNode1Ind];
+    velX[node1] = q1[qCellInd + qNode1Ind] / rho[node1];
+    velY[node1] = q2[qCellInd + qNode1Ind] / rho[node1];
+    p[node1]    = (gam - 1) * (q3[qCellInd + qNode1Ind] - 0.5 * (q1[qCellInd + qNode1Ind] * velX[node1] + q2[qCellInd + qNode1Ind] * velY[node1]));
 
-    rho[node2]  = q[qCellInd + 4 * qNode2Ind];
-    velX[node2] = q[qCellInd + 4 * qNode2Ind + 1] / rho[node2];
-    velY[node2] = q[qCellInd + 4 * qNode2Ind + 2] / rho[node2];
-    p[node2]    = (gam - 1) * (q[qCellInd + 4 * qNode2Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode2Ind + 1] * velX[node2] + q[qCellInd + 4 * qNode2Ind + 2] * velY[node2]));
+    rho[node2]  = q0[qCellInd + qNode2Ind];
+    velX[node2] = q1[qCellInd + qNode2Ind] / rho[node2];
+    velY[node2] = q2[qCellInd + qNode2Ind] / rho[node2];
+    p[node2]    = (gam - 1) * (q3[qCellInd + qNode2Ind] - 0.5 * (q1[qCellInd + qNode2Ind] * velX[node2] + q2[qCellInd + qNode2Ind] * velY[node2]));
   }
 
   // Write out CGNS file

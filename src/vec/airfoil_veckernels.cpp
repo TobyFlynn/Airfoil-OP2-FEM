@@ -47,7 +47,6 @@ extern double LIFT[225];
 // user kernel files
 #include "init_grid_veckernel.cpp"
 #include "set_ic_veckernel.cpp"
-#include "neighbour_zero_veckernel.cpp"
 #include "calc_dt_veckernel.cpp"
 #include "get_neighbour_q_veckernel.cpp"
 #include "get_bedge_q_veckernel.cpp"

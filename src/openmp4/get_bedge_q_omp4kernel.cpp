@@ -20,6 +20,18 @@ void get_bedge_q_omp4_kernel(
   int dat4size,
   double *data5,
   int dat5size,
+  double *data6,
+  int dat6size,
+  double *data7,
+  int dat7size,
+  double *data8,
+  int dat8size,
+  double *data9,
+  int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
   int *col_reord,
   int set_size1,
   int start,
@@ -34,10 +46,16 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   op_arg arg2,
   op_arg arg3,
   op_arg arg4,
-  op_arg arg5){
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11){
 
-  int nargs = 6;
-  op_arg args[6];
+  int nargs = 12;
+  op_arg args[12];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -45,16 +63,22 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   args[3] = arg3;
   args[4] = arg4;
   args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(5);
+  op_timing_realloc(4);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[5].name      = name;
-  OP_kernels[5].count    += 1;
+  OP_kernels[4].name      = name;
+  OP_kernels[4].count    += 1;
 
-  int  ninds   = 4;
-  int  inds[6] = {-1,-1,0,1,2,3};
+  int  ninds   = 10;
+  int  inds[12] = {-1,-1,0,1,2,3,4,5,6,7,8,9};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_bedge_q\n");
@@ -63,13 +87,13 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   // get plan
   int set_size = op_mpi_halo_exchanges_cuda(set, nargs, args);
 
-  #ifdef OP_PART_SIZE_5
-    int part_size = OP_PART_SIZE_5;
+  #ifdef OP_PART_SIZE_4
+    int part_size = OP_PART_SIZE_4;
   #else
     int part_size = OP_part_size;
   #endif
-  #ifdef OP_BLOCK_SIZE_5
-    int nthread = OP_BLOCK_SIZE_5;
+  #ifdef OP_BLOCK_SIZE_4
+    int nthread = OP_BLOCK_SIZE_4;
   #else
     int nthread = OP_block_size;
   #endif
@@ -96,6 +120,18 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
     int dat4size = getSetSizeFromOpArg(&arg4) * arg4.dat->dim;
     double *data5 = (double *)arg5.data_d;
     int dat5size = getSetSizeFromOpArg(&arg5) * arg5.dat->dim;
+    double *data6 = (double *)arg6.data_d;
+    int dat6size = getSetSizeFromOpArg(&arg6) * arg6.dat->dim;
+    double *data7 = (double *)arg7.data_d;
+    int dat7size = getSetSizeFromOpArg(&arg7) * arg7.dat->dim;
+    double *data8 = (double *)arg8.data_d;
+    int dat8size = getSetSizeFromOpArg(&arg8) * arg8.dat->dim;
+    double *data9 = (double *)arg9.data_d;
+    int dat9size = getSetSizeFromOpArg(&arg9) * arg9.dat->dim;
+    double *data10 = (double *)arg10.data_d;
+    int dat10size = getSetSizeFromOpArg(&arg10) * arg10.dat->dim;
+    double *data11 = (double *)arg11.data_d;
+    int dat11size = getSetSizeFromOpArg(&arg11) * arg11.dat->dim;
 
     op_plan *Plan = op_plan_get_stage(name,set,part_size,nargs,args,ninds,inds,OP_COLOR2);
     ncolors = Plan->ncolors;
@@ -124,6 +160,18 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
         dat4size,
         data5,
         dat5size,
+        data6,
+        dat6size,
+        data7,
+        dat7size,
+        data8,
+        dat8size,
+        data9,
+        dat9size,
+        data10,
+        dat10size,
+        data11,
+        dat11size,
         col_reord,
         set_size1,
         start,
@@ -132,8 +180,8 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
         nthread);
 
     }
-    OP_kernels[5].transfer  += Plan->transfer;
-    OP_kernels[5].transfer2 += Plan->transfer2;
+    OP_kernels[4].transfer  += Plan->transfer;
+    OP_kernels[4].transfer2 += Plan->transfer2;
   }
 
   if (set_size == 0 || set_size == set->core_size || ncolors == 1) {
@@ -145,5 +193,5 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   if (OP_diags>1) deviceSync();
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[5].time     += wall_t2 - wall_t1;
+  OP_kernels[4].time     += wall_t2 - wall_t1;
 }

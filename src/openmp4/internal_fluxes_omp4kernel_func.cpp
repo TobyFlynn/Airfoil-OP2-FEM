@@ -11,23 +11,51 @@ void internal_fluxes_omp4_kernel(
   int dat1size,
   double *data2,
   int dat2size,
+  double *data3,
+  int dat3size,
+  double *data4,
+  int dat4size,
+  double *data5,
+  int dat5size,
+  double *data6,
+  int dat6size,
+  double *data7,
+  int dat7size,
+  double *data8,
+  int dat8size,
+  double *data9,
+  int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
   int count,
   int num_teams,
   int nthread){
 
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size])
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
-    const double *q = &data0[60*n_op];
-    double *F = &data1[60*n_op];
-    double *G = &data2[60*n_op];
+    const double *q0 = &data0[15*n_op];
+    const double *q1 = &data1[15*n_op];
+    const double *q2 = &data2[15*n_op];
+    const double *q3 = &data3[15*n_op];
+    double *f0 = &data4[15*n_op];
+    double *f1 = &data5[15*n_op];
+    double *f2 = &data6[15*n_op];
+    double *f3 = &data7[15*n_op];
+    double *g0 = &data8[15*n_op];
+    double *g1 = &data9[15*n_op];
+    double *g2 = &data10[15*n_op];
+    double *g3 = &data11[15*n_op];
 
     //inline function
     
     for(int i = 0; i < 15; i++) {
       double rho, u, v, p;
-      euler_flux(&q[i * 4], &F[i * 4], &G[i * 4], &rho, &u, &v, &p);
+      euler_flux(q0[i], q1[i], q2[i], q3[i], &f0[i], &f1[i], &f2[i], &f3[i],
+                 &g0[i], &g1[i], &g2[i], &g3[i], &rho, &u, &v, &p);
     }
     //end inline func
   }

@@ -13,8 +13,20 @@ void get_neighbour_q_omp4_kernel(
   int dat2size,
   double *data5,
   int dat5size,
+  double *data6,
+  int dat6size,
   double *data7,
   int dat7size,
+  double *data8,
+  int dat8size,
+  double *data13,
+  int dat13size,
+  double *data14,
+  int dat14size,
+  double *data15,
+  int dat15size,
+  double *data16,
+  int dat16size,
   int *col_reord,
   int set_size1,
   int start,
@@ -24,7 +36,7 @@ void get_neighbour_q_omp4_kernel(
 
   #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size]) \
     map(to: FMASK_ompkernel[:15])\
-    map(to:col_reord[0:set_size1],map1[0:map1size],data1[0:dat1size],data2[0:dat2size],data5[0:dat5size],data7[0:dat7size])
+    map(to:col_reord[0:set_size1],map1[0:map1size],data1[0:dat1size],data2[0:dat2size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data13[0:dat13size],data14[0:dat14size],data15[0:dat15size],data16[0:dat16size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int e=start; e<end; e++ ){
     int n_op = col_reord[e];
@@ -39,10 +51,22 @@ void get_neighbour_q_omp4_kernel(
     const double *yL = &data2[3 * map1idx];
     const double *xR = &data1[3 * map3idx];
     const double *yR = &data2[3 * map3idx];
-    const double *qL = &data5[60 * map1idx];
-    const double *qR = &data5[60 * map3idx];
-    double *exteriorQL = &data7[60 * map1idx];
-    double *exteriorQR = &data7[60 * map3idx];
+    const double *qL0 = &data5[15 * map1idx];
+    const double *qL1 = &data6[15 * map1idx];
+    const double *qL2 = &data7[15 * map1idx];
+    const double *qL3 = &data8[15 * map1idx];
+    const double *qR0 = &data5[15 * map3idx];
+    const double *qR1 = &data6[15 * map3idx];
+    const double *qR2 = &data7[15 * map3idx];
+    const double *qR3 = &data8[15 * map3idx];
+    double *exteriorQL0 = &data13[15 * map1idx];
+    double *exteriorQL1 = &data14[15 * map1idx];
+    double *exteriorQL2 = &data15[15 * map1idx];
+    double *exteriorQL3 = &data16[15 * map1idx];
+    double *exteriorQR0 = &data13[15 * map3idx];
+    double *exteriorQR1 = &data14[15 * map3idx];
+    double *exteriorQR2 = &data15[15 * map3idx];
+    double *exteriorQR3 = &data16[15 * map3idx];
 
     //inline function
     
@@ -78,8 +102,8 @@ void get_neighbour_q_omp4_kernel(
     }
 
     int exInd = 0;
-    if(edgeL == 1) exInd = 4 * 5;
-    else if(edgeL == 2) exInd = 2 * 4 * 5;
+    if(edgeL == 1) exInd = 5;
+    else if(edgeL == 2) exInd = 2 * 5;
 
     int *fmask;
 
@@ -94,19 +118,19 @@ void get_neighbour_q_omp4_kernel(
     for(int i = 0; i < 5; i++) {
       int rInd;
       if(reverse) {
-        rInd = 4 * fmask[5 - i - 1];
+        rInd = fmask[5 - i - 1];
       } else {
-        rInd = 4 * fmask[i];
+        rInd = fmask[i];
       }
-      exteriorQL[exInd + 4 * i]     += qR[rInd];
-      exteriorQL[exInd + 4 * i + 1] += qR[rInd + 1];
-      exteriorQL[exInd + 4 * i + 2] += qR[rInd + 2];
-      exteriorQL[exInd + 4 * i + 3] += qR[rInd + 3];
+      exteriorQL0[exInd + i] += qR0[rInd];
+      exteriorQL1[exInd + i] += qR1[rInd];
+      exteriorQL2[exInd + i] += qR2[rInd];
+      exteriorQL3[exInd + i] += qR3[rInd];
     }
 
     exInd = 0;
-    if(edgeR == 1) exInd = 4 * 5;
-    else if(edgeR == 2) exInd = 2 * 4 * 5;
+    if(edgeR == 1) exInd = 5;
+    else if(edgeR == 2) exInd = 2 * 5;
 
     if(edgeL == 0) {
       fmask = FMASK_ompkernel;
@@ -119,14 +143,14 @@ void get_neighbour_q_omp4_kernel(
     for(int i = 0; i < 5; i++) {
       int lInd;
       if(reverse) {
-        lInd = 4 * fmask[5 - i - 1];
+        lInd = fmask[5 - i - 1];
       } else {
-        lInd = 4 * fmask[i];
+        lInd = fmask[i];
       }
-      exteriorQR[exInd + 4 * i]     += qL[lInd];
-      exteriorQR[exInd + 4 * i + 1] += qL[lInd + 1];
-      exteriorQR[exInd + 4 * i + 2] += qL[lInd + 2];
-      exteriorQR[exInd + 4 * i + 3] += qL[lInd + 3];
+      exteriorQR0[exInd + i] += qL0[lInd];
+      exteriorQR1[exInd + i] += qL1[lInd];
+      exteriorQR2[exInd + i] += qL2[lInd];
+      exteriorQR3[exInd + i] += qL3[lInd];
     }
     //end inline func
   }

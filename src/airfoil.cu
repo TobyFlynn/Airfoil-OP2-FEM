@@ -158,16 +158,16 @@ int main(int argc, char **argv) {
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
   op_dat Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4], exteriorQ[4], flux[4], rk[3][4];
   for(int i = 0; i < 4; i++) {
-    op_dat Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
-    op_dat F[i] = op_decl_dat(cells, 15, "double", data->F_data[i], "F" + i);
-    op_dat G[i] = op_decl_dat(cells, 15, "double", data->G_data[i], "G" + i);
-    op_dat dFdr[i] = op_decl_dat(cells, 15, "double", data->dFdr_data[i], "dFdr" + i);
-    op_dat dFds[i] = op_decl_dat(cells, 15, "double", data->dFds_data[i], "dFds" + i);
-    op_dat dGdr[i] = op_decl_dat(cells, 15, "double", data->dGdr_data[i], "dGdr" + i);
-    op_dat dGds[i] = op_decl_dat(cells, 15, "double", data->dGds_data[i], "dGds" + i);
-    op_dat workingQ[i] = op_decl_dat(cells, 15, "double", data->workingQ_data[i], "workingQ" + i);
-    op_dat exteriorQ[i] = op_decl_dat(cells, 3 * 5, "double", data->exteriorQ_data[i], "exteriorQ" + i);
-    op_dat flux[i] = op_decl_dat(cells, 3 * 5, "double", data->flux_data[i], "flux" + i);
+    Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    F[i] = op_decl_dat(cells, 15, "double", data->F_data[i], "F" + i);
+    G[i] = op_decl_dat(cells, 15, "double", data->G_data[i], "G" + i);
+    dFdr[i] = op_decl_dat(cells, 15, "double", data->dFdr_data[i], "dFdr" + i);
+    dFds[i] = op_decl_dat(cells, 15, "double", data->dFds_data[i], "dFds" + i);
+    dGdr[i] = op_decl_dat(cells, 15, "double", data->dGdr_data[i], "dGdr" + i);
+    dGds[i] = op_decl_dat(cells, 15, "double", data->dGds_data[i], "dGds" + i);
+    workingQ[i] = op_decl_dat(cells, 15, "double", data->workingQ_data[i], "workingQ" + i);
+    exteriorQ[i] = op_decl_dat(cells, 3 * 5, "double", data->exteriorQ_data[i], "exteriorQ" + i);
+    flux[i] = op_decl_dat(cells, 3 * 5, "double", data->flux_data[i], "flux" + i);
     rk[0][i] = op_decl_dat(cells, 15, "double", data->rk1_data[i], "rk1" + i);
     rk[1][i] = op_decl_dat(cells, 15, "double", data->rk2_data[i], "rk2" + i);
     rk[2][i] = op_decl_dat(cells, 15, "double", data->rk3_data[i], "rk3" + i);
@@ -196,22 +196,22 @@ int main(int argc, char **argv) {
   op_decl_const(15 * 15, "double", LIFT);
 
   // Matrix multiplications using cuBLAS
-  op_arg init_grid_args[] = {
-    op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
-  };
-  op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
-  init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
-                     (int *)cell2nodes->map, (double *)x->data_d,
-                     (double *)y->data_d, (double *)xr->data_d,
-                     (double *)xs->data_d, (double *)yr->data_d,
-                     (double *)ys->data_d);
-  // Check this
-  op_mpi_set_dirtybit_cuda(6, init_grid_args);
+  // op_arg init_grid_args[] = {
+  //   op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
+  // };
+  // op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
+  // init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
+  //                    (int *)cell2nodes->map, (double *)x->data_d,
+  //                    (double *)y->data_d, (double *)xr->data_d,
+  //                    (double *)xs->data_d, (double *)yr->data_d,
+  //                    (double *)ys->data_d);
+  // // Check this
+  // op_mpi_set_dirtybit_cuda(6, init_grid_args);
   // x->dirty_hd = 2;
   // y->dirty_hd = 2;
   // xr->dirty_hd = 2;
@@ -345,23 +345,23 @@ int main(int argc, char **argv) {
       internal_fluxes_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg internal_fluxes_args[] = {
-        op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
-      internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
-                               (double *)G->data_d, (double *)dFdr->data_d,
-                               (double *)dFds->data_d, (double *)dGdr->data_d,
-                               (double *)dGds->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
+      // op_timers(&cpu_loop_1, &wall_loop_1);
+      // op_arg internal_fluxes_args[] = {
+      //   op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
+      // };
+      // op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
+      // internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
+      //                          (double *)G->data_d, (double *)dFdr->data_d,
+      //                          (double *)dFds->data_d, (double *)dGdr->data_d,
+      //                          (double *)dGds->data_d);
+      //
+      // // Check this
+      // op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
       // dFdr->dirty_hd = 2;
       // dFds->dirty_hd = 2;
       // dGdr->dirty_hd = 2;
@@ -416,17 +416,17 @@ int main(int argc, char **argv) {
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg face_fluxes_args[] = {
-        op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
-      face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
-                           (double *)rk[j]->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
+      // op_timers(&cpu_loop_1, &wall_loop_1);
+      // op_arg face_fluxes_args[] = {
+      //   op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
+      // };
+      // op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
+      // face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
+      //                      (double *)rk[j]->data_d);
+      //
+      // // Check this
+      // op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
       // rk[j]->dirty_hd = 2;
       op_timers(&cpu_loop_2, &wall_loop_2);
       face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
@@ -511,11 +511,21 @@ int main(int argc, char **argv) {
   // op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Save solution to CGNS file
-  double *sol_q = (double *)malloc(4 * 15 * op_get_size(cells) * sizeof(double));
-  op_fetch_data(q, sol_q);
-  save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells), sol_q, cgnsCells, gam);
+  double *sol_q0 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q1 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q2 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q3 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  op_fetch_data(Q[0], sol_q0);
+  op_fetch_data(Q[1], sol_q1);
+  op_fetch_data(Q[2], sol_q2);
+  op_fetch_data(Q[3], sol_q3);
+  save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells),
+                sol_q0, sol_q1, sol_q2, sol_q3, cgnsCells, gam);
 
-  free(sol_q);
+  free(sol_q0);
+  free(sol_q1);
+  free(sol_q2);
+  free(sol_q3);
 
   op_timers(&cpu_2, &wall_2);
 

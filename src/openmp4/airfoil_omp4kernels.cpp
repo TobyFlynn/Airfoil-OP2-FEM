@@ -8,7 +8,6 @@
 // user kernel files
 #include "init_grid_omp4kernel.cpp"
 #include "set_ic_omp4kernel.cpp"
-#include "neighbour_zero_omp4kernel.cpp"
 #include "calc_dt_omp4kernel.cpp"
 #include "get_neighbour_q_omp4kernel.cpp"
 #include "get_bedge_q_omp4kernel.cpp"

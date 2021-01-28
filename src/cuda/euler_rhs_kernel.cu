@@ -5,51 +5,47 @@
 #include "../fluxes.h"
 
 //user function
-__device__ void euler_rhs_gpu( const double *q, double *exteriorQ,
-                      const double *rx, const double *ry, const double *sx,
-                      const double *sy, const double *fscale, const double *nx,
-                      const double *ny, const double *dFdr, const double *dFds,
-                      const double *dGdr, const double *dGds, double *flux,
-                      double *qRHS) {
+__device__ void euler_rhs_gpu( const double *q0, const double *q1, const double *q2,
+                      const double *q3, double *exteriorQ0, double *exteriorQ1,
+                      double *exteriorQ2, double *exteriorQ3, const double *rx,
+                      const double *ry, const double *sx, const double *sy,
+                      const double *fscale, const double *nx, const double *ny,
+                      const double *dFdr0, const double *dFdr1,
+                      const double *dFdr2, const double *dFdr3,
+                      const double *dFds0, const double *dFds1,
+                      const double *dFds2, const double *dFds3,
+                      const double *dGdr0, const double *dGdr1,
+                      const double *dGdr2, const double *dGdr3,
+                      const double *dGds0, const double *dGds1,
+                      const double *dGds2, const double *dGds3, double *flux0,
+                      double *flux1, double *flux2, double *flux3,
+                      double *qRHS0, double *qRHS1, double *qRHS2,
+                      double *qRHS3) {
 
-  for(int i = 0; i < 4; i++) {
-    for(int j = 0; j < 15; j++) {
-      qRHS[i + j * 4] = (rx[j] * dFdr[i + j * 4] + sx[j] * dFds[i + j * 4]) + (ry[j] * dGdr[i + j * 4] + sy[j] * dGds[i + j * 4]);
-    }
+  for(int j = 0; j < 15; j++) {
+    qRHS0[j] = (rx[j] * dFdr0[j] + sx[j] * dFds0[j]) + (ry[j] * dGdr0[j] + sy[j] * dGds0[j]);
   }
 
-  double mQ[4 * 3 * 5];
-  double mF[4 * 3 * 5];
-  double mG[4 * 3 * 5];
-  double mRho[3 * 5];
-  double mU[3 * 5];
-  double mV[3 * 5];
-  double mP[3 * 5];
+  for(int j = 0; j < 15; j++) {
+    qRHS1[j] = (rx[j] * dFdr1[j] + sx[j] * dFds1[j]) + (ry[j] * dGdr1[j] + sy[j] * dGds1[j]);
+  }
+
+  for(int j = 0; j < 15; j++) {
+    qRHS2[j] = (rx[j] * dFdr2[j] + sx[j] * dFds2[j]) + (ry[j] * dGdr2[j] + sy[j] * dGds2[j]);
+  }
+
+  for(int j = 0; j < 15; j++) {
+    qRHS3[j] = (rx[j] * dFdr3[j] + sx[j] * dFds3[j]) + (ry[j] * dGdr3[j] + sy[j] * dGds3[j]);
+  }
+
+  roe(flux0, flux1, flux2, flux3, nx, ny, fscale, q0, q1, q2, q3, exteriorQ0,
+      exteriorQ1, exteriorQ2, exteriorQ3);
 
   for(int i = 0; i < 3 * 5; i++) {
-    int ind = FMASK_cuda[i] * 4;
-    mQ[i * 4]     = q[ind];
-    mQ[i * 4 + 1] = q[ind + 1];
-    mQ[i * 4 + 2] = q[ind + 2];
-    mQ[i * 4 + 3] = q[ind + 3];
-
-    euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
-  }
-
-  double pF[4 * 3 * 5];
-  double pG[4 * 3 * 5];
-  double pRho[3 * 5];
-  double pU[3 * 5];
-  double pV[3 * 5];
-  double pP[3 * 5];
-  for(int i = 0; i < 3 * 5; i++) {
-    euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
-  }
-
-  roe(flux, nx, ny, fscale, q, exteriorQ);
-
-  for(int i = 0; i < 4 * 3 * 5; i++) {
-    exteriorQ[i] = 0.0;
+    exteriorQ0[i] = 0.0;
+    exteriorQ1[i] = 0.0;
+    exteriorQ2[i] = 0.0;
+    exteriorQ3[i] = 0.0;
   }
 
 }
@@ -57,20 +53,44 @@ __device__ void euler_rhs_gpu( const double *q, double *exteriorQ,
 // CUDA kernel function
 __global__ void op_cuda_euler_rhs(
   const double *__restrict arg0,
-  double *arg1,
+  const double *__restrict arg1,
   const double *__restrict arg2,
   const double *__restrict arg3,
-  const double *__restrict arg4,
-  const double *__restrict arg5,
-  const double *__restrict arg6,
-  const double *__restrict arg7,
+  double *arg4,
+  double *arg5,
+  double *arg6,
+  double *arg7,
   const double *__restrict arg8,
   const double *__restrict arg9,
   const double *__restrict arg10,
   const double *__restrict arg11,
   const double *__restrict arg12,
-  double *arg13,
-  double *arg14,
+  const double *__restrict arg13,
+  const double *__restrict arg14,
+  const double *__restrict arg15,
+  const double *__restrict arg16,
+  const double *__restrict arg17,
+  const double *__restrict arg18,
+  const double *__restrict arg19,
+  const double *__restrict arg20,
+  const double *__restrict arg21,
+  const double *__restrict arg22,
+  const double *__restrict arg23,
+  const double *__restrict arg24,
+  const double *__restrict arg25,
+  const double *__restrict arg26,
+  const double *__restrict arg27,
+  const double *__restrict arg28,
+  const double *__restrict arg29,
+  const double *__restrict arg30,
+  double *arg31,
+  double *arg32,
+  double *arg33,
+  double *arg34,
+  double *arg35,
+  double *arg36,
+  double *arg37,
+  double *arg38,
   int   set_size ) {
 
 
@@ -78,8 +98,8 @@ __global__ void op_cuda_euler_rhs(
   for ( int n=threadIdx.x+blockIdx.x*blockDim.x; n<set_size; n+=blockDim.x*gridDim.x ){
 
     //user-supplied kernel call
-    euler_rhs_gpu(arg0+n*60,
-              arg1+n*60,
+    euler_rhs_gpu(arg0+n*15,
+              arg1+n*15,
               arg2+n*15,
               arg3+n*15,
               arg4+n*15,
@@ -87,12 +107,36 @@ __global__ void op_cuda_euler_rhs(
               arg6+n*15,
               arg7+n*15,
               arg8+n*15,
-              arg9+n*60,
-              arg10+n*60,
-              arg11+n*60,
-              arg12+n*60,
-              arg13+n*60,
-              arg14+n*60);
+              arg9+n*15,
+              arg10+n*15,
+              arg11+n*15,
+              arg12+n*15,
+              arg13+n*15,
+              arg14+n*15,
+              arg15+n*15,
+              arg16+n*15,
+              arg17+n*15,
+              arg18+n*15,
+              arg19+n*15,
+              arg20+n*15,
+              arg21+n*15,
+              arg22+n*15,
+              arg23+n*15,
+              arg24+n*15,
+              arg25+n*15,
+              arg26+n*15,
+              arg27+n*15,
+              arg28+n*15,
+              arg29+n*15,
+              arg30+n*15,
+              arg31+n*15,
+              arg32+n*15,
+              arg33+n*15,
+              arg34+n*15,
+              arg35+n*15,
+              arg36+n*15,
+              arg37+n*15,
+              arg38+n*15);
   }
 }
 
@@ -113,10 +157,34 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   op_arg arg11,
   op_arg arg12,
   op_arg arg13,
-  op_arg arg14){
+  op_arg arg14,
+  op_arg arg15,
+  op_arg arg16,
+  op_arg arg17,
+  op_arg arg18,
+  op_arg arg19,
+  op_arg arg20,
+  op_arg arg21,
+  op_arg arg22,
+  op_arg arg23,
+  op_arg arg24,
+  op_arg arg25,
+  op_arg arg26,
+  op_arg arg27,
+  op_arg arg28,
+  op_arg arg29,
+  op_arg arg30,
+  op_arg arg31,
+  op_arg arg32,
+  op_arg arg33,
+  op_arg arg34,
+  op_arg arg35,
+  op_arg arg36,
+  op_arg arg37,
+  op_arg arg38){
 
-  int nargs = 15;
-  op_arg args[15];
+  int nargs = 39;
+  op_arg args[39];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -133,13 +201,37 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   args[12] = arg12;
   args[13] = arg13;
   args[14] = arg14;
+  args[15] = arg15;
+  args[16] = arg16;
+  args[17] = arg17;
+  args[18] = arg18;
+  args[19] = arg19;
+  args[20] = arg20;
+  args[21] = arg21;
+  args[22] = arg22;
+  args[23] = arg23;
+  args[24] = arg24;
+  args[25] = arg25;
+  args[26] = arg26;
+  args[27] = arg27;
+  args[28] = arg28;
+  args[29] = arg29;
+  args[30] = arg30;
+  args[31] = arg31;
+  args[32] = arg32;
+  args[33] = arg33;
+  args[34] = arg34;
+  args[35] = arg35;
+  args[36] = arg36;
+  args[37] = arg37;
+  args[38] = arg38;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(7);
+  op_timing_realloc(6);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[7].name      = name;
-  OP_kernels[7].count    += 1;
+  OP_kernels[6].name      = name;
+  OP_kernels[6].count    += 1;
 
 
   if (OP_diags>2) {
@@ -150,8 +242,8 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
   if (set_size > 0) {
 
     //set CUDA execution parameters
-    #ifdef OP_BLOCK_SIZE_7
-      int nthread = OP_BLOCK_SIZE_7;
+    #ifdef OP_BLOCK_SIZE_6
+      int nthread = OP_BLOCK_SIZE_6;
     #else
       int nthread = OP_block_size;
     #endif
@@ -174,26 +266,74 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
       (double *) arg12.data_d,
       (double *) arg13.data_d,
       (double *) arg14.data_d,
+      (double *) arg15.data_d,
+      (double *) arg16.data_d,
+      (double *) arg17.data_d,
+      (double *) arg18.data_d,
+      (double *) arg19.data_d,
+      (double *) arg20.data_d,
+      (double *) arg21.data_d,
+      (double *) arg22.data_d,
+      (double *) arg23.data_d,
+      (double *) arg24.data_d,
+      (double *) arg25.data_d,
+      (double *) arg26.data_d,
+      (double *) arg27.data_d,
+      (double *) arg28.data_d,
+      (double *) arg29.data_d,
+      (double *) arg30.data_d,
+      (double *) arg31.data_d,
+      (double *) arg32.data_d,
+      (double *) arg33.data_d,
+      (double *) arg34.data_d,
+      (double *) arg35.data_d,
+      (double *) arg36.data_d,
+      (double *) arg37.data_d,
+      (double *) arg38.data_d,
       set->size );
   }
   op_mpi_set_dirtybit_cuda(nargs, args);
   cutilSafeCall(cudaDeviceSynchronize());
   //update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[7].time     += wall_t2 - wall_t1;
-  OP_kernels[7].transfer += (float)set->size * arg0.size;
-  OP_kernels[7].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[7].transfer += (float)set->size * arg2.size;
-  OP_kernels[7].transfer += (float)set->size * arg3.size;
-  OP_kernels[7].transfer += (float)set->size * arg4.size;
-  OP_kernels[7].transfer += (float)set->size * arg5.size;
-  OP_kernels[7].transfer += (float)set->size * arg6.size;
-  OP_kernels[7].transfer += (float)set->size * arg7.size;
-  OP_kernels[7].transfer += (float)set->size * arg8.size;
-  OP_kernels[7].transfer += (float)set->size * arg9.size;
-  OP_kernels[7].transfer += (float)set->size * arg10.size;
-  OP_kernels[7].transfer += (float)set->size * arg11.size;
-  OP_kernels[7].transfer += (float)set->size * arg12.size;
-  OP_kernels[7].transfer += (float)set->size * arg13.size * 2.0f;
-  OP_kernels[7].transfer += (float)set->size * arg14.size * 2.0f;
+  OP_kernels[6].time     += wall_t2 - wall_t1;
+  OP_kernels[6].transfer += (float)set->size * arg0.size;
+  OP_kernels[6].transfer += (float)set->size * arg1.size;
+  OP_kernels[6].transfer += (float)set->size * arg2.size;
+  OP_kernels[6].transfer += (float)set->size * arg3.size;
+  OP_kernels[6].transfer += (float)set->size * arg4.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg6.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg7.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg8.size;
+  OP_kernels[6].transfer += (float)set->size * arg9.size;
+  OP_kernels[6].transfer += (float)set->size * arg10.size;
+  OP_kernels[6].transfer += (float)set->size * arg11.size;
+  OP_kernels[6].transfer += (float)set->size * arg12.size;
+  OP_kernels[6].transfer += (float)set->size * arg13.size;
+  OP_kernels[6].transfer += (float)set->size * arg14.size;
+  OP_kernels[6].transfer += (float)set->size * arg15.size;
+  OP_kernels[6].transfer += (float)set->size * arg16.size;
+  OP_kernels[6].transfer += (float)set->size * arg17.size;
+  OP_kernels[6].transfer += (float)set->size * arg18.size;
+  OP_kernels[6].transfer += (float)set->size * arg19.size;
+  OP_kernels[6].transfer += (float)set->size * arg20.size;
+  OP_kernels[6].transfer += (float)set->size * arg21.size;
+  OP_kernels[6].transfer += (float)set->size * arg22.size;
+  OP_kernels[6].transfer += (float)set->size * arg23.size;
+  OP_kernels[6].transfer += (float)set->size * arg24.size;
+  OP_kernels[6].transfer += (float)set->size * arg25.size;
+  OP_kernels[6].transfer += (float)set->size * arg26.size;
+  OP_kernels[6].transfer += (float)set->size * arg27.size;
+  OP_kernels[6].transfer += (float)set->size * arg28.size;
+  OP_kernels[6].transfer += (float)set->size * arg29.size;
+  OP_kernels[6].transfer += (float)set->size * arg30.size;
+  OP_kernels[6].transfer += (float)set->size * arg31.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg32.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg33.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg34.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg35.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg36.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg37.size * 2.0f;
+  OP_kernels[6].transfer += (float)set->size * arg38.size * 2.0f;
 }

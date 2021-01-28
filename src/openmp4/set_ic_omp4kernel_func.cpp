@@ -7,29 +7,63 @@ void set_ic_omp4_kernel(
   int dat0size,
   double *data1,
   int dat1size,
+  double *data2,
+  int dat2size,
+  double *data3,
+  int dat3size,
+  double *data4,
+  int dat4size,
+  double *data5,
+  int dat5size,
+  double *data6,
+  int dat6size,
+  double *data7,
+  int dat7size,
+  double *data8,
+  int dat8size,
+  double *data9,
+  int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
   int count,
   int num_teams,
   int nthread){
 
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size]) \
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size]) \
     map(to: bc_r_ompkernel, bc_u_ompkernel, bc_v_ompkernel, bc_e_ompkernel, r_ompkernel[:15])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
-    double *q = &data0[60*n_op];
-    double *workingQ = &data1[60*n_op];
+    double *q0 = &data0[15*n_op];
+    double *q1 = &data1[15*n_op];
+    double *q2 = &data2[15*n_op];
+    double *q3 = &data3[15*n_op];
+    double *workingQ0 = &data4[15*n_op];
+    double *workingQ1 = &data5[15*n_op];
+    double *workingQ2 = &data6[15*n_op];
+    double *workingQ3 = &data7[15*n_op];
+    double *exQ0 = &data8[15*n_op];
+    double *exQ1 = &data9[15*n_op];
+    double *exQ2 = &data10[15*n_op];
+    double *exQ3 = &data11[15*n_op];
 
     //inline function
     
     for(int i = 0; i < 15; i++) {
-      q[i * 4]     = bc_r_ompkernel;
-      q[i * 4 + 1] = bc_r_ompkernel * bc_u_ompkernel;
-      q[i * 4 + 2] = bc_r_ompkernel * bc_v_ompkernel;
-      q[i * 4 + 3] = bc_e_ompkernel;
-      workingQ[i * 4]     = q[i * 4];
-      workingQ[i * 4 + 1] = q[i * 4 + 1];
-      workingQ[i * 4 + 2] = q[i * 4 + 2];
-      workingQ[i * 4 + 3] = q[i * 4 + 3];
+      q0[i] = bc_r_ompkernel;
+      q1[i] = bc_r_ompkernel * bc_u_ompkernel;
+      q2[i] = bc_r_ompkernel * bc_v_ompkernel;
+      q3[i] = bc_e_ompkernel;
+      workingQ0[i] = q0[i];
+      workingQ1[i] = q1[i];
+      workingQ2[i] = q2[i];
+      workingQ3[i] = q3[i];
+      exQ0[i] = 0.0;
+      exQ1[i] = 0.0;
+      exQ2[i] = 0.0;
+      exQ3[i] = 0.0;
     }
     //end inline func
   }

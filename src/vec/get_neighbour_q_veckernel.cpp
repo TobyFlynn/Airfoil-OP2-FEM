@@ -4,9 +4,16 @@
 
 //user function
 inline void get_neighbour_q(const int *edgeNum, const double *xL,
-                            const double *yL, const double *xR, const double *yR,
-                            const double *qL, const double *qR,
-                            double *exteriorQL, double *exteriorQR) {
+                            const double *yL, const double *xR,
+                            const double *yR, const double *qL0,
+                            const double *qL1, const double *qL2,
+                            const double *qL3, const double *qR0,
+                            const double *qR1, const double *qR2,
+                            const double *qR3, double *exteriorQL0,
+                            double *exteriorQL1, double *exteriorQL2,
+                            double *exteriorQL3, double *exteriorQR0,
+                            double *exteriorQR1, double *exteriorQR2,
+                            double *exteriorQR3) {
   // Work out which edge for each element
   int edgeL = edgeNum[0];
   int edgeR = edgeNum[1];
@@ -40,8 +47,8 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
 
   // Copy data from R to L
   int exInd = 0;
-  if(edgeL == 1) exInd = 4 * 5;
-  else if(edgeL == 2) exInd = 2 * 4 * 5;
+  if(edgeL == 1) exInd = 5;
+  else if(edgeL == 2) exInd = 2 * 5;
 
   int *fmask;
 
@@ -56,20 +63,20 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
   for(int i = 0; i < 5; i++) {
     int rInd;
     if(reverse) {
-      rInd = 4 * fmask[5 - i - 1];
+      rInd = fmask[5 - i - 1];
     } else {
-      rInd = 4 * fmask[i];
+      rInd = fmask[i];
     }
-    exteriorQL[exInd + 4 * i]     += qR[rInd];
-    exteriorQL[exInd + 4 * i + 1] += qR[rInd + 1];
-    exteriorQL[exInd + 4 * i + 2] += qR[rInd + 2];
-    exteriorQL[exInd + 4 * i + 3] += qR[rInd + 3];
+    exteriorQL0[exInd + i] += qR0[rInd];
+    exteriorQL1[exInd + i] += qR1[rInd];
+    exteriorQL2[exInd + i] += qR2[rInd];
+    exteriorQL3[exInd + i] += qR3[rInd];
   }
 
   // Copy data from L to R
   exInd = 0;
-  if(edgeR == 1) exInd = 4 * 5;
-  else if(edgeR == 2) exInd = 2 * 4 * 5;
+  if(edgeR == 1) exInd = 5;
+  else if(edgeR == 2) exInd = 2 * 5;
 
   if(edgeL == 0) {
     fmask = FMASK;
@@ -82,14 +89,14 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
   for(int i = 0; i < 5; i++) {
     int lInd;
     if(reverse) {
-      lInd = 4 * fmask[5 - i - 1];
+      lInd = fmask[5 - i - 1];
     } else {
-      lInd = 4 * fmask[i];
+      lInd = fmask[i];
     }
-    exteriorQR[exInd + 4 * i]     += qL[lInd];
-    exteriorQR[exInd + 4 * i + 1] += qL[lInd + 1];
-    exteriorQR[exInd + 4 * i + 2] += qL[lInd + 2];
-    exteriorQR[exInd + 4 * i + 3] += qL[lInd + 3];
+    exteriorQR0[exInd + i] += qL0[lInd];
+    exteriorQR1[exInd + i] += qL1[lInd];
+    exteriorQR2[exInd + i] += qL2[lInd];
+    exteriorQR3[exInd + i] += qL3[lInd];
   }
 }
 #ifdef VECTORIZE
@@ -97,7 +104,7 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
 #if defined __clang__ || defined __GNUC__
 __attribute__((always_inline))
 #endif
-inline void get_neighbour_q_vec( const int edgeNum[][SIMD_VEC], const double xL[][SIMD_VEC], const double yL[][SIMD_VEC], const double xR[][SIMD_VEC], const double yR[][SIMD_VEC], const double qL[][SIMD_VEC], const double qR[][SIMD_VEC], double exteriorQL[][SIMD_VEC], double exteriorQR[][SIMD_VEC], int idx ) {
+inline void get_neighbour_q_vec( const int edgeNum[][SIMD_VEC], const double xL[][SIMD_VEC], const double yL[][SIMD_VEC], const double xR[][SIMD_VEC], const double yR[][SIMD_VEC], const double qL0[][SIMD_VEC], const double qL1[][SIMD_VEC], const double qL2[][SIMD_VEC], const double qL3[][SIMD_VEC], const double qR0[][SIMD_VEC], const double qR1[][SIMD_VEC], const double qR2[][SIMD_VEC], const double qR3[][SIMD_VEC], double exteriorQL0[][SIMD_VEC], double exteriorQL1[][SIMD_VEC], double exteriorQL2[][SIMD_VEC], double exteriorQL3[][SIMD_VEC], double exteriorQR0[][SIMD_VEC], double exteriorQR1[][SIMD_VEC], double exteriorQR2[][SIMD_VEC], double exteriorQR3[][SIMD_VEC], int idx ) {
 
   int edgeL = edgeNum[0][idx];
   int edgeR = edgeNum[1][idx];
@@ -130,8 +137,8 @@ inline void get_neighbour_q_vec( const int edgeNum[][SIMD_VEC], const double xL[
   }
 
   int exInd = 0;
-  if(edgeL == 1) exInd = 4 * 5;
-  else if(edgeL == 2) exInd = 2 * 4 * 5;
+  if(edgeL == 1) exInd = 5;
+  else if(edgeL == 2) exInd = 2 * 5;
 
   int *fmask;
 
@@ -146,19 +153,19 @@ inline void get_neighbour_q_vec( const int edgeNum[][SIMD_VEC], const double xL[
   for(int i = 0; i < 5; i++) {
     int rInd;
     if(reverse) {
-      rInd = 4 * fmask[5 - i - 1];
+      rInd = fmask[5 - i - 1];
     } else {
-      rInd = 4 * fmask[i];
+      rInd = fmask[i];
     }
-    exteriorQL[exInd + 4 * i][idx]     = qR[rInd][idx];
-    exteriorQL[exInd + 4 * i + 1][idx] = qR[rInd + 1][idx];
-    exteriorQL[exInd + 4 * i + 2][idx] = qR[rInd + 2][idx];
-    exteriorQL[exInd + 4 * i + 3][idx] = qR[rInd + 3][idx];
+    exteriorQL0[exInd + i][idx] = qR0[rInd][idx];
+    exteriorQL1[exInd + i][idx] = qR1[rInd][idx];
+    exteriorQL2[exInd + i][idx] = qR2[rInd][idx];
+    exteriorQL3[exInd + i][idx] = qR3[rInd][idx];
   }
 
   exInd = 0;
-  if(edgeR == 1) exInd = 4 * 5;
-  else if(edgeR == 2) exInd = 2 * 4 * 5;
+  if(edgeR == 1) exInd = 5;
+  else if(edgeR == 2) exInd = 2 * 5;
 
   if(edgeL == 0) {
     fmask = FMASK;
@@ -171,14 +178,14 @@ inline void get_neighbour_q_vec( const int edgeNum[][SIMD_VEC], const double xL[
   for(int i = 0; i < 5; i++) {
     int lInd;
     if(reverse) {
-      lInd = 4 * fmask[5 - i - 1];
+      lInd = fmask[5 - i - 1];
     } else {
-      lInd = 4 * fmask[i];
+      lInd = fmask[i];
     }
-    exteriorQR[exInd + 4 * i][idx]     = qL[lInd][idx];
-    exteriorQR[exInd + 4 * i + 1][idx] = qL[lInd + 1][idx];
-    exteriorQR[exInd + 4 * i + 2][idx] = qL[lInd + 2][idx];
-    exteriorQR[exInd + 4 * i + 3][idx] = qL[lInd + 3][idx];
+    exteriorQR0[exInd + i][idx] = qL0[lInd][idx];
+    exteriorQR1[exInd + i][idx] = qL1[lInd][idx];
+    exteriorQR2[exInd + i][idx] = qL2[lInd][idx];
+    exteriorQR3[exInd + i][idx] = qL3[lInd][idx];
   }
 
 }
@@ -194,10 +201,22 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   op_arg arg5,
   op_arg arg6,
   op_arg arg7,
-  op_arg arg8){
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14,
+  op_arg arg15,
+  op_arg arg16,
+  op_arg arg17,
+  op_arg arg18,
+  op_arg arg19,
+  op_arg arg20){
 
-  int nargs = 9;
-  op_arg args[9];
+  int nargs = 21;
+  op_arg args[21];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -208,6 +227,18 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   args[6] = arg6;
   args[7] = arg7;
   args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
+  args[15] = arg15;
+  args[16] = arg16;
+  args[17] = arg17;
+  args[18] = arg18;
+  args[19] = arg19;
+  args[20] = arg20;
   //create aligned pointers for dats
   ALIGNED_int const int * __restrict__ ptr0 = (int *) arg0.data;
   DECLARE_PTR_ALIGNED(ptr0,int_ALIGN);
@@ -223,14 +254,38 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   DECLARE_PTR_ALIGNED(ptr5,double_ALIGN);
   ALIGNED_double const double * __restrict__ ptr6 = (double *) arg6.data;
   DECLARE_PTR_ALIGNED(ptr6,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr7 = (double *) arg7.data;
+  ALIGNED_double const double * __restrict__ ptr7 = (double *) arg7.data;
   DECLARE_PTR_ALIGNED(ptr7,double_ALIGN);
-  ALIGNED_double       double * __restrict__ ptr8 = (double *) arg8.data;
+  ALIGNED_double const double * __restrict__ ptr8 = (double *) arg8.data;
   DECLARE_PTR_ALIGNED(ptr8,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr9 = (double *) arg9.data;
+  DECLARE_PTR_ALIGNED(ptr9,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr10 = (double *) arg10.data;
+  DECLARE_PTR_ALIGNED(ptr10,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr11 = (double *) arg11.data;
+  DECLARE_PTR_ALIGNED(ptr11,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr12 = (double *) arg12.data;
+  DECLARE_PTR_ALIGNED(ptr12,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr13 = (double *) arg13.data;
+  DECLARE_PTR_ALIGNED(ptr13,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr14 = (double *) arg14.data;
+  DECLARE_PTR_ALIGNED(ptr14,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr15 = (double *) arg15.data;
+  DECLARE_PTR_ALIGNED(ptr15,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr16 = (double *) arg16.data;
+  DECLARE_PTR_ALIGNED(ptr16,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr17 = (double *) arg17.data;
+  DECLARE_PTR_ALIGNED(ptr17,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr18 = (double *) arg18.data;
+  DECLARE_PTR_ALIGNED(ptr18,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr19 = (double *) arg19.data;
+  DECLARE_PTR_ALIGNED(ptr19,double_ALIGN);
+  ALIGNED_double       double * __restrict__ ptr20 = (double *) arg20.data;
+  DECLARE_PTR_ALIGNED(ptr20,double_ALIGN);
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(4);
+  op_timing_realloc(3);
   op_timers_core(&cpu_t1, &wall_t1);
 
   if (OP_diags>2) {
@@ -252,10 +307,22 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
       ALIGNED_double double dat2[3][SIMD_VEC];
       ALIGNED_double double dat3[3][SIMD_VEC];
       ALIGNED_double double dat4[3][SIMD_VEC];
-      ALIGNED_double double dat5[60][SIMD_VEC];
-      ALIGNED_double double dat6[60][SIMD_VEC];
-      ALIGNED_double double dat7[60][SIMD_VEC];
-      ALIGNED_double double dat8[60][SIMD_VEC];
+      ALIGNED_double double dat5[15][SIMD_VEC];
+      ALIGNED_double double dat6[15][SIMD_VEC];
+      ALIGNED_double double dat7[15][SIMD_VEC];
+      ALIGNED_double double dat8[15][SIMD_VEC];
+      ALIGNED_double double dat9[15][SIMD_VEC];
+      ALIGNED_double double dat10[15][SIMD_VEC];
+      ALIGNED_double double dat11[15][SIMD_VEC];
+      ALIGNED_double double dat12[15][SIMD_VEC];
+      ALIGNED_double double dat13[15][SIMD_VEC];
+      ALIGNED_double double dat14[15][SIMD_VEC];
+      ALIGNED_double double dat15[15][SIMD_VEC];
+      ALIGNED_double double dat16[15][SIMD_VEC];
+      ALIGNED_double double dat17[15][SIMD_VEC];
+      ALIGNED_double double dat18[15][SIMD_VEC];
+      ALIGNED_double double dat19[15][SIMD_VEC];
+      ALIGNED_double double dat20[15][SIMD_VEC];
       #pragma omp simd simdlen(SIMD_VEC)
       for ( int i=0; i<SIMD_VEC; i++ ){
         int idx0_2 = 2 * (n+i);
@@ -263,8 +330,14 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
         int idx2_3 = 3 * arg1.map_data[(n+i) * arg1.map->dim + 0];
         int idx3_3 = 3 * arg1.map_data[(n+i) * arg1.map->dim + 1];
         int idx4_3 = 3 * arg1.map_data[(n+i) * arg1.map->dim + 1];
-        int idx5_60 = 60 * arg1.map_data[(n+i) * arg1.map->dim + 0];
-        int idx6_60 = 60 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx5_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx6_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx7_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx8_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx9_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx10_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx11_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx12_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
 
         dat0[0][i] = (ptr0)[idx0_2 + 0];
         dat0[1][i] = (ptr0)[idx0_2 + 1];
@@ -285,249 +358,261 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
         dat4[1][i] = (ptr4)[idx4_3 + 1];
         dat4[2][i] = (ptr4)[idx4_3 + 2];
 
-        dat5[0][i] = (ptr5)[idx5_60 + 0];
-        dat5[1][i] = (ptr5)[idx5_60 + 1];
-        dat5[2][i] = (ptr5)[idx5_60 + 2];
-        dat5[3][i] = (ptr5)[idx5_60 + 3];
-        dat5[4][i] = (ptr5)[idx5_60 + 4];
-        dat5[5][i] = (ptr5)[idx5_60 + 5];
-        dat5[6][i] = (ptr5)[idx5_60 + 6];
-        dat5[7][i] = (ptr5)[idx5_60 + 7];
-        dat5[8][i] = (ptr5)[idx5_60 + 8];
-        dat5[9][i] = (ptr5)[idx5_60 + 9];
-        dat5[10][i] = (ptr5)[idx5_60 + 10];
-        dat5[11][i] = (ptr5)[idx5_60 + 11];
-        dat5[12][i] = (ptr5)[idx5_60 + 12];
-        dat5[13][i] = (ptr5)[idx5_60 + 13];
-        dat5[14][i] = (ptr5)[idx5_60 + 14];
-        dat5[15][i] = (ptr5)[idx5_60 + 15];
-        dat5[16][i] = (ptr5)[idx5_60 + 16];
-        dat5[17][i] = (ptr5)[idx5_60 + 17];
-        dat5[18][i] = (ptr5)[idx5_60 + 18];
-        dat5[19][i] = (ptr5)[idx5_60 + 19];
-        dat5[20][i] = (ptr5)[idx5_60 + 20];
-        dat5[21][i] = (ptr5)[idx5_60 + 21];
-        dat5[22][i] = (ptr5)[idx5_60 + 22];
-        dat5[23][i] = (ptr5)[idx5_60 + 23];
-        dat5[24][i] = (ptr5)[idx5_60 + 24];
-        dat5[25][i] = (ptr5)[idx5_60 + 25];
-        dat5[26][i] = (ptr5)[idx5_60 + 26];
-        dat5[27][i] = (ptr5)[idx5_60 + 27];
-        dat5[28][i] = (ptr5)[idx5_60 + 28];
-        dat5[29][i] = (ptr5)[idx5_60 + 29];
-        dat5[30][i] = (ptr5)[idx5_60 + 30];
-        dat5[31][i] = (ptr5)[idx5_60 + 31];
-        dat5[32][i] = (ptr5)[idx5_60 + 32];
-        dat5[33][i] = (ptr5)[idx5_60 + 33];
-        dat5[34][i] = (ptr5)[idx5_60 + 34];
-        dat5[35][i] = (ptr5)[idx5_60 + 35];
-        dat5[36][i] = (ptr5)[idx5_60 + 36];
-        dat5[37][i] = (ptr5)[idx5_60 + 37];
-        dat5[38][i] = (ptr5)[idx5_60 + 38];
-        dat5[39][i] = (ptr5)[idx5_60 + 39];
-        dat5[40][i] = (ptr5)[idx5_60 + 40];
-        dat5[41][i] = (ptr5)[idx5_60 + 41];
-        dat5[42][i] = (ptr5)[idx5_60 + 42];
-        dat5[43][i] = (ptr5)[idx5_60 + 43];
-        dat5[44][i] = (ptr5)[idx5_60 + 44];
-        dat5[45][i] = (ptr5)[idx5_60 + 45];
-        dat5[46][i] = (ptr5)[idx5_60 + 46];
-        dat5[47][i] = (ptr5)[idx5_60 + 47];
-        dat5[48][i] = (ptr5)[idx5_60 + 48];
-        dat5[49][i] = (ptr5)[idx5_60 + 49];
-        dat5[50][i] = (ptr5)[idx5_60 + 50];
-        dat5[51][i] = (ptr5)[idx5_60 + 51];
-        dat5[52][i] = (ptr5)[idx5_60 + 52];
-        dat5[53][i] = (ptr5)[idx5_60 + 53];
-        dat5[54][i] = (ptr5)[idx5_60 + 54];
-        dat5[55][i] = (ptr5)[idx5_60 + 55];
-        dat5[56][i] = (ptr5)[idx5_60 + 56];
-        dat5[57][i] = (ptr5)[idx5_60 + 57];
-        dat5[58][i] = (ptr5)[idx5_60 + 58];
-        dat5[59][i] = (ptr5)[idx5_60 + 59];
+        dat5[0][i] = (ptr5)[idx5_15 + 0];
+        dat5[1][i] = (ptr5)[idx5_15 + 1];
+        dat5[2][i] = (ptr5)[idx5_15 + 2];
+        dat5[3][i] = (ptr5)[idx5_15 + 3];
+        dat5[4][i] = (ptr5)[idx5_15 + 4];
+        dat5[5][i] = (ptr5)[idx5_15 + 5];
+        dat5[6][i] = (ptr5)[idx5_15 + 6];
+        dat5[7][i] = (ptr5)[idx5_15 + 7];
+        dat5[8][i] = (ptr5)[idx5_15 + 8];
+        dat5[9][i] = (ptr5)[idx5_15 + 9];
+        dat5[10][i] = (ptr5)[idx5_15 + 10];
+        dat5[11][i] = (ptr5)[idx5_15 + 11];
+        dat5[12][i] = (ptr5)[idx5_15 + 12];
+        dat5[13][i] = (ptr5)[idx5_15 + 13];
+        dat5[14][i] = (ptr5)[idx5_15 + 14];
 
-        dat6[0][i] = (ptr6)[idx6_60 + 0];
-        dat6[1][i] = (ptr6)[idx6_60 + 1];
-        dat6[2][i] = (ptr6)[idx6_60 + 2];
-        dat6[3][i] = (ptr6)[idx6_60 + 3];
-        dat6[4][i] = (ptr6)[idx6_60 + 4];
-        dat6[5][i] = (ptr6)[idx6_60 + 5];
-        dat6[6][i] = (ptr6)[idx6_60 + 6];
-        dat6[7][i] = (ptr6)[idx6_60 + 7];
-        dat6[8][i] = (ptr6)[idx6_60 + 8];
-        dat6[9][i] = (ptr6)[idx6_60 + 9];
-        dat6[10][i] = (ptr6)[idx6_60 + 10];
-        dat6[11][i] = (ptr6)[idx6_60 + 11];
-        dat6[12][i] = (ptr6)[idx6_60 + 12];
-        dat6[13][i] = (ptr6)[idx6_60 + 13];
-        dat6[14][i] = (ptr6)[idx6_60 + 14];
-        dat6[15][i] = (ptr6)[idx6_60 + 15];
-        dat6[16][i] = (ptr6)[idx6_60 + 16];
-        dat6[17][i] = (ptr6)[idx6_60 + 17];
-        dat6[18][i] = (ptr6)[idx6_60 + 18];
-        dat6[19][i] = (ptr6)[idx6_60 + 19];
-        dat6[20][i] = (ptr6)[idx6_60 + 20];
-        dat6[21][i] = (ptr6)[idx6_60 + 21];
-        dat6[22][i] = (ptr6)[idx6_60 + 22];
-        dat6[23][i] = (ptr6)[idx6_60 + 23];
-        dat6[24][i] = (ptr6)[idx6_60 + 24];
-        dat6[25][i] = (ptr6)[idx6_60 + 25];
-        dat6[26][i] = (ptr6)[idx6_60 + 26];
-        dat6[27][i] = (ptr6)[idx6_60 + 27];
-        dat6[28][i] = (ptr6)[idx6_60 + 28];
-        dat6[29][i] = (ptr6)[idx6_60 + 29];
-        dat6[30][i] = (ptr6)[idx6_60 + 30];
-        dat6[31][i] = (ptr6)[idx6_60 + 31];
-        dat6[32][i] = (ptr6)[idx6_60 + 32];
-        dat6[33][i] = (ptr6)[idx6_60 + 33];
-        dat6[34][i] = (ptr6)[idx6_60 + 34];
-        dat6[35][i] = (ptr6)[idx6_60 + 35];
-        dat6[36][i] = (ptr6)[idx6_60 + 36];
-        dat6[37][i] = (ptr6)[idx6_60 + 37];
-        dat6[38][i] = (ptr6)[idx6_60 + 38];
-        dat6[39][i] = (ptr6)[idx6_60 + 39];
-        dat6[40][i] = (ptr6)[idx6_60 + 40];
-        dat6[41][i] = (ptr6)[idx6_60 + 41];
-        dat6[42][i] = (ptr6)[idx6_60 + 42];
-        dat6[43][i] = (ptr6)[idx6_60 + 43];
-        dat6[44][i] = (ptr6)[idx6_60 + 44];
-        dat6[45][i] = (ptr6)[idx6_60 + 45];
-        dat6[46][i] = (ptr6)[idx6_60 + 46];
-        dat6[47][i] = (ptr6)[idx6_60 + 47];
-        dat6[48][i] = (ptr6)[idx6_60 + 48];
-        dat6[49][i] = (ptr6)[idx6_60 + 49];
-        dat6[50][i] = (ptr6)[idx6_60 + 50];
-        dat6[51][i] = (ptr6)[idx6_60 + 51];
-        dat6[52][i] = (ptr6)[idx6_60 + 52];
-        dat6[53][i] = (ptr6)[idx6_60 + 53];
-        dat6[54][i] = (ptr6)[idx6_60 + 54];
-        dat6[55][i] = (ptr6)[idx6_60 + 55];
-        dat6[56][i] = (ptr6)[idx6_60 + 56];
-        dat6[57][i] = (ptr6)[idx6_60 + 57];
-        dat6[58][i] = (ptr6)[idx6_60 + 58];
-        dat6[59][i] = (ptr6)[idx6_60 + 59];
+        dat6[0][i] = (ptr6)[idx6_15 + 0];
+        dat6[1][i] = (ptr6)[idx6_15 + 1];
+        dat6[2][i] = (ptr6)[idx6_15 + 2];
+        dat6[3][i] = (ptr6)[idx6_15 + 3];
+        dat6[4][i] = (ptr6)[idx6_15 + 4];
+        dat6[5][i] = (ptr6)[idx6_15 + 5];
+        dat6[6][i] = (ptr6)[idx6_15 + 6];
+        dat6[7][i] = (ptr6)[idx6_15 + 7];
+        dat6[8][i] = (ptr6)[idx6_15 + 8];
+        dat6[9][i] = (ptr6)[idx6_15 + 9];
+        dat6[10][i] = (ptr6)[idx6_15 + 10];
+        dat6[11][i] = (ptr6)[idx6_15 + 11];
+        dat6[12][i] = (ptr6)[idx6_15 + 12];
+        dat6[13][i] = (ptr6)[idx6_15 + 13];
+        dat6[14][i] = (ptr6)[idx6_15 + 14];
 
-        dat7[0][i] = 0.0;
-        dat7[1][i] = 0.0;
-        dat7[2][i] = 0.0;
-        dat7[3][i] = 0.0;
-        dat7[4][i] = 0.0;
-        dat7[5][i] = 0.0;
-        dat7[6][i] = 0.0;
-        dat7[7][i] = 0.0;
-        dat7[8][i] = 0.0;
-        dat7[9][i] = 0.0;
-        dat7[10][i] = 0.0;
-        dat7[11][i] = 0.0;
-        dat7[12][i] = 0.0;
-        dat7[13][i] = 0.0;
-        dat7[14][i] = 0.0;
-        dat7[15][i] = 0.0;
-        dat7[16][i] = 0.0;
-        dat7[17][i] = 0.0;
-        dat7[18][i] = 0.0;
-        dat7[19][i] = 0.0;
-        dat7[20][i] = 0.0;
-        dat7[21][i] = 0.0;
-        dat7[22][i] = 0.0;
-        dat7[23][i] = 0.0;
-        dat7[24][i] = 0.0;
-        dat7[25][i] = 0.0;
-        dat7[26][i] = 0.0;
-        dat7[27][i] = 0.0;
-        dat7[28][i] = 0.0;
-        dat7[29][i] = 0.0;
-        dat7[30][i] = 0.0;
-        dat7[31][i] = 0.0;
-        dat7[32][i] = 0.0;
-        dat7[33][i] = 0.0;
-        dat7[34][i] = 0.0;
-        dat7[35][i] = 0.0;
-        dat7[36][i] = 0.0;
-        dat7[37][i] = 0.0;
-        dat7[38][i] = 0.0;
-        dat7[39][i] = 0.0;
-        dat7[40][i] = 0.0;
-        dat7[41][i] = 0.0;
-        dat7[42][i] = 0.0;
-        dat7[43][i] = 0.0;
-        dat7[44][i] = 0.0;
-        dat7[45][i] = 0.0;
-        dat7[46][i] = 0.0;
-        dat7[47][i] = 0.0;
-        dat7[48][i] = 0.0;
-        dat7[49][i] = 0.0;
-        dat7[50][i] = 0.0;
-        dat7[51][i] = 0.0;
-        dat7[52][i] = 0.0;
-        dat7[53][i] = 0.0;
-        dat7[54][i] = 0.0;
-        dat7[55][i] = 0.0;
-        dat7[56][i] = 0.0;
-        dat7[57][i] = 0.0;
-        dat7[58][i] = 0.0;
-        dat7[59][i] = 0.0;
+        dat7[0][i] = (ptr7)[idx7_15 + 0];
+        dat7[1][i] = (ptr7)[idx7_15 + 1];
+        dat7[2][i] = (ptr7)[idx7_15 + 2];
+        dat7[3][i] = (ptr7)[idx7_15 + 3];
+        dat7[4][i] = (ptr7)[idx7_15 + 4];
+        dat7[5][i] = (ptr7)[idx7_15 + 5];
+        dat7[6][i] = (ptr7)[idx7_15 + 6];
+        dat7[7][i] = (ptr7)[idx7_15 + 7];
+        dat7[8][i] = (ptr7)[idx7_15 + 8];
+        dat7[9][i] = (ptr7)[idx7_15 + 9];
+        dat7[10][i] = (ptr7)[idx7_15 + 10];
+        dat7[11][i] = (ptr7)[idx7_15 + 11];
+        dat7[12][i] = (ptr7)[idx7_15 + 12];
+        dat7[13][i] = (ptr7)[idx7_15 + 13];
+        dat7[14][i] = (ptr7)[idx7_15 + 14];
 
-        dat8[0][i] = 0.0;
-        dat8[1][i] = 0.0;
-        dat8[2][i] = 0.0;
-        dat8[3][i] = 0.0;
-        dat8[4][i] = 0.0;
-        dat8[5][i] = 0.0;
-        dat8[6][i] = 0.0;
-        dat8[7][i] = 0.0;
-        dat8[8][i] = 0.0;
-        dat8[9][i] = 0.0;
-        dat8[10][i] = 0.0;
-        dat8[11][i] = 0.0;
-        dat8[12][i] = 0.0;
-        dat8[13][i] = 0.0;
-        dat8[14][i] = 0.0;
-        dat8[15][i] = 0.0;
-        dat8[16][i] = 0.0;
-        dat8[17][i] = 0.0;
-        dat8[18][i] = 0.0;
-        dat8[19][i] = 0.0;
-        dat8[20][i] = 0.0;
-        dat8[21][i] = 0.0;
-        dat8[22][i] = 0.0;
-        dat8[23][i] = 0.0;
-        dat8[24][i] = 0.0;
-        dat8[25][i] = 0.0;
-        dat8[26][i] = 0.0;
-        dat8[27][i] = 0.0;
-        dat8[28][i] = 0.0;
-        dat8[29][i] = 0.0;
-        dat8[30][i] = 0.0;
-        dat8[31][i] = 0.0;
-        dat8[32][i] = 0.0;
-        dat8[33][i] = 0.0;
-        dat8[34][i] = 0.0;
-        dat8[35][i] = 0.0;
-        dat8[36][i] = 0.0;
-        dat8[37][i] = 0.0;
-        dat8[38][i] = 0.0;
-        dat8[39][i] = 0.0;
-        dat8[40][i] = 0.0;
-        dat8[41][i] = 0.0;
-        dat8[42][i] = 0.0;
-        dat8[43][i] = 0.0;
-        dat8[44][i] = 0.0;
-        dat8[45][i] = 0.0;
-        dat8[46][i] = 0.0;
-        dat8[47][i] = 0.0;
-        dat8[48][i] = 0.0;
-        dat8[49][i] = 0.0;
-        dat8[50][i] = 0.0;
-        dat8[51][i] = 0.0;
-        dat8[52][i] = 0.0;
-        dat8[53][i] = 0.0;
-        dat8[54][i] = 0.0;
-        dat8[55][i] = 0.0;
-        dat8[56][i] = 0.0;
-        dat8[57][i] = 0.0;
-        dat8[58][i] = 0.0;
-        dat8[59][i] = 0.0;
+        dat8[0][i] = (ptr8)[idx8_15 + 0];
+        dat8[1][i] = (ptr8)[idx8_15 + 1];
+        dat8[2][i] = (ptr8)[idx8_15 + 2];
+        dat8[3][i] = (ptr8)[idx8_15 + 3];
+        dat8[4][i] = (ptr8)[idx8_15 + 4];
+        dat8[5][i] = (ptr8)[idx8_15 + 5];
+        dat8[6][i] = (ptr8)[idx8_15 + 6];
+        dat8[7][i] = (ptr8)[idx8_15 + 7];
+        dat8[8][i] = (ptr8)[idx8_15 + 8];
+        dat8[9][i] = (ptr8)[idx8_15 + 9];
+        dat8[10][i] = (ptr8)[idx8_15 + 10];
+        dat8[11][i] = (ptr8)[idx8_15 + 11];
+        dat8[12][i] = (ptr8)[idx8_15 + 12];
+        dat8[13][i] = (ptr8)[idx8_15 + 13];
+        dat8[14][i] = (ptr8)[idx8_15 + 14];
+
+        dat9[0][i] = (ptr9)[idx9_15 + 0];
+        dat9[1][i] = (ptr9)[idx9_15 + 1];
+        dat9[2][i] = (ptr9)[idx9_15 + 2];
+        dat9[3][i] = (ptr9)[idx9_15 + 3];
+        dat9[4][i] = (ptr9)[idx9_15 + 4];
+        dat9[5][i] = (ptr9)[idx9_15 + 5];
+        dat9[6][i] = (ptr9)[idx9_15 + 6];
+        dat9[7][i] = (ptr9)[idx9_15 + 7];
+        dat9[8][i] = (ptr9)[idx9_15 + 8];
+        dat9[9][i] = (ptr9)[idx9_15 + 9];
+        dat9[10][i] = (ptr9)[idx9_15 + 10];
+        dat9[11][i] = (ptr9)[idx9_15 + 11];
+        dat9[12][i] = (ptr9)[idx9_15 + 12];
+        dat9[13][i] = (ptr9)[idx9_15 + 13];
+        dat9[14][i] = (ptr9)[idx9_15 + 14];
+
+        dat10[0][i] = (ptr10)[idx10_15 + 0];
+        dat10[1][i] = (ptr10)[idx10_15 + 1];
+        dat10[2][i] = (ptr10)[idx10_15 + 2];
+        dat10[3][i] = (ptr10)[idx10_15 + 3];
+        dat10[4][i] = (ptr10)[idx10_15 + 4];
+        dat10[5][i] = (ptr10)[idx10_15 + 5];
+        dat10[6][i] = (ptr10)[idx10_15 + 6];
+        dat10[7][i] = (ptr10)[idx10_15 + 7];
+        dat10[8][i] = (ptr10)[idx10_15 + 8];
+        dat10[9][i] = (ptr10)[idx10_15 + 9];
+        dat10[10][i] = (ptr10)[idx10_15 + 10];
+        dat10[11][i] = (ptr10)[idx10_15 + 11];
+        dat10[12][i] = (ptr10)[idx10_15 + 12];
+        dat10[13][i] = (ptr10)[idx10_15 + 13];
+        dat10[14][i] = (ptr10)[idx10_15 + 14];
+
+        dat11[0][i] = (ptr11)[idx11_15 + 0];
+        dat11[1][i] = (ptr11)[idx11_15 + 1];
+        dat11[2][i] = (ptr11)[idx11_15 + 2];
+        dat11[3][i] = (ptr11)[idx11_15 + 3];
+        dat11[4][i] = (ptr11)[idx11_15 + 4];
+        dat11[5][i] = (ptr11)[idx11_15 + 5];
+        dat11[6][i] = (ptr11)[idx11_15 + 6];
+        dat11[7][i] = (ptr11)[idx11_15 + 7];
+        dat11[8][i] = (ptr11)[idx11_15 + 8];
+        dat11[9][i] = (ptr11)[idx11_15 + 9];
+        dat11[10][i] = (ptr11)[idx11_15 + 10];
+        dat11[11][i] = (ptr11)[idx11_15 + 11];
+        dat11[12][i] = (ptr11)[idx11_15 + 12];
+        dat11[13][i] = (ptr11)[idx11_15 + 13];
+        dat11[14][i] = (ptr11)[idx11_15 + 14];
+
+        dat12[0][i] = (ptr12)[idx12_15 + 0];
+        dat12[1][i] = (ptr12)[idx12_15 + 1];
+        dat12[2][i] = (ptr12)[idx12_15 + 2];
+        dat12[3][i] = (ptr12)[idx12_15 + 3];
+        dat12[4][i] = (ptr12)[idx12_15 + 4];
+        dat12[5][i] = (ptr12)[idx12_15 + 5];
+        dat12[6][i] = (ptr12)[idx12_15 + 6];
+        dat12[7][i] = (ptr12)[idx12_15 + 7];
+        dat12[8][i] = (ptr12)[idx12_15 + 8];
+        dat12[9][i] = (ptr12)[idx12_15 + 9];
+        dat12[10][i] = (ptr12)[idx12_15 + 10];
+        dat12[11][i] = (ptr12)[idx12_15 + 11];
+        dat12[12][i] = (ptr12)[idx12_15 + 12];
+        dat12[13][i] = (ptr12)[idx12_15 + 13];
+        dat12[14][i] = (ptr12)[idx12_15 + 14];
+
+        dat13[0][i] = 0.0;
+        dat13[1][i] = 0.0;
+        dat13[2][i] = 0.0;
+        dat13[3][i] = 0.0;
+        dat13[4][i] = 0.0;
+        dat13[5][i] = 0.0;
+        dat13[6][i] = 0.0;
+        dat13[7][i] = 0.0;
+        dat13[8][i] = 0.0;
+        dat13[9][i] = 0.0;
+        dat13[10][i] = 0.0;
+        dat13[11][i] = 0.0;
+        dat13[12][i] = 0.0;
+        dat13[13][i] = 0.0;
+        dat13[14][i] = 0.0;
+
+        dat14[0][i] = 0.0;
+        dat14[1][i] = 0.0;
+        dat14[2][i] = 0.0;
+        dat14[3][i] = 0.0;
+        dat14[4][i] = 0.0;
+        dat14[5][i] = 0.0;
+        dat14[6][i] = 0.0;
+        dat14[7][i] = 0.0;
+        dat14[8][i] = 0.0;
+        dat14[9][i] = 0.0;
+        dat14[10][i] = 0.0;
+        dat14[11][i] = 0.0;
+        dat14[12][i] = 0.0;
+        dat14[13][i] = 0.0;
+        dat14[14][i] = 0.0;
+
+        dat15[0][i] = 0.0;
+        dat15[1][i] = 0.0;
+        dat15[2][i] = 0.0;
+        dat15[3][i] = 0.0;
+        dat15[4][i] = 0.0;
+        dat15[5][i] = 0.0;
+        dat15[6][i] = 0.0;
+        dat15[7][i] = 0.0;
+        dat15[8][i] = 0.0;
+        dat15[9][i] = 0.0;
+        dat15[10][i] = 0.0;
+        dat15[11][i] = 0.0;
+        dat15[12][i] = 0.0;
+        dat15[13][i] = 0.0;
+        dat15[14][i] = 0.0;
+
+        dat16[0][i] = 0.0;
+        dat16[1][i] = 0.0;
+        dat16[2][i] = 0.0;
+        dat16[3][i] = 0.0;
+        dat16[4][i] = 0.0;
+        dat16[5][i] = 0.0;
+        dat16[6][i] = 0.0;
+        dat16[7][i] = 0.0;
+        dat16[8][i] = 0.0;
+        dat16[9][i] = 0.0;
+        dat16[10][i] = 0.0;
+        dat16[11][i] = 0.0;
+        dat16[12][i] = 0.0;
+        dat16[13][i] = 0.0;
+        dat16[14][i] = 0.0;
+
+        dat17[0][i] = 0.0;
+        dat17[1][i] = 0.0;
+        dat17[2][i] = 0.0;
+        dat17[3][i] = 0.0;
+        dat17[4][i] = 0.0;
+        dat17[5][i] = 0.0;
+        dat17[6][i] = 0.0;
+        dat17[7][i] = 0.0;
+        dat17[8][i] = 0.0;
+        dat17[9][i] = 0.0;
+        dat17[10][i] = 0.0;
+        dat17[11][i] = 0.0;
+        dat17[12][i] = 0.0;
+        dat17[13][i] = 0.0;
+        dat17[14][i] = 0.0;
+
+        dat18[0][i] = 0.0;
+        dat18[1][i] = 0.0;
+        dat18[2][i] = 0.0;
+        dat18[3][i] = 0.0;
+        dat18[4][i] = 0.0;
+        dat18[5][i] = 0.0;
+        dat18[6][i] = 0.0;
+        dat18[7][i] = 0.0;
+        dat18[8][i] = 0.0;
+        dat18[9][i] = 0.0;
+        dat18[10][i] = 0.0;
+        dat18[11][i] = 0.0;
+        dat18[12][i] = 0.0;
+        dat18[13][i] = 0.0;
+        dat18[14][i] = 0.0;
+
+        dat19[0][i] = 0.0;
+        dat19[1][i] = 0.0;
+        dat19[2][i] = 0.0;
+        dat19[3][i] = 0.0;
+        dat19[4][i] = 0.0;
+        dat19[5][i] = 0.0;
+        dat19[6][i] = 0.0;
+        dat19[7][i] = 0.0;
+        dat19[8][i] = 0.0;
+        dat19[9][i] = 0.0;
+        dat19[10][i] = 0.0;
+        dat19[11][i] = 0.0;
+        dat19[12][i] = 0.0;
+        dat19[13][i] = 0.0;
+        dat19[14][i] = 0.0;
+
+        dat20[0][i] = 0.0;
+        dat20[1][i] = 0.0;
+        dat20[2][i] = 0.0;
+        dat20[3][i] = 0.0;
+        dat20[4][i] = 0.0;
+        dat20[5][i] = 0.0;
+        dat20[6][i] = 0.0;
+        dat20[7][i] = 0.0;
+        dat20[8][i] = 0.0;
+        dat20[9][i] = 0.0;
+        dat20[10][i] = 0.0;
+        dat20[11][i] = 0.0;
+        dat20[12][i] = 0.0;
+        dat20[13][i] = 0.0;
+        dat20[14][i] = 0.0;
 
       }
       #pragma omp simd simdlen(SIMD_VEC)
@@ -542,133 +627,157 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
           dat6,
           dat7,
           dat8,
+          dat9,
+          dat10,
+          dat11,
+          dat12,
+          dat13,
+          dat14,
+          dat15,
+          dat16,
+          dat17,
+          dat18,
+          dat19,
+          dat20,
           i);
       }
       for ( int i=0; i<SIMD_VEC; i++ ){
-        int idx7_60 = 60 * arg1.map_data[(n+i) * arg1.map->dim + 0];
-        int idx8_60 = 60 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx13_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx14_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx15_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx16_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 0];
+        int idx17_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx18_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx19_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
+        int idx20_15 = 15 * arg1.map_data[(n+i) * arg1.map->dim + 1];
 
-        (ptr7)[idx7_60 + 0] += dat7[0][i];
-        (ptr7)[idx7_60 + 1] += dat7[1][i];
-        (ptr7)[idx7_60 + 2] += dat7[2][i];
-        (ptr7)[idx7_60 + 3] += dat7[3][i];
-        (ptr7)[idx7_60 + 4] += dat7[4][i];
-        (ptr7)[idx7_60 + 5] += dat7[5][i];
-        (ptr7)[idx7_60 + 6] += dat7[6][i];
-        (ptr7)[idx7_60 + 7] += dat7[7][i];
-        (ptr7)[idx7_60 + 8] += dat7[8][i];
-        (ptr7)[idx7_60 + 9] += dat7[9][i];
-        (ptr7)[idx7_60 + 10] += dat7[10][i];
-        (ptr7)[idx7_60 + 11] += dat7[11][i];
-        (ptr7)[idx7_60 + 12] += dat7[12][i];
-        (ptr7)[idx7_60 + 13] += dat7[13][i];
-        (ptr7)[idx7_60 + 14] += dat7[14][i];
-        (ptr7)[idx7_60 + 15] += dat7[15][i];
-        (ptr7)[idx7_60 + 16] += dat7[16][i];
-        (ptr7)[idx7_60 + 17] += dat7[17][i];
-        (ptr7)[idx7_60 + 18] += dat7[18][i];
-        (ptr7)[idx7_60 + 19] += dat7[19][i];
-        (ptr7)[idx7_60 + 20] += dat7[20][i];
-        (ptr7)[idx7_60 + 21] += dat7[21][i];
-        (ptr7)[idx7_60 + 22] += dat7[22][i];
-        (ptr7)[idx7_60 + 23] += dat7[23][i];
-        (ptr7)[idx7_60 + 24] += dat7[24][i];
-        (ptr7)[idx7_60 + 25] += dat7[25][i];
-        (ptr7)[idx7_60 + 26] += dat7[26][i];
-        (ptr7)[idx7_60 + 27] += dat7[27][i];
-        (ptr7)[idx7_60 + 28] += dat7[28][i];
-        (ptr7)[idx7_60 + 29] += dat7[29][i];
-        (ptr7)[idx7_60 + 30] += dat7[30][i];
-        (ptr7)[idx7_60 + 31] += dat7[31][i];
-        (ptr7)[idx7_60 + 32] += dat7[32][i];
-        (ptr7)[idx7_60 + 33] += dat7[33][i];
-        (ptr7)[idx7_60 + 34] += dat7[34][i];
-        (ptr7)[idx7_60 + 35] += dat7[35][i];
-        (ptr7)[idx7_60 + 36] += dat7[36][i];
-        (ptr7)[idx7_60 + 37] += dat7[37][i];
-        (ptr7)[idx7_60 + 38] += dat7[38][i];
-        (ptr7)[idx7_60 + 39] += dat7[39][i];
-        (ptr7)[idx7_60 + 40] += dat7[40][i];
-        (ptr7)[idx7_60 + 41] += dat7[41][i];
-        (ptr7)[idx7_60 + 42] += dat7[42][i];
-        (ptr7)[idx7_60 + 43] += dat7[43][i];
-        (ptr7)[idx7_60 + 44] += dat7[44][i];
-        (ptr7)[idx7_60 + 45] += dat7[45][i];
-        (ptr7)[idx7_60 + 46] += dat7[46][i];
-        (ptr7)[idx7_60 + 47] += dat7[47][i];
-        (ptr7)[idx7_60 + 48] += dat7[48][i];
-        (ptr7)[idx7_60 + 49] += dat7[49][i];
-        (ptr7)[idx7_60 + 50] += dat7[50][i];
-        (ptr7)[idx7_60 + 51] += dat7[51][i];
-        (ptr7)[idx7_60 + 52] += dat7[52][i];
-        (ptr7)[idx7_60 + 53] += dat7[53][i];
-        (ptr7)[idx7_60 + 54] += dat7[54][i];
-        (ptr7)[idx7_60 + 55] += dat7[55][i];
-        (ptr7)[idx7_60 + 56] += dat7[56][i];
-        (ptr7)[idx7_60 + 57] += dat7[57][i];
-        (ptr7)[idx7_60 + 58] += dat7[58][i];
-        (ptr7)[idx7_60 + 59] += dat7[59][i];
+        (ptr13)[idx13_15 + 0] += dat13[0][i];
+        (ptr13)[idx13_15 + 1] += dat13[1][i];
+        (ptr13)[idx13_15 + 2] += dat13[2][i];
+        (ptr13)[idx13_15 + 3] += dat13[3][i];
+        (ptr13)[idx13_15 + 4] += dat13[4][i];
+        (ptr13)[idx13_15 + 5] += dat13[5][i];
+        (ptr13)[idx13_15 + 6] += dat13[6][i];
+        (ptr13)[idx13_15 + 7] += dat13[7][i];
+        (ptr13)[idx13_15 + 8] += dat13[8][i];
+        (ptr13)[idx13_15 + 9] += dat13[9][i];
+        (ptr13)[idx13_15 + 10] += dat13[10][i];
+        (ptr13)[idx13_15 + 11] += dat13[11][i];
+        (ptr13)[idx13_15 + 12] += dat13[12][i];
+        (ptr13)[idx13_15 + 13] += dat13[13][i];
+        (ptr13)[idx13_15 + 14] += dat13[14][i];
 
-        (ptr8)[idx8_60 + 0] += dat8[0][i];
-        (ptr8)[idx8_60 + 1] += dat8[1][i];
-        (ptr8)[idx8_60 + 2] += dat8[2][i];
-        (ptr8)[idx8_60 + 3] += dat8[3][i];
-        (ptr8)[idx8_60 + 4] += dat8[4][i];
-        (ptr8)[idx8_60 + 5] += dat8[5][i];
-        (ptr8)[idx8_60 + 6] += dat8[6][i];
-        (ptr8)[idx8_60 + 7] += dat8[7][i];
-        (ptr8)[idx8_60 + 8] += dat8[8][i];
-        (ptr8)[idx8_60 + 9] += dat8[9][i];
-        (ptr8)[idx8_60 + 10] += dat8[10][i];
-        (ptr8)[idx8_60 + 11] += dat8[11][i];
-        (ptr8)[idx8_60 + 12] += dat8[12][i];
-        (ptr8)[idx8_60 + 13] += dat8[13][i];
-        (ptr8)[idx8_60 + 14] += dat8[14][i];
-        (ptr8)[idx8_60 + 15] += dat8[15][i];
-        (ptr8)[idx8_60 + 16] += dat8[16][i];
-        (ptr8)[idx8_60 + 17] += dat8[17][i];
-        (ptr8)[idx8_60 + 18] += dat8[18][i];
-        (ptr8)[idx8_60 + 19] += dat8[19][i];
-        (ptr8)[idx8_60 + 20] += dat8[20][i];
-        (ptr8)[idx8_60 + 21] += dat8[21][i];
-        (ptr8)[idx8_60 + 22] += dat8[22][i];
-        (ptr8)[idx8_60 + 23] += dat8[23][i];
-        (ptr8)[idx8_60 + 24] += dat8[24][i];
-        (ptr8)[idx8_60 + 25] += dat8[25][i];
-        (ptr8)[idx8_60 + 26] += dat8[26][i];
-        (ptr8)[idx8_60 + 27] += dat8[27][i];
-        (ptr8)[idx8_60 + 28] += dat8[28][i];
-        (ptr8)[idx8_60 + 29] += dat8[29][i];
-        (ptr8)[idx8_60 + 30] += dat8[30][i];
-        (ptr8)[idx8_60 + 31] += dat8[31][i];
-        (ptr8)[idx8_60 + 32] += dat8[32][i];
-        (ptr8)[idx8_60 + 33] += dat8[33][i];
-        (ptr8)[idx8_60 + 34] += dat8[34][i];
-        (ptr8)[idx8_60 + 35] += dat8[35][i];
-        (ptr8)[idx8_60 + 36] += dat8[36][i];
-        (ptr8)[idx8_60 + 37] += dat8[37][i];
-        (ptr8)[idx8_60 + 38] += dat8[38][i];
-        (ptr8)[idx8_60 + 39] += dat8[39][i];
-        (ptr8)[idx8_60 + 40] += dat8[40][i];
-        (ptr8)[idx8_60 + 41] += dat8[41][i];
-        (ptr8)[idx8_60 + 42] += dat8[42][i];
-        (ptr8)[idx8_60 + 43] += dat8[43][i];
-        (ptr8)[idx8_60 + 44] += dat8[44][i];
-        (ptr8)[idx8_60 + 45] += dat8[45][i];
-        (ptr8)[idx8_60 + 46] += dat8[46][i];
-        (ptr8)[idx8_60 + 47] += dat8[47][i];
-        (ptr8)[idx8_60 + 48] += dat8[48][i];
-        (ptr8)[idx8_60 + 49] += dat8[49][i];
-        (ptr8)[idx8_60 + 50] += dat8[50][i];
-        (ptr8)[idx8_60 + 51] += dat8[51][i];
-        (ptr8)[idx8_60 + 52] += dat8[52][i];
-        (ptr8)[idx8_60 + 53] += dat8[53][i];
-        (ptr8)[idx8_60 + 54] += dat8[54][i];
-        (ptr8)[idx8_60 + 55] += dat8[55][i];
-        (ptr8)[idx8_60 + 56] += dat8[56][i];
-        (ptr8)[idx8_60 + 57] += dat8[57][i];
-        (ptr8)[idx8_60 + 58] += dat8[58][i];
-        (ptr8)[idx8_60 + 59] += dat8[59][i];
+        (ptr14)[idx14_15 + 0] += dat14[0][i];
+        (ptr14)[idx14_15 + 1] += dat14[1][i];
+        (ptr14)[idx14_15 + 2] += dat14[2][i];
+        (ptr14)[idx14_15 + 3] += dat14[3][i];
+        (ptr14)[idx14_15 + 4] += dat14[4][i];
+        (ptr14)[idx14_15 + 5] += dat14[5][i];
+        (ptr14)[idx14_15 + 6] += dat14[6][i];
+        (ptr14)[idx14_15 + 7] += dat14[7][i];
+        (ptr14)[idx14_15 + 8] += dat14[8][i];
+        (ptr14)[idx14_15 + 9] += dat14[9][i];
+        (ptr14)[idx14_15 + 10] += dat14[10][i];
+        (ptr14)[idx14_15 + 11] += dat14[11][i];
+        (ptr14)[idx14_15 + 12] += dat14[12][i];
+        (ptr14)[idx14_15 + 13] += dat14[13][i];
+        (ptr14)[idx14_15 + 14] += dat14[14][i];
+
+        (ptr15)[idx15_15 + 0] += dat15[0][i];
+        (ptr15)[idx15_15 + 1] += dat15[1][i];
+        (ptr15)[idx15_15 + 2] += dat15[2][i];
+        (ptr15)[idx15_15 + 3] += dat15[3][i];
+        (ptr15)[idx15_15 + 4] += dat15[4][i];
+        (ptr15)[idx15_15 + 5] += dat15[5][i];
+        (ptr15)[idx15_15 + 6] += dat15[6][i];
+        (ptr15)[idx15_15 + 7] += dat15[7][i];
+        (ptr15)[idx15_15 + 8] += dat15[8][i];
+        (ptr15)[idx15_15 + 9] += dat15[9][i];
+        (ptr15)[idx15_15 + 10] += dat15[10][i];
+        (ptr15)[idx15_15 + 11] += dat15[11][i];
+        (ptr15)[idx15_15 + 12] += dat15[12][i];
+        (ptr15)[idx15_15 + 13] += dat15[13][i];
+        (ptr15)[idx15_15 + 14] += dat15[14][i];
+
+        (ptr16)[idx16_15 + 0] += dat16[0][i];
+        (ptr16)[idx16_15 + 1] += dat16[1][i];
+        (ptr16)[idx16_15 + 2] += dat16[2][i];
+        (ptr16)[idx16_15 + 3] += dat16[3][i];
+        (ptr16)[idx16_15 + 4] += dat16[4][i];
+        (ptr16)[idx16_15 + 5] += dat16[5][i];
+        (ptr16)[idx16_15 + 6] += dat16[6][i];
+        (ptr16)[idx16_15 + 7] += dat16[7][i];
+        (ptr16)[idx16_15 + 8] += dat16[8][i];
+        (ptr16)[idx16_15 + 9] += dat16[9][i];
+        (ptr16)[idx16_15 + 10] += dat16[10][i];
+        (ptr16)[idx16_15 + 11] += dat16[11][i];
+        (ptr16)[idx16_15 + 12] += dat16[12][i];
+        (ptr16)[idx16_15 + 13] += dat16[13][i];
+        (ptr16)[idx16_15 + 14] += dat16[14][i];
+
+        (ptr17)[idx17_15 + 0] += dat17[0][i];
+        (ptr17)[idx17_15 + 1] += dat17[1][i];
+        (ptr17)[idx17_15 + 2] += dat17[2][i];
+        (ptr17)[idx17_15 + 3] += dat17[3][i];
+        (ptr17)[idx17_15 + 4] += dat17[4][i];
+        (ptr17)[idx17_15 + 5] += dat17[5][i];
+        (ptr17)[idx17_15 + 6] += dat17[6][i];
+        (ptr17)[idx17_15 + 7] += dat17[7][i];
+        (ptr17)[idx17_15 + 8] += dat17[8][i];
+        (ptr17)[idx17_15 + 9] += dat17[9][i];
+        (ptr17)[idx17_15 + 10] += dat17[10][i];
+        (ptr17)[idx17_15 + 11] += dat17[11][i];
+        (ptr17)[idx17_15 + 12] += dat17[12][i];
+        (ptr17)[idx17_15 + 13] += dat17[13][i];
+        (ptr17)[idx17_15 + 14] += dat17[14][i];
+
+        (ptr18)[idx18_15 + 0] += dat18[0][i];
+        (ptr18)[idx18_15 + 1] += dat18[1][i];
+        (ptr18)[idx18_15 + 2] += dat18[2][i];
+        (ptr18)[idx18_15 + 3] += dat18[3][i];
+        (ptr18)[idx18_15 + 4] += dat18[4][i];
+        (ptr18)[idx18_15 + 5] += dat18[5][i];
+        (ptr18)[idx18_15 + 6] += dat18[6][i];
+        (ptr18)[idx18_15 + 7] += dat18[7][i];
+        (ptr18)[idx18_15 + 8] += dat18[8][i];
+        (ptr18)[idx18_15 + 9] += dat18[9][i];
+        (ptr18)[idx18_15 + 10] += dat18[10][i];
+        (ptr18)[idx18_15 + 11] += dat18[11][i];
+        (ptr18)[idx18_15 + 12] += dat18[12][i];
+        (ptr18)[idx18_15 + 13] += dat18[13][i];
+        (ptr18)[idx18_15 + 14] += dat18[14][i];
+
+        (ptr19)[idx19_15 + 0] += dat19[0][i];
+        (ptr19)[idx19_15 + 1] += dat19[1][i];
+        (ptr19)[idx19_15 + 2] += dat19[2][i];
+        (ptr19)[idx19_15 + 3] += dat19[3][i];
+        (ptr19)[idx19_15 + 4] += dat19[4][i];
+        (ptr19)[idx19_15 + 5] += dat19[5][i];
+        (ptr19)[idx19_15 + 6] += dat19[6][i];
+        (ptr19)[idx19_15 + 7] += dat19[7][i];
+        (ptr19)[idx19_15 + 8] += dat19[8][i];
+        (ptr19)[idx19_15 + 9] += dat19[9][i];
+        (ptr19)[idx19_15 + 10] += dat19[10][i];
+        (ptr19)[idx19_15 + 11] += dat19[11][i];
+        (ptr19)[idx19_15 + 12] += dat19[12][i];
+        (ptr19)[idx19_15 + 13] += dat19[13][i];
+        (ptr19)[idx19_15 + 14] += dat19[14][i];
+
+        (ptr20)[idx20_15 + 0] += dat20[0][i];
+        (ptr20)[idx20_15 + 1] += dat20[1][i];
+        (ptr20)[idx20_15 + 2] += dat20[2][i];
+        (ptr20)[idx20_15 + 3] += dat20[3][i];
+        (ptr20)[idx20_15 + 4] += dat20[4][i];
+        (ptr20)[idx20_15 + 5] += dat20[5][i];
+        (ptr20)[idx20_15 + 6] += dat20[6][i];
+        (ptr20)[idx20_15 + 7] += dat20[7][i];
+        (ptr20)[idx20_15 + 8] += dat20[8][i];
+        (ptr20)[idx20_15 + 9] += dat20[9][i];
+        (ptr20)[idx20_15 + 10] += dat20[10][i];
+        (ptr20)[idx20_15 + 11] += dat20[11][i];
+        (ptr20)[idx20_15 + 12] += dat20[12][i];
+        (ptr20)[idx20_15 + 13] += dat20[13][i];
+        (ptr20)[idx20_15 + 14] += dat20[14][i];
 
       }
     }
@@ -692,10 +801,22 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
         &(ptr2)[3 * map1idx],
         &(ptr3)[3 * map3idx],
         &(ptr4)[3 * map3idx],
-        &(ptr5)[60 * map1idx],
-        &(ptr6)[60 * map3idx],
-        &(ptr7)[60 * map1idx],
-        &(ptr8)[60 * map3idx]);
+        &(ptr5)[15 * map1idx],
+        &(ptr6)[15 * map1idx],
+        &(ptr7)[15 * map1idx],
+        &(ptr8)[15 * map1idx],
+        &(ptr9)[15 * map3idx],
+        &(ptr10)[15 * map3idx],
+        &(ptr11)[15 * map3idx],
+        &(ptr12)[15 * map3idx],
+        &(ptr13)[15 * map1idx],
+        &(ptr14)[15 * map1idx],
+        &(ptr15)[15 * map1idx],
+        &(ptr16)[15 * map1idx],
+        &(ptr17)[15 * map3idx],
+        &(ptr18)[15 * map3idx],
+        &(ptr19)[15 * map3idx],
+        &(ptr20)[15 * map3idx]);
     }
   }
 
@@ -707,12 +828,17 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[4].name      = name;
-  OP_kernels[4].count    += 1;
-  OP_kernels[4].time     += wall_t2 - wall_t1;
-  OP_kernels[4].transfer += (float)set->size * arg1.size;
-  OP_kernels[4].transfer += (float)set->size * arg2.size;
-  OP_kernels[4].transfer += (float)set->size * arg5.size;
-  OP_kernels[4].transfer += (float)set->size * arg0.size;
-  OP_kernels[4].transfer += (float)set->size * arg1.map->dim * 4.0f;
+  OP_kernels[3].name      = name;
+  OP_kernels[3].count    += 1;
+  OP_kernels[3].time     += wall_t2 - wall_t1;
+  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[3].transfer += (float)set->size * arg2.size;
+  OP_kernels[3].transfer += (float)set->size * arg5.size;
+  OP_kernels[3].transfer += (float)set->size * arg6.size;
+  OP_kernels[3].transfer += (float)set->size * arg8.size;
+  OP_kernels[3].transfer += (float)set->size * arg14.size * 2.0f;
+  OP_kernels[3].transfer += (float)set->size * arg15.size * 2.0f;
+  OP_kernels[3].transfer += (float)set->size * arg16.size * 2.0f;
+  OP_kernels[3].transfer += (float)set->size * arg0.size;
+  OP_kernels[3].transfer += (float)set->size * arg1.map->dim * 4.0f;
 }

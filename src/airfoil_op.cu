@@ -34,17 +34,39 @@ void op_par_loop_init_grid(char const *, op_set,
 
 void op_par_loop_set_ic(char const *, op_set,
   op_arg,
-  op_arg );
-
-void op_par_loop_neighbour_zero(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg );
 
 void op_par_loop_calc_dt(char const *, op_set,
   op_arg,
   op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg );
 
 void op_par_loop_get_neighbour_q(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg,
   op_arg,
   op_arg,
@@ -61,14 +83,53 @@ void op_par_loop_get_bedge_q(char const *, op_set,
   op_arg,
   op_arg,
   op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg );
 
 void op_par_loop_internal_fluxes(char const *, op_set,
   op_arg,
   op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg );
 
 void op_par_loop_euler_rhs(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg,
   op_arg,
   op_arg,
@@ -91,9 +152,36 @@ void op_par_loop_set_workingQ(char const *, op_set,
   op_arg,
   op_arg,
   op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg );
 
 void op_par_loop_update_Q(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
   op_arg,
   op_arg,
   op_arg,
@@ -139,7 +227,6 @@ void op_par_loop_update_Q(char const *, op_set,
 // #include "set_workingQ.h"
 // #include "update_Q.h"
 // #include "calc_dt.h"
-// #include "neighbour_zero.h"
 // #include "internal_fluxes.h"
 
 using namespace std;
@@ -263,21 +350,22 @@ int main(int argc, char **argv) {
   op_dat fscale = op_decl_dat(cells, 3 * 5, "double", data->fscale_data, "fscale");
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
-  op_dat q    = op_decl_dat(cells, 4 * 15, "double", data->q_data, "q");
-  op_dat F    = op_decl_dat(cells, 4 * 15, "double", data->F_data, "F");
-  op_dat G    = op_decl_dat(cells, 4 * 15, "double", data->G_data, "G");
-  op_dat dFdr = op_decl_dat(cells, 4 * 15, "double", data->dFdr_data, "dFdr");
-  op_dat dFds = op_decl_dat(cells, 4 * 15, "double", data->dFds_data, "dFds");
-  op_dat dGdr = op_decl_dat(cells, 4 * 15, "double", data->dGdr_data, "dGdr");
-  op_dat dGds = op_decl_dat(cells, 4 * 15, "double", data->dGds_data, "dGds");
-  op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", data->workingQ_data, "workingQ");
-  op_dat rk[3];
-  rk[0] = op_decl_dat(cells, 4 * 15, "double", data->rk1_data, "rk1");
-  rk[1] = op_decl_dat(cells, 4 * 15, "double", data->rk2_data, "rk2");
-  rk[2] = op_decl_dat(cells, 4 * 15, "double", data->rk3_data, "rk3");
-    // Holds neighbouring values of Q for nodes on faces
-  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", data->exteriorQ_data, "exteriorQ");
-  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", data->flux_data, "flux");
+  op_dat Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4], exteriorQ[4], flux[4], rk[3][4];
+  for(int i = 0; i < 4; i++) {
+    Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    F[i] = op_decl_dat(cells, 15, "double", data->F_data[i], "F" + i);
+    G[i] = op_decl_dat(cells, 15, "double", data->G_data[i], "G" + i);
+    dFdr[i] = op_decl_dat(cells, 15, "double", data->dFdr_data[i], "dFdr" + i);
+    dFds[i] = op_decl_dat(cells, 15, "double", data->dFds_data[i], "dFds" + i);
+    dGdr[i] = op_decl_dat(cells, 15, "double", data->dGdr_data[i], "dGdr" + i);
+    dGds[i] = op_decl_dat(cells, 15, "double", data->dGds_data[i], "dGds" + i);
+    workingQ[i] = op_decl_dat(cells, 15, "double", data->workingQ_data[i], "workingQ" + i);
+    exteriorQ[i] = op_decl_dat(cells, 3 * 5, "double", data->exteriorQ_data[i], "exteriorQ" + i);
+    flux[i] = op_decl_dat(cells, 3 * 5, "double", data->flux_data[i], "flux" + i);
+    rk[0][i] = op_decl_dat(cells, 15, "double", data->rk1_data[i], "rk1" + i);
+    rk[1][i] = op_decl_dat(cells, 15, "double", data->rk2_data[i], "rk2" + i);
+    rk[2][i] = op_decl_dat(cells, 15, "double", data->rk3_data[i], "rk3" + i);
+  }
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -302,22 +390,22 @@ int main(int argc, char **argv) {
   op_decl_const2("LIFT",225,"double",LIFT);
 
   // Matrix multiplications using cuBLAS
-  op_arg init_grid_args[] = {
-    op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
-    op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
-  };
-  op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
-  init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
-                     (int *)cell2nodes->map, (double *)x->data_d,
-                     (double *)y->data_d, (double *)xr->data_d,
-                     (double *)xs->data_d, (double *)yr->data_d,
-                     (double *)ys->data_d);
-  // Check this
-  op_mpi_set_dirtybit_cuda(6, init_grid_args);
+  // op_arg init_grid_args[] = {
+  //   op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
+  //   op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
+  // };
+  // op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
+  // init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
+  //                    (int *)cell2nodes->map, (double *)x->data_d,
+  //                    (double *)y->data_d, (double *)xr->data_d,
+  //                    (double *)xs->data_d, (double *)yr->data_d,
+  //                    (double *)ys->data_d);
+  // // Check this
+  // op_mpi_set_dirtybit_cuda(6, init_grid_args);
   // x->dirty_hd = 2;
   // y->dirty_hd = 2;
   // xr->dirty_hd = 2;
@@ -346,15 +434,25 @@ int main(int argc, char **argv) {
 
 
   op_par_loop_set_ic("set_ic",cells,
-              op_arg_dat(q,-1,OP_ID,60,"double",OP_WRITE),
-              op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
-
-  op_par_loop_neighbour_zero("neighbour_zero",cells,
-              op_arg_dat(exteriorQ,-1,OP_ID,60,"double",OP_WRITE));
+              op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(exteriorQ[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(exteriorQ[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(exteriorQ[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(exteriorQ[3],-1,OP_ID,15,"double",OP_WRITE));
 
   double dt1 = 0.0;
   op_par_loop_calc_dt("calc_dt",cells,
-              op_arg_dat(q,-1,OP_ID,60,"double",OP_READ),
+              op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
               op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
               op_arg_gbl(&dt1,1,"double",OP_MAX));
 
@@ -386,10 +484,22 @@ int main(int argc, char **argv) {
                   op_arg_dat(nodeY,0,edge2cells,3,"double",OP_READ),
                   op_arg_dat(nodeX,1,edge2cells,3,"double",OP_READ),
                   op_arg_dat(nodeY,1,edge2cells,3,"double",OP_READ),
-                  op_arg_dat(workingQ,0,edge2cells,60,"double",OP_READ),
-                  op_arg_dat(workingQ,1,edge2cells,60,"double",OP_READ),
-                  op_arg_dat(exteriorQ,0,edge2cells,60,"double",OP_INC),
-                  op_arg_dat(exteriorQ,1,edge2cells,60,"double",OP_INC));
+                  op_arg_dat(workingQ[0],0,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[1],0,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[2],0,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[3],0,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[0],1,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[1],1,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[2],1,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[3],1,edge2cells,15,"double",OP_READ),
+                  op_arg_dat(exteriorQ[0],0,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[1],0,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[2],0,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[3],0,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[0],1,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[1],1,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[2],1,edge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[3],1,edge2cells,15,"double",OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_neighbour_q_t += wall_loop_2 - wall_loop_1;
 
@@ -400,37 +510,52 @@ int main(int argc, char **argv) {
                   op_arg_dat(bedgeNum,-1,OP_ID,1,"int",OP_READ),
                   op_arg_dat(nx,0,bedge2cells,15,"double",OP_READ),
                   op_arg_dat(ny,0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ,0,bedge2cells,60,"double",OP_READ),
-                  op_arg_dat(exteriorQ,0,bedge2cells,60,"double",OP_INC));
+                  op_arg_dat(workingQ[0],0,bedge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[1],0,bedge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[2],0,bedge2cells,15,"double",OP_READ),
+                  op_arg_dat(workingQ[3],0,bedge2cells,15,"double",OP_READ),
+                  op_arg_dat(exteriorQ[0],0,bedge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[1],0,bedge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[2],0,bedge2cells,15,"double",OP_INC),
+                  op_arg_dat(exteriorQ[3],0,bedge2cells,15,"double",OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
       op_timers(&cpu_loop_1, &wall_loop_1);
       op_par_loop_internal_fluxes("internal_fluxes",cells,
-                  op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(F,-1,OP_ID,60,"double",OP_WRITE),
-                  op_arg_dat(G,-1,OP_ID,60,"double",OP_WRITE));
+                  op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(F[0],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(F[1],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(F[2],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(F[3],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(G[0],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(G[1],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(G[2],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(G[3],-1,OP_ID,15,"double",OP_WRITE));
       op_timers(&cpu_loop_2, &wall_loop_2);
       internal_fluxes_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg internal_fluxes_args[] = {
-        op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-        op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
-      internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
-                               (double *)G->data_d, (double *)dFdr->data_d,
-                               (double *)dFds->data_d, (double *)dGdr->data_d,
-                               (double *)dGds->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
+      // op_timers(&cpu_loop_1, &wall_loop_1);
+      // op_arg internal_fluxes_args[] = {
+      //   op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
+      //   op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
+      // };
+      // op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
+      // internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
+      //                          (double *)G->data_d, (double *)dFdr->data_d,
+      //                          (double *)dFds->data_d, (double *)dGdr->data_d,
+      //                          (double *)dGds->data_d);
+      //
+      // // Check this
+      // op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
       // dFdr->dirty_hd = 2;
       // dFds->dirty_hd = 2;
       // dGdr->dirty_hd = 2;
@@ -442,8 +567,14 @@ int main(int argc, char **argv) {
       op_timers(&cpu_loop_1, &wall_loop_1);
 
       op_par_loop_euler_rhs("euler_rhs",cells,
-                  op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(exteriorQ,-1,OP_ID,60,"double",OP_RW),
+                  op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(exteriorQ[0],-1,OP_ID,15,"double",OP_RW),
+                  op_arg_dat(exteriorQ[1],-1,OP_ID,15,"double",OP_RW),
+                  op_arg_dat(exteriorQ[2],-1,OP_ID,15,"double",OP_RW),
+                  op_arg_dat(exteriorQ[3],-1,OP_ID,15,"double",OP_RW),
                   op_arg_dat(rx,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(ry,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(sx,-1,OP_ID,15,"double",OP_READ),
@@ -451,27 +582,45 @@ int main(int argc, char **argv) {
                   op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(nx,-1,OP_ID,15,"double",OP_READ),
                   op_arg_dat(ny,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFdr,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(dFds,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(dGdr,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(dGds,-1,OP_ID,60,"double",OP_READ),
-                  op_arg_dat(flux,-1,OP_ID,60,"double",OP_WRITE),
-                  op_arg_dat(rk[j],-1,OP_ID,60,"double",OP_WRITE));
+                  op_arg_dat(dFdr[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFdr[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFdr[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFdr[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFds[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFds[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFds[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dFds[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGdr[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGdr[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGdr[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGdr[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGds[0],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGds[1],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGds[2],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(dGds[3],-1,OP_ID,15,"double",OP_READ),
+                  op_arg_dat(flux[0],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(flux[1],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(flux[2],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(flux[3],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(rk[j][0],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(rk[j][1],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(rk[j][2],-1,OP_ID,15,"double",OP_WRITE),
+                  op_arg_dat(rk[j][3],-1,OP_ID,15,"double",OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg face_fluxes_args[] = {
-        op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
-        op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
-      face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
-                           (double *)rk[j]->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
+      // op_timers(&cpu_loop_1, &wall_loop_1);
+      // op_arg face_fluxes_args[] = {
+      //   op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
+      //   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
+      // };
+      // op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
+      // face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
+      //                      (double *)rk[j]->data_d);
+      //
+      // // Check this
+      // op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
       // rk[j]->dirty_hd = 2;
       op_timers(&cpu_loop_2, &wall_loop_2);
       face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
@@ -481,10 +630,22 @@ int main(int argc, char **argv) {
         op_par_loop_set_workingQ("set_workingQ",cells,
                     op_arg_gbl(&dt,1,"double",OP_READ),
                     op_arg_gbl(&j,1,"int",OP_READ),
-                    op_arg_dat(q,-1,OP_ID,60,"double",OP_READ),
-                    op_arg_dat(rk[0],-1,OP_ID,60,"double",OP_READ),
-                    op_arg_dat(rk[1],-1,OP_ID,60,"double",OP_READ),
-                    op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
+                    op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[0][0],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[0][1],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[0][2],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[0][3],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[1][0],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[1][1],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[1][2],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(rk[1][3],-1,OP_ID,15,"double",OP_READ),
+                    op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_WRITE),
+                    op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_WRITE),
+                    op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_WRITE),
+                    op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
@@ -492,11 +653,26 @@ int main(int argc, char **argv) {
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop_update_Q("update_Q",cells,
                 op_arg_gbl(&dt,1,"double",OP_READ),
-                op_arg_dat(q,-1,OP_ID,60,"double",OP_RW),
-                op_arg_dat(rk[0],-1,OP_ID,60,"double",OP_READ),
-                op_arg_dat(rk[1],-1,OP_ID,60,"double",OP_READ),
-                op_arg_dat(rk[2],-1,OP_ID,60,"double",OP_READ),
-                op_arg_dat(workingQ,-1,OP_ID,60,"double",OP_WRITE));
+                op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_RW),
+                op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_RW),
+                op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_RW),
+                op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_RW),
+                op_arg_dat(rk[0][0],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[0][1],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[0][2],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[0][3],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[1][0],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[1][1],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[1][2],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[1][3],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[2][0],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[2][1],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[2][2],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(rk[2][3],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_WRITE),
+                op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_WRITE),
+                op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_WRITE),
+                op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_WRITE));
     op_timers(&cpu_loop_2, &wall_loop_2);
     update_Q_t += wall_loop_2 - wall_loop_1;
 
@@ -504,7 +680,10 @@ int main(int argc, char **argv) {
     dt1 = 0.0;
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop_calc_dt("calc_dt",cells,
-                op_arg_dat(q,-1,OP_ID,60,"double",OP_READ),
+                op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+                op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
                 op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
                 op_arg_gbl(&dt1,1,"double",OP_MAX));
     op_timers(&cpu_loop_2, &wall_loop_2);
@@ -526,11 +705,21 @@ int main(int argc, char **argv) {
   // op_fetch_data_hdf5_file(ny, "points.h5");
 
   // Save solution to CGNS file
-  double *sol_q = (double *)malloc(4 * 15 * op_get_size(cells) * sizeof(double));
-  op_fetch_data(q, sol_q);
-  save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells), sol_q, cgnsCells, gam);
+  double *sol_q0 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q1 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q2 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  double *sol_q3 = (double *)malloc(15 * op_get_size(cells) * sizeof(double));
+  op_fetch_data(Q[0], sol_q0);
+  op_fetch_data(Q[1], sol_q1);
+  op_fetch_data(Q[2], sol_q2);
+  op_fetch_data(Q[3], sol_q3);
+  save_solution("./naca0012.cgns", op_get_size(nodes), op_get_size(cells),
+                sol_q0, sol_q1, sol_q2, sol_q3, cgnsCells, gam);
 
-  free(sol_q);
+  free(sol_q0);
+  free(sol_q1);
+  free(sol_q2);
+  free(sol_q3);
 
   op_timers(&cpu_2, &wall_2);
 

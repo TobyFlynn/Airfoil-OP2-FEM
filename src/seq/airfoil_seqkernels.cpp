@@ -27,7 +27,6 @@ extern double LIFT[225];
 // user kernel files
 #include "init_grid_seqkernel.cpp"
 #include "set_ic_seqkernel.cpp"
-#include "neighbour_zero_seqkernel.cpp"
 #include "calc_dt_seqkernel.cpp"
 #include "get_neighbour_q_seqkernel.cpp"
 #include "get_bedge_q_seqkernel.cpp"

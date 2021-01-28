@@ -5,12 +5,22 @@
 //user function
 //user function
 //#pragma acc routine
-inline void update_Q_openacc( const double *dt, double *q, const double *rk1,
-                     const double *rk2, const double *rk3,
-                     double *workingQ) {
-  for(int i = 0; i < 4 * 15; i++) {
-    q[i] = q[i] + (*dt) * (rk1[i]/ 6.0 + rk2[i] / 6.0 + 2.0 * rk3[i] / 3.0);
-    workingQ[i] = q[i];
+inline void update_Q_openacc( const double *dt, double *q0, double *q1, double *q2,
+                     double *q3, const double *rk10, const double *rk11,
+                     const double *rk12, const double *rk13, const double *rk20,
+                     const double *rk21, const double *rk22, const double *rk23,
+                     const double *rk30, const double *rk31, const double *rk32,
+                     const double *rk33, double *workingQ0, double *workingQ1,
+                     double *workingQ2, double *workingQ3) {
+  for(int i = 0; i < 15; i++) {
+    q0[i] = q0[i] + (*dt) * (rk10[i]/ 6.0 + rk20[i] / 6.0 + 2.0 * rk30[i] / 3.0);
+    workingQ0[i] = q0[i];
+    q1[i] = q1[i] + (*dt) * (rk11[i]/ 6.0 + rk21[i] / 6.0 + 2.0 * rk31[i] / 3.0);
+    workingQ1[i] = q1[i];
+    q2[i] = q2[i] + (*dt) * (rk12[i]/ 6.0 + rk22[i] / 6.0 + 2.0 * rk32[i] / 3.0);
+    workingQ2[i] = q2[i];
+    q3[i] = q3[i] + (*dt) * (rk13[i]/ 6.0 + rk23[i] / 6.0 + 2.0 * rk33[i] / 3.0);
+    workingQ3[i] = q3[i];
   }
 }
 
@@ -21,11 +31,26 @@ void op_par_loop_update_Q(char const *name, op_set set,
   op_arg arg2,
   op_arg arg3,
   op_arg arg4,
-  op_arg arg5){
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14,
+  op_arg arg15,
+  op_arg arg16,
+  op_arg arg17,
+  op_arg arg18,
+  op_arg arg19,
+  op_arg arg20){
 
   double*arg0h = (double *)arg0.data;
-  int nargs = 6;
-  op_arg args[6];
+  int nargs = 21;
+  op_arg args[21];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -33,13 +58,28 @@ void op_par_loop_update_Q(char const *name, op_set set,
   args[3] = arg3;
   args[4] = arg4;
   args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
+  args[15] = arg15;
+  args[16] = arg16;
+  args[17] = arg17;
+  args[18] = arg18;
+  args[19] = arg19;
+  args[20] = arg20;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(9);
+  op_timing_realloc(8);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[9].name      = name;
-  OP_kernels[9].count    += 1;
+  OP_kernels[8].name      = name;
+  OP_kernels[8].count    += 1;
 
 
   if (OP_diags>2) {
@@ -60,15 +100,45 @@ void op_par_loop_update_Q(char const *name, op_set set,
     double* data3 = (double*)arg3.data_d;
     double* data4 = (double*)arg4.data_d;
     double* data5 = (double*)arg5.data_d;
-    #pragma acc parallel loop independent deviceptr(data1,data2,data3,data4,data5)
+    double* data6 = (double*)arg6.data_d;
+    double* data7 = (double*)arg7.data_d;
+    double* data8 = (double*)arg8.data_d;
+    double* data9 = (double*)arg9.data_d;
+    double* data10 = (double*)arg10.data_d;
+    double* data11 = (double*)arg11.data_d;
+    double* data12 = (double*)arg12.data_d;
+    double* data13 = (double*)arg13.data_d;
+    double* data14 = (double*)arg14.data_d;
+    double* data15 = (double*)arg15.data_d;
+    double* data16 = (double*)arg16.data_d;
+    double* data17 = (double*)arg17.data_d;
+    double* data18 = (double*)arg18.data_d;
+    double* data19 = (double*)arg19.data_d;
+    double* data20 = (double*)arg20.data_d;
+    #pragma acc parallel loop independent deviceptr(data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17,data18,data19,data20)
     for ( int n=0; n<set->size; n++ ){
       update_Q_openacc(
         &arg0_l,
-        &data1[60*n],
-        &data2[60*n],
-        &data3[60*n],
-        &data4[60*n],
-        &data5[60*n]);
+        &data1[15*n],
+        &data2[15*n],
+        &data3[15*n],
+        &data4[15*n],
+        &data5[15*n],
+        &data6[15*n],
+        &data7[15*n],
+        &data8[15*n],
+        &data9[15*n],
+        &data10[15*n],
+        &data11[15*n],
+        &data12[15*n],
+        &data13[15*n],
+        &data14[15*n],
+        &data15[15*n],
+        &data16[15*n],
+        &data17[15*n],
+        &data18[15*n],
+        &data19[15*n],
+        &data20[15*n]);
     }
   }
 
@@ -77,10 +147,25 @@ void op_par_loop_update_Q(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[9].time     += wall_t2 - wall_t1;
-  OP_kernels[9].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[9].transfer += (float)set->size * arg2.size;
-  OP_kernels[9].transfer += (float)set->size * arg3.size;
-  OP_kernels[9].transfer += (float)set->size * arg4.size;
-  OP_kernels[9].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[8].time     += wall_t2 - wall_t1;
+  OP_kernels[8].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg2.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg3.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg4.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg5.size;
+  OP_kernels[8].transfer += (float)set->size * arg6.size;
+  OP_kernels[8].transfer += (float)set->size * arg7.size;
+  OP_kernels[8].transfer += (float)set->size * arg8.size;
+  OP_kernels[8].transfer += (float)set->size * arg9.size;
+  OP_kernels[8].transfer += (float)set->size * arg10.size;
+  OP_kernels[8].transfer += (float)set->size * arg11.size;
+  OP_kernels[8].transfer += (float)set->size * arg12.size;
+  OP_kernels[8].transfer += (float)set->size * arg13.size;
+  OP_kernels[8].transfer += (float)set->size * arg14.size;
+  OP_kernels[8].transfer += (float)set->size * arg15.size;
+  OP_kernels[8].transfer += (float)set->size * arg16.size;
+  OP_kernels[8].transfer += (float)set->size * arg17.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg18.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg19.size * 2.0f;
+  OP_kernels[8].transfer += (float)set->size * arg20.size * 2.0f;
 }

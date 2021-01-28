@@ -15,10 +15,22 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   op_arg arg5,
   op_arg arg6,
   op_arg arg7,
-  op_arg arg8){
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14,
+  op_arg arg15,
+  op_arg arg16,
+  op_arg arg17,
+  op_arg arg18,
+  op_arg arg19,
+  op_arg arg20){
 
-  int nargs = 9;
-  op_arg args[9];
+  int nargs = 21;
+  op_arg args[21];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -29,24 +41,36 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   args[6] = arg6;
   args[7] = arg7;
   args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
+  args[15] = arg15;
+  args[16] = arg16;
+  args[17] = arg17;
+  args[18] = arg18;
+  args[19] = arg19;
+  args[20] = arg20;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(4);
-  OP_kernels[4].name      = name;
-  OP_kernels[4].count    += 1;
+  op_timing_realloc(3);
+  OP_kernels[3].name      = name;
+  OP_kernels[3].count    += 1;
   op_timers_core(&cpu_t1, &wall_t1);
 
-  int  ninds   = 4;
-  int  inds[9] = {-1,0,1,0,1,2,2,3,3};
+  int  ninds   = 10;
+  int  inds[21] = {-1,0,1,0,1,2,3,4,5,2,3,4,5,6,7,8,9,6,7,8,9};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_neighbour_q\n");
   }
 
   // get plan
-  #ifdef OP_PART_SIZE_4
-    int part_size = OP_PART_SIZE_4;
+  #ifdef OP_PART_SIZE_3
+    int part_size = OP_PART_SIZE_3;
   #else
     int part_size = OP_part_size;
   #endif
@@ -83,17 +107,29 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
             &((double*)arg2.data)[3 * map1idx],
             &((double*)arg1.data)[3 * map3idx],
             &((double*)arg2.data)[3 * map3idx],
-            &((double*)arg5.data)[60 * map1idx],
-            &((double*)arg5.data)[60 * map3idx],
-            &((double*)arg7.data)[60 * map1idx],
-            &((double*)arg7.data)[60 * map3idx]);
+            &((double*)arg5.data)[15 * map1idx],
+            &((double*)arg6.data)[15 * map1idx],
+            &((double*)arg7.data)[15 * map1idx],
+            &((double*)arg8.data)[15 * map1idx],
+            &((double*)arg5.data)[15 * map3idx],
+            &((double*)arg6.data)[15 * map3idx],
+            &((double*)arg7.data)[15 * map3idx],
+            &((double*)arg8.data)[15 * map3idx],
+            &((double*)arg13.data)[15 * map1idx],
+            &((double*)arg14.data)[15 * map1idx],
+            &((double*)arg15.data)[15 * map1idx],
+            &((double*)arg16.data)[15 * map1idx],
+            &((double*)arg13.data)[15 * map3idx],
+            &((double*)arg14.data)[15 * map3idx],
+            &((double*)arg15.data)[15 * map3idx],
+            &((double*)arg16.data)[15 * map3idx]);
         }
       }
 
       block_offset += nblocks;
     }
-    OP_kernels[4].transfer  += Plan->transfer;
-    OP_kernels[4].transfer2 += Plan->transfer2;
+    OP_kernels[3].transfer  += Plan->transfer;
+    OP_kernels[3].transfer2 += Plan->transfer2;
   }
 
   if (set_size == 0 || set_size == set->core_size) {
@@ -104,5 +140,5 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[4].time     += wall_t2 - wall_t1;
+  OP_kernels[3].time     += wall_t2 - wall_t1;
 }

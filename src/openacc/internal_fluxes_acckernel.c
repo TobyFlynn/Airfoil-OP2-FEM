@@ -7,10 +7,14 @@
 
 //user function
 //#pragma acc routine
-inline void internal_fluxes_openacc( const double *q, double *F, double *G) {
+inline void internal_fluxes_openacc( const double *q0, const double *q1,
+                            const double *q2, const double *q3, double *f0,
+                            double *f1, double *f2, double *f3, double *g0,
+                            double *g1, double *g2, double *g3) {
   for(int i = 0; i < 15; i++) {
     double rho, u, v, p;
-    euler_flux(&q[i * 4], &F[i * 4], &G[i * 4], &rho, &u, &v, &p);
+    euler_flux(q0[i], q1[i], q2[i], q3[i], &f0[i], &f1[i], &f2[i], &f3[i],
+               &g0[i], &g1[i], &g2[i], &g3[i], &rho, &u, &v, &p);
   }
 }
 
@@ -18,21 +22,39 @@ inline void internal_fluxes_openacc( const double *q, double *F, double *G) {
 void op_par_loop_internal_fluxes(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11){
 
-  int nargs = 3;
-  op_arg args[3];
+  int nargs = 12;
+  op_arg args[12];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(6);
+  op_timing_realloc(5);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[6].name      = name;
-  OP_kernels[6].count    += 1;
+  OP_kernels[5].name      = name;
+  OP_kernels[5].count    += 1;
 
 
   if (OP_diags>2) {
@@ -50,12 +72,30 @@ void op_par_loop_internal_fluxes(char const *name, op_set set,
     double* data0 = (double*)arg0.data_d;
     double* data1 = (double*)arg1.data_d;
     double* data2 = (double*)arg2.data_d;
-    #pragma acc parallel loop independent deviceptr(data0,data1,data2)
+    double* data3 = (double*)arg3.data_d;
+    double* data4 = (double*)arg4.data_d;
+    double* data5 = (double*)arg5.data_d;
+    double* data6 = (double*)arg6.data_d;
+    double* data7 = (double*)arg7.data_d;
+    double* data8 = (double*)arg8.data_d;
+    double* data9 = (double*)arg9.data_d;
+    double* data10 = (double*)arg10.data_d;
+    double* data11 = (double*)arg11.data_d;
+    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11)
     for ( int n=0; n<set->size; n++ ){
       internal_fluxes_openacc(
-        &data0[60*n],
-        &data1[60*n],
-        &data2[60*n]);
+        &data0[15*n],
+        &data1[15*n],
+        &data2[15*n],
+        &data3[15*n],
+        &data4[15*n],
+        &data5[15*n],
+        &data6[15*n],
+        &data7[15*n],
+        &data8[15*n],
+        &data9[15*n],
+        &data10[15*n],
+        &data11[15*n]);
     }
   }
 
@@ -64,8 +104,17 @@ void op_par_loop_internal_fluxes(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[6].time     += wall_t2 - wall_t1;
-  OP_kernels[6].transfer += (float)set->size * arg0.size;
-  OP_kernels[6].transfer += (float)set->size * arg1.size * 2.0f;
-  OP_kernels[6].transfer += (float)set->size * arg2.size * 2.0f;
+  OP_kernels[5].time     += wall_t2 - wall_t1;
+  OP_kernels[5].transfer += (float)set->size * arg0.size;
+  OP_kernels[5].transfer += (float)set->size * arg1.size;
+  OP_kernels[5].transfer += (float)set->size * arg2.size;
+  OP_kernels[5].transfer += (float)set->size * arg3.size;
+  OP_kernels[5].transfer += (float)set->size * arg4.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg6.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg7.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg8.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg10.size * 2.0f;
+  OP_kernels[5].transfer += (float)set->size * arg11.size * 2.0f;
 }

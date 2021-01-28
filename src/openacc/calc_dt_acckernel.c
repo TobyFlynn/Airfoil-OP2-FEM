@@ -5,13 +5,14 @@
 //user function
 //user function
 //#pragma acc routine
-inline void calc_dt_openacc( const double *q, const double *fscale, double *dt1) {
+inline void calc_dt_openacc( const double *q0, const double *q1, const double *q2,
+                    const double *q3, const double *fscale, double *dt1) {
   double dt1_arr[3 * 5];
   for(int i = 0; i < 3 * 5; i++) {
-    double rho = q[FMASK[i] * 4];
-    double u = q[FMASK[i] * 4 + 1] / rho;
-    double v = q[FMASK[i] * 4 + 2] / rho;
-    double p = (gam - 1.0) * (q[FMASK[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
+    double rho = q0[FMASK[i]];
+    double u = q1[FMASK[i]] / rho;
+    double v = q2[FMASK[i]] / rho;
+    double p = (gam - 1.0) * (q3[FMASK[i]] - rho * (u * u + v * v) * 0.5);
     double c = sqrt(fabs(gam * p / rho));
     dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK[i]] *(sqrt(u * u + v * v) + c);
   }
@@ -29,22 +30,28 @@ inline void calc_dt_openacc( const double *q, const double *fscale, double *dt1)
 void op_par_loop_calc_dt(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5){
 
-  double*arg2h = (double *)arg2.data;
-  int nargs = 3;
-  op_arg args[3];
+  double*arg5h = (double *)arg5.data;
+  int nargs = 6;
+  op_arg args[6];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
+  op_timing_realloc(2);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
+  OP_kernels[2].name      = name;
+  OP_kernels[2].count    += 1;
 
 
   if (OP_diags>2) {
@@ -53,7 +60,7 @@ void op_par_loop_calc_dt(char const *name, op_set set,
 
   int set_size = op_mpi_halo_exchanges_cuda(set, nargs, args);
 
-  double arg2_l = arg2h[0];
+  double arg5_l = arg5h[0];
 
   if (set_size >0) {
 
@@ -62,23 +69,32 @@ void op_par_loop_calc_dt(char const *name, op_set set,
 
     double* data0 = (double*)arg0.data_d;
     double* data1 = (double*)arg1.data_d;
-    #pragma acc parallel loop independent deviceptr(data0,data1) reduction(max:arg2_l)
+    double* data2 = (double*)arg2.data_d;
+    double* data3 = (double*)arg3.data_d;
+    double* data4 = (double*)arg4.data_d;
+    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4) reduction(max:arg5_l)
     for ( int n=0; n<set->size; n++ ){
       calc_dt_openacc(
-        &data0[60*n],
+        &data0[15*n],
         &data1[15*n],
-        &arg2_l);
+        &data2[15*n],
+        &data3[15*n],
+        &data4[15*n],
+        &arg5_l);
     }
   }
 
   // combine reduction data
-  arg2h[0]  = MAX(arg2h[0],arg2_l);
-  op_mpi_reduce_double(&arg2,arg2h);
+  arg5h[0]  = MAX(arg5h[0],arg5_l);
+  op_mpi_reduce_double(&arg5,arg5h);
   op_mpi_set_dirtybit_cuda(nargs, args);
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].time     += wall_t2 - wall_t1;
-  OP_kernels[3].transfer += (float)set->size * arg0.size;
-  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].time     += wall_t2 - wall_t1;
+  OP_kernels[2].transfer += (float)set->size * arg0.size;
+  OP_kernels[2].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].transfer += (float)set->size * arg2.size;
+  OP_kernels[2].transfer += (float)set->size * arg3.size;
+  OP_kernels[2].transfer += (float)set->size * arg4.size;
 }

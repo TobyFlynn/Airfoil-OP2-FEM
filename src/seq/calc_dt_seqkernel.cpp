@@ -9,18 +9,24 @@
 void op_par_loop_calc_dt(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5){
 
-  int nargs = 3;
-  op_arg args[3];
+  int nargs = 6;
+  op_arg args[6];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
+  op_timing_realloc(2);
   op_timers_core(&cpu_t1, &wall_t1);
 
 
@@ -34,21 +40,27 @@ void op_par_loop_calc_dt(char const *name, op_set set,
 
     for ( int n=0; n<set_size; n++ ){
       calc_dt(
-        &((double*)arg0.data)[60*n],
+        &((double*)arg0.data)[15*n],
         &((double*)arg1.data)[15*n],
-        (double*)arg2.data);
+        &((double*)arg2.data)[15*n],
+        &((double*)arg3.data)[15*n],
+        &((double*)arg4.data)[15*n],
+        (double*)arg5.data);
     }
   }
 
   // combine reduction data
-  op_mpi_reduce_double(&arg2,(double*)arg2.data);
+  op_mpi_reduce_double(&arg5,(double*)arg5.data);
   op_mpi_set_dirtybit(nargs, args);
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
-  OP_kernels[3].time     += wall_t2 - wall_t1;
-  OP_kernels[3].transfer += (float)set->size * arg0.size;
-  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].name      = name;
+  OP_kernels[2].count    += 1;
+  OP_kernels[2].time     += wall_t2 - wall_t1;
+  OP_kernels[2].transfer += (float)set->size * arg0.size;
+  OP_kernels[2].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].transfer += (float)set->size * arg2.size;
+  OP_kernels[2].transfer += (float)set->size * arg3.size;
+  OP_kernels[2].transfer += (float)set->size * arg4.size;
 }

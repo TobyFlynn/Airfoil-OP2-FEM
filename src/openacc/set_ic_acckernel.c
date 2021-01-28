@@ -5,29 +5,56 @@
 //user function
 //user function
 //#pragma acc routine
-inline void set_ic_openacc( double *q, double *workingQ) {
+inline void set_ic_openacc( double *q0, double *q1, double *q2, double *q3,
+                   double *workingQ0, double *workingQ1, double *workingQ2,
+                   double *workingQ3, double *exQ0, double *exQ1, double *exQ2,
+                   double *exQ3) {
   for(int i = 0; i < 15; i++) {
-    q[i * 4]     = bc_r;
-    q[i * 4 + 1] = bc_r * bc_u;
-    q[i * 4 + 2] = bc_r * bc_v;
-    q[i * 4 + 3] = bc_e;
-    workingQ[i * 4]     = q[i * 4];
-    workingQ[i * 4 + 1] = q[i * 4 + 1];
-    workingQ[i * 4 + 2] = q[i * 4 + 2];
-    workingQ[i * 4 + 3] = q[i * 4 + 3];
+    q0[i] = bc_r;
+    q1[i] = bc_r * bc_u;
+    q2[i] = bc_r * bc_v;
+    q3[i] = bc_e;
+    workingQ0[i] = q0[i];
+    workingQ1[i] = q1[i];
+    workingQ2[i] = q2[i];
+    workingQ3[i] = q3[i];
+    exQ0[i] = 0.0;
+    exQ1[i] = 0.0;
+    exQ2[i] = 0.0;
+    exQ3[i] = 0.0;
   }
 }
 
 // host stub function
 void op_par_loop_set_ic(char const *name, op_set set,
   op_arg arg0,
-  op_arg arg1){
+  op_arg arg1,
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11){
 
-  int nargs = 2;
-  op_arg args[2];
+  int nargs = 12;
+  op_arg args[12];
 
   args[0] = arg0;
   args[1] = arg1;
+  args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
@@ -51,11 +78,31 @@ void op_par_loop_set_ic(char const *name, op_set set,
 
     double* data0 = (double*)arg0.data_d;
     double* data1 = (double*)arg1.data_d;
-    #pragma acc parallel loop independent deviceptr(data0,data1)
+    double* data2 = (double*)arg2.data_d;
+    double* data3 = (double*)arg3.data_d;
+    double* data4 = (double*)arg4.data_d;
+    double* data5 = (double*)arg5.data_d;
+    double* data6 = (double*)arg6.data_d;
+    double* data7 = (double*)arg7.data_d;
+    double* data8 = (double*)arg8.data_d;
+    double* data9 = (double*)arg9.data_d;
+    double* data10 = (double*)arg10.data_d;
+    double* data11 = (double*)arg11.data_d;
+    #pragma acc parallel loop independent deviceptr(data0,data1,data2,data3,data4,data5,data6,data7,data8,data9,data10,data11)
     for ( int n=0; n<set->size; n++ ){
       set_ic_openacc(
-        &data0[60*n],
-        &data1[60*n]);
+        &data0[15*n],
+        &data1[15*n],
+        &data2[15*n],
+        &data3[15*n],
+        &data4[15*n],
+        &data5[15*n],
+        &data6[15*n],
+        &data7[15*n],
+        &data8[15*n],
+        &data9[15*n],
+        &data10[15*n],
+        &data11[15*n]);
     }
   }
 
@@ -67,4 +114,14 @@ void op_par_loop_set_ic(char const *name, op_set set,
   OP_kernels[1].time     += wall_t2 - wall_t1;
   OP_kernels[1].transfer += (float)set->size * arg0.size * 2.0f;
   OP_kernels[1].transfer += (float)set->size * arg1.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg2.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg3.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg4.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg6.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg7.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg8.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg9.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg10.size * 2.0f;
+  OP_kernels[1].transfer += (float)set->size * arg11.size * 2.0f;
 }

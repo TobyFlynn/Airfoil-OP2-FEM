@@ -17,6 +17,18 @@ void get_bedge_q_omp4_kernel(
   int dat4size,
   double *data5,
   int dat5size,
+  double *data6,
+  int dat6size,
+  double *data7,
+  int dat7size,
+  double *data8,
+  int dat8size,
+  double *data9,
+  int dat9size,
+  double *data10,
+  int dat10size,
+  double *data11,
+  int dat11size,
   int *col_reord,
   int set_size1,
   int start,
@@ -26,7 +38,7 @@ void get_bedge_q_omp4_kernel(
 
   #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size]) \
     map(to: bc_r_ompkernel, bc_u_ompkernel, bc_v_ompkernel, bc_e_ompkernel, r_ompkernel[:15], FMASK_ompkernel[:15])\
-    map(to:col_reord[0:set_size1],map2[0:map2size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size])
+    map(to:col_reord[0:set_size1],map2[0:map2size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int e=start; e<end; e++ ){
     int n_op = col_reord[e];
@@ -38,19 +50,22 @@ void get_bedge_q_omp4_kernel(
     const int *bedgeNum = &data1[1*n_op];
     const double *nx = &data2[15 * map2idx];
     const double *ny = &data3[15 * map2idx];
-    const double *q = &data4[60 * map2idx];
-    double *exteriorQ = &data5[60 * map2idx];
+    const double *q0 = &data4[15 * map2idx];
+    const double *q1 = &data5[15 * map2idx];
+    const double *q2 = &data6[15 * map2idx];
+    const double *q3 = &data7[15 * map2idx];
+    double *exteriorQ0 = &data8[15 * map2idx];
+    double *exteriorQ1 = &data9[15 * map2idx];
+    double *exteriorQ2 = &data10[15 * map2idx];
+    double *exteriorQ3 = &data11[15 * map2idx];
 
     //inline function
     
     int exInd = 0;
-    int nInd = 0;
     if(*bedgeNum == 1) {
-      exInd = 4 * 5;
-      nInd = 5;
+      exInd = 5;
     } else if(*bedgeNum == 2) {
-      exInd = 2 * 4 * 5;
-      nInd = 2 * 5;
+      exInd = 2 * 5;
     }
 
     int *fmask;
@@ -66,28 +81,28 @@ void get_bedge_q_omp4_kernel(
     if(*bedge_type == 0) {
 
       for(int i = 0; i < 5; i++) {
-        exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
-        exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-        exteriorQ[exInd + i * 4 + 2] += bc_r_ompkernel * bc_v_ompkernel;
-        exteriorQ[exInd + i * 4 + 3] += bc_e_ompkernel;
+        exteriorQ0[exInd + i] += bc_r_ompkernel;
+        exteriorQ1[exInd + i] += bc_r_ompkernel * bc_u_ompkernel;
+        exteriorQ2[exInd + i] += bc_r_ompkernel * bc_v_ompkernel;
+        exteriorQ3[exInd + i] += bc_e_ompkernel;
       }
     } else if(*bedge_type == 1) {
 
       for(int i = 0; i < 5; i++) {
-        int qInd = fmask[i] * 4;
-        exteriorQ[exInd + i * 4]     += bc_r_ompkernel;
-        exteriorQ[exInd + i * 4 + 1] += bc_r_ompkernel * bc_u_ompkernel;
-        exteriorQ[exInd + i * 4 + 2] += bc_r_ompkernel * bc_v_ompkernel;
-        exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+        int qInd = fmask[i];
+        exteriorQ0[exInd] += bc_r_ompkernel;
+        exteriorQ1[exInd] += bc_r_ompkernel * bc_u_ompkernel;
+        exteriorQ2[exInd] += bc_r_ompkernel * bc_v_ompkernel;
+        exteriorQ3[exInd] += q3[qInd];
       }
     } else {
 
       for(int i = 0; i < 5; i++) {
-        int qInd = fmask[i] * 4;
-        exteriorQ[exInd + i * 4]     += q[qInd];
-        exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
-        exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
-        exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+        int qInd = fmask[i];
+        exteriorQ0[exInd] += q0[qInd];
+        exteriorQ1[exInd] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
+        exteriorQ2[exInd] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
+        exteriorQ3[exInd] += q3[qInd];
       }
     }
     //end inline func

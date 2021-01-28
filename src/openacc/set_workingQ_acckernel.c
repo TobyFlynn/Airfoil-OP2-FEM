@@ -5,15 +5,27 @@
 //user function
 //user function
 //#pragma acc routine
-inline void set_workingQ_openacc( const double *dt, const int *stage, const double *q,
-                         const double *k1, const double *k2, double *workingQ) {
+inline void set_workingQ_openacc( const double *dt, const int *stage, const double *q0,
+                         const double *q1, const double *q2, const double *q3,
+                         const double *k10, const double *k11,
+                         const double *k12, const double *k13,
+                         const double *k20, const double *k21,
+                         const double *k22, const double *k23,
+                         double *workingQ0, double *workingQ1,
+                         double *workingQ2, double *workingQ3) {
   if(*stage == 0) {
-    for(int i = 0; i < 4 * 15; i++) {
-      workingQ[i] = q[i] + (*dt) * k1[i];
+    for(int i = 0; i < 15; i++) {
+      workingQ0[i] = q0[i] + (*dt) * k10[i];
+      workingQ1[i] = q1[i] + (*dt) * k11[i];
+      workingQ2[i] = q2[i] + (*dt) * k12[i];
+      workingQ3[i] = q3[i] + (*dt) * k13[i];
     }
   } else {
-    for(int i = 0; i < 4 * 15; i++) {
-      workingQ[i] = q[i] + (*dt) * (k1[i] / 4.0 + k2[i] / 4.0);
+    for(int i = 0; i < 15; i++) {
+      workingQ0[i] = q0[i] + (*dt) * (k10[i] / 4.0 + k20[i] / 4.0);
+      workingQ1[i] = q1[i] + (*dt) * (k11[i] / 4.0 + k21[i] / 4.0);
+      workingQ2[i] = q2[i] + (*dt) * (k12[i] / 4.0 + k22[i] / 4.0);
+      workingQ3[i] = q3[i] + (*dt) * (k13[i] / 4.0 + k23[i] / 4.0);
     }
   }
 }
@@ -25,12 +37,24 @@ void op_par_loop_set_workingQ(char const *name, op_set set,
   op_arg arg2,
   op_arg arg3,
   op_arg arg4,
-  op_arg arg5){
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11,
+  op_arg arg12,
+  op_arg arg13,
+  op_arg arg14,
+  op_arg arg15,
+  op_arg arg16,
+  op_arg arg17){
 
   double*arg0h = (double *)arg0.data;
   int*arg1h = (int *)arg1.data;
-  int nargs = 6;
-  op_arg args[6];
+  int nargs = 18;
+  op_arg args[18];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -38,13 +62,25 @@ void op_par_loop_set_workingQ(char const *name, op_set set,
   args[3] = arg3;
   args[4] = arg4;
   args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
+  args[12] = arg12;
+  args[13] = arg13;
+  args[14] = arg14;
+  args[15] = arg15;
+  args[16] = arg16;
+  args[17] = arg17;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(8);
+  op_timing_realloc(7);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[8].name      = name;
-  OP_kernels[8].count    += 1;
+  OP_kernels[7].name      = name;
+  OP_kernels[7].count    += 1;
 
 
   if (OP_diags>2) {
@@ -65,15 +101,39 @@ void op_par_loop_set_workingQ(char const *name, op_set set,
     double* data3 = (double*)arg3.data_d;
     double* data4 = (double*)arg4.data_d;
     double* data5 = (double*)arg5.data_d;
-    #pragma acc parallel loop independent deviceptr(data2,data3,data4,data5)
+    double* data6 = (double*)arg6.data_d;
+    double* data7 = (double*)arg7.data_d;
+    double* data8 = (double*)arg8.data_d;
+    double* data9 = (double*)arg9.data_d;
+    double* data10 = (double*)arg10.data_d;
+    double* data11 = (double*)arg11.data_d;
+    double* data12 = (double*)arg12.data_d;
+    double* data13 = (double*)arg13.data_d;
+    double* data14 = (double*)arg14.data_d;
+    double* data15 = (double*)arg15.data_d;
+    double* data16 = (double*)arg16.data_d;
+    double* data17 = (double*)arg17.data_d;
+    #pragma acc parallel loop independent deviceptr(data2,data3,data4,data5,data6,data7,data8,data9,data10,data11,data12,data13,data14,data15,data16,data17)
     for ( int n=0; n<set->size; n++ ){
       set_workingQ_openacc(
         &arg0_l,
         &arg1_l,
-        &data2[60*n],
-        &data3[60*n],
-        &data4[60*n],
-        &data5[60*n]);
+        &data2[15*n],
+        &data3[15*n],
+        &data4[15*n],
+        &data5[15*n],
+        &data6[15*n],
+        &data7[15*n],
+        &data8[15*n],
+        &data9[15*n],
+        &data10[15*n],
+        &data11[15*n],
+        &data12[15*n],
+        &data13[15*n],
+        &data14[15*n],
+        &data15[15*n],
+        &data16[15*n],
+        &data17[15*n]);
     }
   }
 
@@ -82,9 +142,21 @@ void op_par_loop_set_workingQ(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[8].time     += wall_t2 - wall_t1;
-  OP_kernels[8].transfer += (float)set->size * arg2.size;
-  OP_kernels[8].transfer += (float)set->size * arg3.size;
-  OP_kernels[8].transfer += (float)set->size * arg4.size;
-  OP_kernels[8].transfer += (float)set->size * arg5.size * 2.0f;
+  OP_kernels[7].time     += wall_t2 - wall_t1;
+  OP_kernels[7].transfer += (float)set->size * arg2.size;
+  OP_kernels[7].transfer += (float)set->size * arg3.size;
+  OP_kernels[7].transfer += (float)set->size * arg4.size;
+  OP_kernels[7].transfer += (float)set->size * arg5.size;
+  OP_kernels[7].transfer += (float)set->size * arg6.size;
+  OP_kernels[7].transfer += (float)set->size * arg7.size;
+  OP_kernels[7].transfer += (float)set->size * arg8.size;
+  OP_kernels[7].transfer += (float)set->size * arg9.size;
+  OP_kernels[7].transfer += (float)set->size * arg10.size;
+  OP_kernels[7].transfer += (float)set->size * arg11.size;
+  OP_kernels[7].transfer += (float)set->size * arg12.size;
+  OP_kernels[7].transfer += (float)set->size * arg13.size;
+  OP_kernels[7].transfer += (float)set->size * arg14.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg15.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg16.size * 2.0f;
+  OP_kernels[7].transfer += (float)set->size * arg17.size * 2.0f;
 }

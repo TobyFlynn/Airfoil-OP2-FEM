@@ -29,7 +29,6 @@ int size, char *dat, char const *name){}
 // user kernel files
 #include "init_grid_acckernel.c"
 #include "set_ic_acckernel.c"
-#include "neighbour_zero_acckernel.c"
 #include "calc_dt_acckernel.c"
 #include "get_neighbour_q_acckernel.c"
 #include "get_bedge_q_acckernel.c"

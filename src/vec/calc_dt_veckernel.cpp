@@ -3,13 +3,14 @@
 //
 
 //user function
-inline void calc_dt(const double *q, const double *fscale, double *dt1) {
+inline void calc_dt(const double *q0, const double *q1, const double *q2,
+                    const double *q3, const double *fscale, double *dt1) {
   double dt1_arr[3 * 5];
   for(int i = 0; i < 3 * 5; i++) {
-    double rho = q[FMASK[i] * 4];
-    double u = q[FMASK[i] * 4 + 1] / rho;
-    double v = q[FMASK[i] * 4 + 2] / rho;
-    double p = (gam - 1.0) * (q[FMASK[i] * 4 + 3] - rho * (u * u + v * v) * 0.5);
+    double rho = q0[FMASK[i]];
+    double u = q1[FMASK[i]] / rho;
+    double v = q2[FMASK[i]] / rho;
+    double p = (gam - 1.0) * (q3[FMASK[i]] - rho * (u * u + v * v) * 0.5);
     double c = sqrt(fabs(gam * p / rho));
     dt1_arr[i] = ((4 + 1) * (4 + 1)) * 0.5 * fscale[FMASK[i]] *(sqrt(u * u + v * v) + c);
   }
@@ -28,23 +29,35 @@ inline void calc_dt(const double *q, const double *fscale, double *dt1) {
 void op_par_loop_calc_dt(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5){
 
-  int nargs = 3;
-  op_arg args[3];
+  int nargs = 6;
+  op_arg args[6];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
   //create aligned pointers for dats
   ALIGNED_double const double * __restrict__ ptr0 = (double *) arg0.data;
   DECLARE_PTR_ALIGNED(ptr0,double_ALIGN);
   ALIGNED_double const double * __restrict__ ptr1 = (double *) arg1.data;
   DECLARE_PTR_ALIGNED(ptr1,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr2 = (double *) arg2.data;
+  DECLARE_PTR_ALIGNED(ptr2,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr3 = (double *) arg3.data;
+  DECLARE_PTR_ALIGNED(ptr3,double_ALIGN);
+  ALIGNED_double const double * __restrict__ ptr4 = (double *) arg4.data;
+  DECLARE_PTR_ALIGNED(ptr4,double_ALIGN);
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
+  op_timing_realloc(2);
   op_timers_core(&cpu_t1, &wall_t1);
 
 
@@ -59,19 +72,22 @@ void op_par_loop_calc_dt(char const *name, op_set set,
     #ifdef VECTORIZE
     #pragma novector
     for ( int n=0; n<(exec_size/SIMD_VEC)*SIMD_VEC; n+=SIMD_VEC ){
-      double dat2[SIMD_VEC];
+      double dat5[SIMD_VEC];
       for ( int i=0; i<SIMD_VEC; i++ ){
-        dat2[i] = -INFINITY;
+        dat5[i] = -INFINITY;
       }
       #pragma omp simd simdlen(SIMD_VEC)
       for ( int i=0; i<SIMD_VEC; i++ ){
         calc_dt(
-          &(ptr0)[60 * (n+i)],
+          &(ptr0)[15 * (n+i)],
           &(ptr1)[15 * (n+i)],
-          &dat2[i]);
+          &(ptr2)[15 * (n+i)],
+          &(ptr3)[15 * (n+i)],
+          &(ptr4)[15 * (n+i)],
+          &dat5[i]);
       }
       for ( int i=0; i<SIMD_VEC; i++ ){
-        *(double*)arg2.data = MAX(*(double*)arg2.data,dat2[i]);
+        *(double*)arg5.data = MAX(*(double*)arg5.data,dat5[i]);
       }
     }
     //remainder
@@ -80,21 +96,27 @@ void op_par_loop_calc_dt(char const *name, op_set set,
     for ( int n=0; n<exec_size; n++ ){
     #endif
       calc_dt(
-        &(ptr0)[60*n],
+        &(ptr0)[15*n],
         &(ptr1)[15*n],
-        (double*)arg2.data);
+        &(ptr2)[15*n],
+        &(ptr3)[15*n],
+        &(ptr4)[15*n],
+        (double*)arg5.data);
     }
   }
 
   // combine reduction data
-  op_mpi_reduce(&arg2,(double*)arg2.data);
+  op_mpi_reduce(&arg5,(double*)arg5.data);
   op_mpi_set_dirtybit(nargs, args);
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
-  OP_kernels[3].time     += wall_t2 - wall_t1;
-  OP_kernels[3].transfer += (float)set->size * arg0.size;
-  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].name      = name;
+  OP_kernels[2].count    += 1;
+  OP_kernels[2].time     += wall_t2 - wall_t1;
+  OP_kernels[2].transfer += (float)set->size * arg0.size;
+  OP_kernels[2].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].transfer += (float)set->size * arg2.size;
+  OP_kernels[2].transfer += (float)set->size * arg3.size;
+  OP_kernels[2].transfer += (float)set->size * arg4.size;
 }

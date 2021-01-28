@@ -35,72 +35,129 @@ void euler_rhs_omp4_kernel(
   int dat13size,
   double *data14,
   int dat14size,
+  double *data15,
+  int dat15size,
+  double *data16,
+  int dat16size,
+  double *data17,
+  int dat17size,
+  double *data18,
+  int dat18size,
+  double *data19,
+  int dat19size,
+  double *data20,
+  int dat20size,
+  double *data21,
+  int dat21size,
+  double *data22,
+  int dat22size,
+  double *data23,
+  int dat23size,
+  double *data24,
+  int dat24size,
+  double *data25,
+  int dat25size,
+  double *data26,
+  int dat26size,
+  double *data27,
+  int dat27size,
+  double *data28,
+  int dat28size,
+  double *data29,
+  int dat29size,
+  double *data30,
+  int dat30size,
+  double *data31,
+  int dat31size,
+  double *data32,
+  int dat32size,
+  double *data33,
+  int dat33size,
+  double *data34,
+  int dat34size,
+  double *data35,
+  int dat35size,
+  double *data36,
+  int dat36size,
+  double *data37,
+  int dat37size,
+  double *data38,
+  int dat38size,
   int count,
   int num_teams,
   int nthread){
 
-  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size],data12[0:dat12size],data13[0:dat13size],data14[0:dat14size]) \
-    map(to: FMASK_ompkernel[:15])
+  #pragma omp target teams num_teams(num_teams) thread_limit(nthread) map(to:data0[0:dat0size],data1[0:dat1size],data2[0:dat2size],data3[0:dat3size],data4[0:dat4size],data5[0:dat5size],data6[0:dat6size],data7[0:dat7size],data8[0:dat8size],data9[0:dat9size],data10[0:dat10size],data11[0:dat11size],data12[0:dat12size],data13[0:dat13size],data14[0:dat14size],data15[0:dat15size],data16[0:dat16size],data17[0:dat17size],data18[0:dat18size],data19[0:dat19size],data20[0:dat20size],data21[0:dat21size],data22[0:dat22size],data23[0:dat23size],data24[0:dat24size],data25[0:dat25size],data26[0:dat26size],data27[0:dat27size],data28[0:dat28size],data29[0:dat29size],data30[0:dat30size],data31[0:dat31size],data32[0:dat32size],data33[0:dat33size],data34[0:dat34size],data35[0:dat35size],data36[0:dat36size],data37[0:dat37size],data38[0:dat38size])
   #pragma omp distribute parallel for schedule(static,1)
   for ( int n_op=0; n_op<count; n_op++ ){
     //variable mapping
-    const double *q = &data0[60*n_op];
-    double *exteriorQ = &data1[60*n_op];
-    const double *rx = &data2[15*n_op];
-    const double *ry = &data3[15*n_op];
-    const double *sx = &data4[15*n_op];
-    const double *sy = &data5[15*n_op];
-    const double *fscale = &data6[15*n_op];
-    const double *nx = &data7[15*n_op];
-    const double *ny = &data8[15*n_op];
-    const double *dFdr = &data9[60*n_op];
-    const double *dFds = &data10[60*n_op];
-    const double *dGdr = &data11[60*n_op];
-    const double *dGds = &data12[60*n_op];
-    double *flux = &data13[60*n_op];
-    double *qRHS = &data14[60*n_op];
+    const double *q0 = &data0[15*n_op];
+    const double *q1 = &data1[15*n_op];
+    const double *q2 = &data2[15*n_op];
+    const double *q3 = &data3[15*n_op];
+    double *exteriorQ0 = &data4[15*n_op];
+    double *exteriorQ1 = &data5[15*n_op];
+    double *exteriorQ2 = &data6[15*n_op];
+    double *exteriorQ3 = &data7[15*n_op];
+    const double *rx = &data8[15*n_op];
+    const double *ry = &data9[15*n_op];
+    const double *sx = &data10[15*n_op];
+    const double *sy = &data11[15*n_op];
+    const double *fscale = &data12[15*n_op];
+    const double *nx = &data13[15*n_op];
+    const double *ny = &data14[15*n_op];
+    const double *dFdr0 = &data15[15*n_op];
+    const double *dFdr1 = &data16[15*n_op];
+    const double *dFdr2 = &data17[15*n_op];
+    const double *dFdr3 = &data18[15*n_op];
+    const double *dFds0 = &data19[15*n_op];
+    const double *dFds1 = &data20[15*n_op];
+    const double *dFds2 = &data21[15*n_op];
+    const double *dFds3 = &data22[15*n_op];
+    const double *dGdr0 = &data23[15*n_op];
+    const double *dGdr1 = &data24[15*n_op];
+    const double *dGdr2 = &data25[15*n_op];
+    const double *dGdr3 = &data26[15*n_op];
+    const double *dGds0 = &data27[15*n_op];
+    const double *dGds1 = &data28[15*n_op];
+    const double *dGds2 = &data29[15*n_op];
+    const double *dGds3 = &data30[15*n_op];
+    double *flux0 = &data31[15*n_op];
+    double *flux1 = &data32[15*n_op];
+    double *flux2 = &data33[15*n_op];
+    double *flux3 = &data34[15*n_op];
+    double *qRHS0 = &data35[15*n_op];
+    double *qRHS1 = &data36[15*n_op];
+    double *qRHS2 = &data37[15*n_op];
+    double *qRHS3 = &data38[15*n_op];
 
     //inline function
     
 
-    for(int i = 0; i < 4; i++) {
-      for(int j = 0; j < 15; j++) {
-        qRHS[i + j * 4] = (rx[j] * dFdr[i + j * 4] + sx[j] * dFds[i + j * 4]) + (ry[j] * dGdr[i + j * 4] + sy[j] * dGds[i + j * 4]);
-      }
+    for(int j = 0; j < 15; j++) {
+      qRHS0[j] = (rx[j] * dFdr0[j] + sx[j] * dFds0[j]) + (ry[j] * dGdr0[j] + sy[j] * dGds0[j]);
     }
 
-    double mQ[4 * 3 * 5];
-    double mF[4 * 3 * 5];
-    double mG[4 * 3 * 5];
-    double mRho[3 * 5];
-    double mU[3 * 5];
-    double mV[3 * 5];
-    double mP[3 * 5];
+    for(int j = 0; j < 15; j++) {
+      qRHS1[j] = (rx[j] * dFdr1[j] + sx[j] * dFds1[j]) + (ry[j] * dGdr1[j] + sy[j] * dGds1[j]);
+    }
+
+    for(int j = 0; j < 15; j++) {
+      qRHS2[j] = (rx[j] * dFdr2[j] + sx[j] * dFds2[j]) + (ry[j] * dGdr2[j] + sy[j] * dGds2[j]);
+    }
+
+    for(int j = 0; j < 15; j++) {
+      qRHS3[j] = (rx[j] * dFdr3[j] + sx[j] * dFds3[j]) + (ry[j] * dGdr3[j] + sy[j] * dGds3[j]);
+    }
+
+    roe(flux0, flux1, flux2, flux3, nx, ny, fscale, q0, q1, q2, q3, exteriorQ0,
+        exteriorQ1, exteriorQ2, exteriorQ3);
 
     for(int i = 0; i < 3 * 5; i++) {
-      int ind = FMASK_ompkernel[i] * 4;
-      mQ[i * 4]     = q[ind];
-      mQ[i * 4 + 1] = q[ind + 1];
-      mQ[i * 4 + 2] = q[ind + 2];
-      mQ[i * 4 + 3] = q[ind + 3];
-
-      euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
-    }
-
-    double pF[4 * 3 * 5];
-    double pG[4 * 3 * 5];
-    double pRho[3 * 5];
-    double pU[3 * 5];
-    double pV[3 * 5];
-    double pP[3 * 5];
-    for(int i = 0; i < 3 * 5; i++) {
-      euler_flux(&exteriorQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
-    }
-
-    roe(flux, nx, ny, fscale, q, exteriorQ);
-
-    for(int i = 0; i < 4 * 3 * 5; i++) {
-      exteriorQ[i] = 0.0;
+      exteriorQ0[i] = 0.0;
+      exteriorQ1[i] = 0.0;
+      exteriorQ2[i] = 0.0;
+      exteriorQ3[i] = 0.0;
     }
     //end inline func
   }

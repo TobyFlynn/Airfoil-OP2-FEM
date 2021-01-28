@@ -10,7 +10,13 @@ void calc_dt_omp4_kernel(
   int dat0size,
   double *data1,
   int dat1size,
-  double *arg2,
+  double *data2,
+  int dat2size,
+  double *data3,
+  int dat3size,
+  double *data4,
+  int dat4size,
+  double *arg5,
   int count,
   int num_teams,
   int nthread);
@@ -19,22 +25,28 @@ void calc_dt_omp4_kernel(
 void op_par_loop_calc_dt(char const *name, op_set set,
   op_arg arg0,
   op_arg arg1,
-  op_arg arg2){
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5){
 
-  double*arg2h = (double *)arg2.data;
-  int nargs = 3;
-  op_arg args[3];
+  double*arg5h = (double *)arg5.data;
+  int nargs = 6;
+  op_arg args[6];
 
   args[0] = arg0;
   args[1] = arg1;
   args[2] = arg2;
+  args[3] = arg3;
+  args[4] = arg4;
+  args[5] = arg5;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
+  op_timing_realloc(2);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
+  OP_kernels[2].name      = name;
+  OP_kernels[2].count    += 1;
 
 
   if (OP_diags>2) {
@@ -43,18 +55,18 @@ void op_par_loop_calc_dt(char const *name, op_set set,
 
   int set_size = op_mpi_halo_exchanges_cuda(set, nargs, args);
 
-  #ifdef OP_PART_SIZE_3
-    int part_size = OP_PART_SIZE_3;
+  #ifdef OP_PART_SIZE_2
+    int part_size = OP_PART_SIZE_2;
   #else
     int part_size = OP_part_size;
   #endif
-  #ifdef OP_BLOCK_SIZE_3
-    int nthread = OP_BLOCK_SIZE_3;
+  #ifdef OP_BLOCK_SIZE_2
+    int nthread = OP_BLOCK_SIZE_2;
   #else
     int nthread = OP_block_size;
   #endif
 
-  double arg2_l = arg2h[0];
+  double arg5_l = arg5h[0];
 
   if (set_size >0) {
 
@@ -64,12 +76,24 @@ void op_par_loop_calc_dt(char const *name, op_set set,
     int dat0size = getSetSizeFromOpArg(&arg0) * arg0.dat->dim;
     double* data1 = (double*)arg1.data_d;
     int dat1size = getSetSizeFromOpArg(&arg1) * arg1.dat->dim;
+    double* data2 = (double*)arg2.data_d;
+    int dat2size = getSetSizeFromOpArg(&arg2) * arg2.dat->dim;
+    double* data3 = (double*)arg3.data_d;
+    int dat3size = getSetSizeFromOpArg(&arg3) * arg3.dat->dim;
+    double* data4 = (double*)arg4.data_d;
+    int dat4size = getSetSizeFromOpArg(&arg4) * arg4.dat->dim;
     calc_dt_omp4_kernel(
       data0,
       dat0size,
       data1,
       dat1size,
-      &arg2_l,
+      data2,
+      dat2size,
+      data3,
+      dat3size,
+      data4,
+      dat4size,
+      &arg5_l,
       set->size,
       part_size!=0?(set->size-1)/part_size+1:(set->size-1)/nthread,
       nthread);
@@ -77,14 +101,17 @@ void op_par_loop_calc_dt(char const *name, op_set set,
   }
 
   // combine reduction data
-  arg2h[0]  = MAX(arg2h[0],arg2_l);
-  op_mpi_reduce_double(&arg2,arg2h);
+  arg5h[0]  = MAX(arg5h[0],arg5_l);
+  op_mpi_reduce_double(&arg5,arg5h);
   op_mpi_set_dirtybit_cuda(nargs, args);
 
   if (OP_diags>1) deviceSync();
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].time     += wall_t2 - wall_t1;
-  OP_kernels[3].transfer += (float)set->size * arg0.size;
-  OP_kernels[3].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].time     += wall_t2 - wall_t1;
+  OP_kernels[2].transfer += (float)set->size * arg0.size;
+  OP_kernels[2].transfer += (float)set->size * arg1.size;
+  OP_kernels[2].transfer += (float)set->size * arg2.size;
+  OP_kernels[2].transfer += (float)set->size * arg3.size;
+  OP_kernels[2].transfer += (float)set->size * arg4.size;
 }

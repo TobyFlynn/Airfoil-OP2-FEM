@@ -4,16 +4,15 @@
 
 //user function
 __device__ void get_bedge_q_gpu( const int *bedge_type, const int *bedgeNum,
-                        const double *nx, const double *ny,
-                        const double *q, double *exteriorQ) {
+                        const double *nx, const double *ny, const double *q0,
+                        const double *q1, const double *q2, const double *q3,
+                        double *exteriorQ0, double *exteriorQ1,
+                        double *exteriorQ2, double *exteriorQ3) {
   int exInd = 0;
-  int nInd = 0;
   if(*bedgeNum == 1) {
-    exInd = 4 * 5;
-    nInd = 5;
+    exInd = 5;
   } else if(*bedgeNum == 2) {
-    exInd = 2 * 4 * 5;
-    nInd = 2 * 5;
+    exInd = 2 * 5;
   }
 
   int *fmask;
@@ -29,28 +28,28 @@ __device__ void get_bedge_q_gpu( const int *bedge_type, const int *bedgeNum,
   if(*bedge_type == 0) {
 
     for(int i = 0; i < 5; i++) {
-      exteriorQ[exInd + i * 4]     += bc_r_cuda;
-      exteriorQ[exInd + i * 4 + 1] += bc_r_cuda * bc_u_cuda;
-      exteriorQ[exInd + i * 4 + 2] += bc_r_cuda * bc_v_cuda;
-      exteriorQ[exInd + i * 4 + 3] += bc_e_cuda;
+      exteriorQ0[exInd + i] += bc_r_cuda;
+      exteriorQ1[exInd + i] += bc_r_cuda * bc_u_cuda;
+      exteriorQ2[exInd + i] += bc_r_cuda * bc_v_cuda;
+      exteriorQ3[exInd + i] += bc_e_cuda;
     }
   } else if(*bedge_type == 1) {
 
     for(int i = 0; i < 5; i++) {
-      int qInd = fmask[i] * 4;
-      exteriorQ[exInd + i * 4]     += bc_r_cuda;
-      exteriorQ[exInd + i * 4 + 1] += bc_r_cuda * bc_u_cuda;
-      exteriorQ[exInd + i * 4 + 2] += bc_r_cuda * bc_v_cuda;
-      exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+      int qInd = fmask[i];
+      exteriorQ0[exInd] += bc_r_cuda;
+      exteriorQ1[exInd] += bc_r_cuda * bc_u_cuda;
+      exteriorQ2[exInd] += bc_r_cuda * bc_v_cuda;
+      exteriorQ3[exInd] += q3[qInd];
     }
   } else {
 
     for(int i = 0; i < 5; i++) {
-      int qInd = fmask[i] * 4;
-      exteriorQ[exInd + i * 4]     += q[qInd];
-      exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
-      exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
-      exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+      int qInd = fmask[i];
+      exteriorQ0[exInd] += q0[qInd];
+      exteriorQ1[exInd] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
+      exteriorQ2[exInd] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
+      exteriorQ3[exInd] += q3[qInd];
     }
   }
 
@@ -61,21 +60,42 @@ __global__ void op_cuda_get_bedge_q(
   const double *__restrict ind_arg0,
   const double *__restrict ind_arg1,
   const double *__restrict ind_arg2,
-  double *__restrict ind_arg3,
+  const double *__restrict ind_arg3,
+  const double *__restrict ind_arg4,
+  const double *__restrict ind_arg5,
+  double *__restrict ind_arg6,
+  double *__restrict ind_arg7,
+  double *__restrict ind_arg8,
+  double *__restrict ind_arg9,
   const int *__restrict opDat2Map,
   const int *__restrict arg0,
   const int *__restrict arg1,
   int start,
   int end,
   int   set_size) {
-  double arg5_l[60];
+  double arg8_l[15];
+  double arg9_l[15];
+  double arg10_l[15];
+  double arg11_l[15];
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   if (tid + start < end) {
     int n = tid + start;
     //initialise local variables
-    double arg5_l[60];
-    for ( int d=0; d<60; d++ ){
-      arg5_l[d] = ZERO_double;
+    double arg8_l[15];
+    for ( int d=0; d<15; d++ ){
+      arg8_l[d] = ZERO_double;
+    }
+    double arg9_l[15];
+    for ( int d=0; d<15; d++ ){
+      arg9_l[d] = ZERO_double;
+    }
+    double arg10_l[15];
+    for ( int d=0; d<15; d++ ){
+      arg10_l[d] = ZERO_double;
+    }
+    double arg11_l[15];
+    for ( int d=0; d<15; d++ ){
+      arg11_l[d] = ZERO_double;
     }
     int map2idx;
     map2idx = opDat2Map[n + set_size * 0];
@@ -85,68 +105,74 @@ __global__ void op_cuda_get_bedge_q(
                 arg1+n*1,
                 ind_arg0+map2idx*15,
                 ind_arg1+map2idx*15,
-                ind_arg2+map2idx*60,
-                arg5_l);
-    atomicAdd(&ind_arg3[0+map2idx*60],arg5_l[0]);
-    atomicAdd(&ind_arg3[1+map2idx*60],arg5_l[1]);
-    atomicAdd(&ind_arg3[2+map2idx*60],arg5_l[2]);
-    atomicAdd(&ind_arg3[3+map2idx*60],arg5_l[3]);
-    atomicAdd(&ind_arg3[4+map2idx*60],arg5_l[4]);
-    atomicAdd(&ind_arg3[5+map2idx*60],arg5_l[5]);
-    atomicAdd(&ind_arg3[6+map2idx*60],arg5_l[6]);
-    atomicAdd(&ind_arg3[7+map2idx*60],arg5_l[7]);
-    atomicAdd(&ind_arg3[8+map2idx*60],arg5_l[8]);
-    atomicAdd(&ind_arg3[9+map2idx*60],arg5_l[9]);
-    atomicAdd(&ind_arg3[10+map2idx*60],arg5_l[10]);
-    atomicAdd(&ind_arg3[11+map2idx*60],arg5_l[11]);
-    atomicAdd(&ind_arg3[12+map2idx*60],arg5_l[12]);
-    atomicAdd(&ind_arg3[13+map2idx*60],arg5_l[13]);
-    atomicAdd(&ind_arg3[14+map2idx*60],arg5_l[14]);
-    atomicAdd(&ind_arg3[15+map2idx*60],arg5_l[15]);
-    atomicAdd(&ind_arg3[16+map2idx*60],arg5_l[16]);
-    atomicAdd(&ind_arg3[17+map2idx*60],arg5_l[17]);
-    atomicAdd(&ind_arg3[18+map2idx*60],arg5_l[18]);
-    atomicAdd(&ind_arg3[19+map2idx*60],arg5_l[19]);
-    atomicAdd(&ind_arg3[20+map2idx*60],arg5_l[20]);
-    atomicAdd(&ind_arg3[21+map2idx*60],arg5_l[21]);
-    atomicAdd(&ind_arg3[22+map2idx*60],arg5_l[22]);
-    atomicAdd(&ind_arg3[23+map2idx*60],arg5_l[23]);
-    atomicAdd(&ind_arg3[24+map2idx*60],arg5_l[24]);
-    atomicAdd(&ind_arg3[25+map2idx*60],arg5_l[25]);
-    atomicAdd(&ind_arg3[26+map2idx*60],arg5_l[26]);
-    atomicAdd(&ind_arg3[27+map2idx*60],arg5_l[27]);
-    atomicAdd(&ind_arg3[28+map2idx*60],arg5_l[28]);
-    atomicAdd(&ind_arg3[29+map2idx*60],arg5_l[29]);
-    atomicAdd(&ind_arg3[30+map2idx*60],arg5_l[30]);
-    atomicAdd(&ind_arg3[31+map2idx*60],arg5_l[31]);
-    atomicAdd(&ind_arg3[32+map2idx*60],arg5_l[32]);
-    atomicAdd(&ind_arg3[33+map2idx*60],arg5_l[33]);
-    atomicAdd(&ind_arg3[34+map2idx*60],arg5_l[34]);
-    atomicAdd(&ind_arg3[35+map2idx*60],arg5_l[35]);
-    atomicAdd(&ind_arg3[36+map2idx*60],arg5_l[36]);
-    atomicAdd(&ind_arg3[37+map2idx*60],arg5_l[37]);
-    atomicAdd(&ind_arg3[38+map2idx*60],arg5_l[38]);
-    atomicAdd(&ind_arg3[39+map2idx*60],arg5_l[39]);
-    atomicAdd(&ind_arg3[40+map2idx*60],arg5_l[40]);
-    atomicAdd(&ind_arg3[41+map2idx*60],arg5_l[41]);
-    atomicAdd(&ind_arg3[42+map2idx*60],arg5_l[42]);
-    atomicAdd(&ind_arg3[43+map2idx*60],arg5_l[43]);
-    atomicAdd(&ind_arg3[44+map2idx*60],arg5_l[44]);
-    atomicAdd(&ind_arg3[45+map2idx*60],arg5_l[45]);
-    atomicAdd(&ind_arg3[46+map2idx*60],arg5_l[46]);
-    atomicAdd(&ind_arg3[47+map2idx*60],arg5_l[47]);
-    atomicAdd(&ind_arg3[48+map2idx*60],arg5_l[48]);
-    atomicAdd(&ind_arg3[49+map2idx*60],arg5_l[49]);
-    atomicAdd(&ind_arg3[50+map2idx*60],arg5_l[50]);
-    atomicAdd(&ind_arg3[51+map2idx*60],arg5_l[51]);
-    atomicAdd(&ind_arg3[52+map2idx*60],arg5_l[52]);
-    atomicAdd(&ind_arg3[53+map2idx*60],arg5_l[53]);
-    atomicAdd(&ind_arg3[54+map2idx*60],arg5_l[54]);
-    atomicAdd(&ind_arg3[55+map2idx*60],arg5_l[55]);
-    atomicAdd(&ind_arg3[56+map2idx*60],arg5_l[56]);
-    atomicAdd(&ind_arg3[57+map2idx*60],arg5_l[57]);
-    atomicAdd(&ind_arg3[58+map2idx*60],arg5_l[58]);
-    atomicAdd(&ind_arg3[59+map2idx*60],arg5_l[59]);
+                ind_arg2+map2idx*15,
+                ind_arg3+map2idx*15,
+                ind_arg4+map2idx*15,
+                ind_arg5+map2idx*15,
+                arg8_l,
+                arg9_l,
+                arg10_l,
+                arg11_l);
+    atomicAdd(&ind_arg6[0+map2idx*15],arg8_l[0]);
+    atomicAdd(&ind_arg6[1+map2idx*15],arg8_l[1]);
+    atomicAdd(&ind_arg6[2+map2idx*15],arg8_l[2]);
+    atomicAdd(&ind_arg6[3+map2idx*15],arg8_l[3]);
+    atomicAdd(&ind_arg6[4+map2idx*15],arg8_l[4]);
+    atomicAdd(&ind_arg6[5+map2idx*15],arg8_l[5]);
+    atomicAdd(&ind_arg6[6+map2idx*15],arg8_l[6]);
+    atomicAdd(&ind_arg6[7+map2idx*15],arg8_l[7]);
+    atomicAdd(&ind_arg6[8+map2idx*15],arg8_l[8]);
+    atomicAdd(&ind_arg6[9+map2idx*15],arg8_l[9]);
+    atomicAdd(&ind_arg6[10+map2idx*15],arg8_l[10]);
+    atomicAdd(&ind_arg6[11+map2idx*15],arg8_l[11]);
+    atomicAdd(&ind_arg6[12+map2idx*15],arg8_l[12]);
+    atomicAdd(&ind_arg6[13+map2idx*15],arg8_l[13]);
+    atomicAdd(&ind_arg6[14+map2idx*15],arg8_l[14]);
+    atomicAdd(&ind_arg7[0+map2idx*15],arg9_l[0]);
+    atomicAdd(&ind_arg7[1+map2idx*15],arg9_l[1]);
+    atomicAdd(&ind_arg7[2+map2idx*15],arg9_l[2]);
+    atomicAdd(&ind_arg7[3+map2idx*15],arg9_l[3]);
+    atomicAdd(&ind_arg7[4+map2idx*15],arg9_l[4]);
+    atomicAdd(&ind_arg7[5+map2idx*15],arg9_l[5]);
+    atomicAdd(&ind_arg7[6+map2idx*15],arg9_l[6]);
+    atomicAdd(&ind_arg7[7+map2idx*15],arg9_l[7]);
+    atomicAdd(&ind_arg7[8+map2idx*15],arg9_l[8]);
+    atomicAdd(&ind_arg7[9+map2idx*15],arg9_l[9]);
+    atomicAdd(&ind_arg7[10+map2idx*15],arg9_l[10]);
+    atomicAdd(&ind_arg7[11+map2idx*15],arg9_l[11]);
+    atomicAdd(&ind_arg7[12+map2idx*15],arg9_l[12]);
+    atomicAdd(&ind_arg7[13+map2idx*15],arg9_l[13]);
+    atomicAdd(&ind_arg7[14+map2idx*15],arg9_l[14]);
+    atomicAdd(&ind_arg8[0+map2idx*15],arg10_l[0]);
+    atomicAdd(&ind_arg8[1+map2idx*15],arg10_l[1]);
+    atomicAdd(&ind_arg8[2+map2idx*15],arg10_l[2]);
+    atomicAdd(&ind_arg8[3+map2idx*15],arg10_l[3]);
+    atomicAdd(&ind_arg8[4+map2idx*15],arg10_l[4]);
+    atomicAdd(&ind_arg8[5+map2idx*15],arg10_l[5]);
+    atomicAdd(&ind_arg8[6+map2idx*15],arg10_l[6]);
+    atomicAdd(&ind_arg8[7+map2idx*15],arg10_l[7]);
+    atomicAdd(&ind_arg8[8+map2idx*15],arg10_l[8]);
+    atomicAdd(&ind_arg8[9+map2idx*15],arg10_l[9]);
+    atomicAdd(&ind_arg8[10+map2idx*15],arg10_l[10]);
+    atomicAdd(&ind_arg8[11+map2idx*15],arg10_l[11]);
+    atomicAdd(&ind_arg8[12+map2idx*15],arg10_l[12]);
+    atomicAdd(&ind_arg8[13+map2idx*15],arg10_l[13]);
+    atomicAdd(&ind_arg8[14+map2idx*15],arg10_l[14]);
+    atomicAdd(&ind_arg9[0+map2idx*15],arg11_l[0]);
+    atomicAdd(&ind_arg9[1+map2idx*15],arg11_l[1]);
+    atomicAdd(&ind_arg9[2+map2idx*15],arg11_l[2]);
+    atomicAdd(&ind_arg9[3+map2idx*15],arg11_l[3]);
+    atomicAdd(&ind_arg9[4+map2idx*15],arg11_l[4]);
+    atomicAdd(&ind_arg9[5+map2idx*15],arg11_l[5]);
+    atomicAdd(&ind_arg9[6+map2idx*15],arg11_l[6]);
+    atomicAdd(&ind_arg9[7+map2idx*15],arg11_l[7]);
+    atomicAdd(&ind_arg9[8+map2idx*15],arg11_l[8]);
+    atomicAdd(&ind_arg9[9+map2idx*15],arg11_l[9]);
+    atomicAdd(&ind_arg9[10+map2idx*15],arg11_l[10]);
+    atomicAdd(&ind_arg9[11+map2idx*15],arg11_l[11]);
+    atomicAdd(&ind_arg9[12+map2idx*15],arg11_l[12]);
+    atomicAdd(&ind_arg9[13+map2idx*15],arg11_l[13]);
+    atomicAdd(&ind_arg9[14+map2idx*15],arg11_l[14]);
   }
 }
 
@@ -158,10 +184,16 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   op_arg arg2,
   op_arg arg3,
   op_arg arg4,
-  op_arg arg5){
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8,
+  op_arg arg9,
+  op_arg arg10,
+  op_arg arg11){
 
-  int nargs = 6;
-  op_arg args[6];
+  int nargs = 12;
+  op_arg args[12];
 
   args[0] = arg0;
   args[1] = arg1;
@@ -169,17 +201,23 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   args[3] = arg3;
   args[4] = arg4;
   args[5] = arg5;
+  args[6] = arg6;
+  args[7] = arg7;
+  args[8] = arg8;
+  args[9] = arg9;
+  args[10] = arg10;
+  args[11] = arg11;
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(5);
+  op_timing_realloc(4);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[5].name      = name;
-  OP_kernels[5].count    += 1;
+  OP_kernels[4].name      = name;
+  OP_kernels[4].count    += 1;
 
 
-  int    ninds   = 4;
-  int    inds[6] = {-1,-1,0,1,2,3};
+  int    ninds   = 10;
+  int    inds[12] = {-1,-1,0,1,2,3,4,5,6,7,8,9};
 
   if (OP_diags>2) {
     printf(" kernel routine with indirection: get_bedge_q\n");
@@ -188,8 +226,8 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   if (set_size > 0) {
 
     //set CUDA execution parameters
-    #ifdef OP_BLOCK_SIZE_5
-      int nthread = OP_BLOCK_SIZE_5;
+    #ifdef OP_BLOCK_SIZE_4
+      int nthread = OP_BLOCK_SIZE_4;
     #else
       int nthread = OP_block_size;
     #endif
@@ -207,6 +245,12 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
         (double *)arg3.data_d,
         (double *)arg4.data_d,
         (double *)arg5.data_d,
+        (double *)arg6.data_d,
+        (double *)arg7.data_d,
+        (double *)arg8.data_d,
+        (double *)arg9.data_d,
+        (double *)arg10.data_d,
+        (double *)arg11.data_d,
         arg2.map_data_d,
         (int*)arg0.data_d,
         (int*)arg1.data_d,
@@ -218,5 +262,5 @@ void op_par_loop_get_bedge_q(char const *name, op_set set,
   cutilSafeCall(cudaDeviceSynchronize());
   //update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[5].time     += wall_t2 - wall_t1;
+  OP_kernels[4].time     += wall_t2 - wall_t1;
 }
