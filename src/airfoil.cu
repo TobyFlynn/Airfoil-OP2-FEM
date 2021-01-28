@@ -196,22 +196,22 @@ int main(int argc, char **argv) {
   op_decl_const(15 * 15, "double", LIFT);
 
   // Matrix multiplications using cuBLAS
-  // op_arg init_grid_args[] = {
-  //   op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
-  //   op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
-  //   op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
-  //   op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
-  //   op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
-  //   op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
-  // };
-  // op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
-  // init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
-  //                    (int *)cell2nodes->map, (double *)x->data_d,
-  //                    (double *)y->data_d, (double *)xr->data_d,
-  //                    (double *)xs->data_d, (double *)yr->data_d,
-  //                    (double *)ys->data_d);
-  // // Check this
-  // op_mpi_set_dirtybit_cuda(6, init_grid_args);
+  op_arg init_grid_args[] = {
+    op_arg_dat(x, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(y, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(xr, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(xs, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(yr, -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(ys, -1, OP_ID, 15, "double", OP_WRITE)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 6, init_grid_args);
+  init_grid_matrices(cublas_handle, numCells, (double *)node_coords->data,
+                     (int *)cell2nodes->map, (double *)x->data_d,
+                     (double *)y->data_d, (double *)xr->data_d,
+                     (double *)xs->data_d, (double *)yr->data_d,
+                     (double *)ys->data_d);
+  // Check this
+  op_mpi_set_dirtybit_cuda(6, init_grid_args);
   // x->dirty_hd = 2;
   // y->dirty_hd = 2;
   // xr->dirty_hd = 2;
@@ -345,23 +345,50 @@ int main(int argc, char **argv) {
       internal_fluxes_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      // op_timers(&cpu_loop_1, &wall_loop_1);
-      // op_arg internal_fluxes_args[] = {
-      //   op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_READ),
-      //   op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_READ),
-      //   op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-      //   op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-      //   op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-      //   op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_WRITE)
-      // };
-      // op_mpi_halo_exchanges_cuda(cells, 6, internal_fluxes_args);
-      // internal_fluxes_matrices(cublas_handle, numCells, (double *)F->data_d,
-      //                          (double *)G->data_d, (double *)dFdr->data_d,
-      //                          (double *)dFds->data_d, (double *)dGdr->data_d,
-      //                          (double *)dGds->data_d);
-      //
-      // // Check this
-      // op_mpi_set_dirtybit_cuda(6, internal_fluxes_args);
+      op_timers(&cpu_loop_1, &wall_loop_1);
+      op_arg internal_fluxes_args[] = {
+        op_arg_dat(F[0], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(F[1], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(F[2], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(F[3], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(G[0], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(G[1], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(G[2], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(G[3], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(dFdr[0], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFdr[1], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFdr[2], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFdr[3], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFds[0], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFds[1], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFds[2], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dFds[3], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGdr[0], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGdr[1], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGdr[2], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGdr[3], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGds[0], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGds[1], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGds[2], -1, OP_ID, 15, "double", OP_WRITE),
+        op_arg_dat(dGds[3], -1, OP_ID, 15, "double", OP_WRITE)
+      };
+      op_mpi_halo_exchanges_cuda(cells, 24, internal_fluxes_args);
+      internal_fluxes_matrices(cublas_handle, numCells, (double *)F[0]->data_d,
+                               (double *)F[1]->data_d, (double *)F[2]->data_d,
+                               (double *)F[3]->data_d, (double *)G[0]->data_d,
+                               (double *)G[1]->data_d, (double *)G[2]->data_d,
+                               (double *)G[3]->data_d, (double *)dFdr[0]->data_d,
+                               (double *)dFdr[1]->data_d, (double *)dFdr[2]->data_d,
+                               (double *)dFdr[3]->data_d, (double *)dFds[0]->data_d,
+                               (double *)dFds[1]->data_d, (double *)dFds[2]->data_d,
+                               (double *)dFds[3]->data_d, (double *)dGdr[0]->data_d,
+                               (double *)dGdr[1]->data_d, (double *)dGdr[2]->data_d,
+                               (double *)dGdr[3]->data_d, (double *)dGds[0]->data_d,
+                               (double *)dGds[1]->data_d, (double *)dGds[2]->data_d,
+                               (double *)dGds[3]->data_d);
+
+      // Check this
+      op_mpi_set_dirtybit_cuda(24, internal_fluxes_args);
       // dFdr->dirty_hd = 2;
       // dFds->dirty_hd = 2;
       // dGdr->dirty_hd = 2;
@@ -416,17 +443,26 @@ int main(int argc, char **argv) {
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
       // TODO matrix mult
-      // op_timers(&cpu_loop_1, &wall_loop_1);
-      // op_arg face_fluxes_args[] = {
-      //   op_arg_dat(flux, -1, OP_ID, 4 * 15, "double", OP_READ),
-      //   op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_RW)
-      // };
-      // op_mpi_halo_exchanges_cuda(cells, 2, face_fluxes_args);
-      // face_fluxes_matrices(cublas_handle, numCells, (double *)flux->data_d,
-      //                      (double *)rk[j]->data_d);
-      //
-      // // Check this
-      // op_mpi_set_dirtybit_cuda(2, face_fluxes_args);
+      op_timers(&cpu_loop_1, &wall_loop_1);
+      op_arg face_fluxes_args[] = {
+        op_arg_dat(flux[0], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(flux[1], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(flux[2], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(flux[3], -1, OP_ID, 15, "double", OP_READ),
+        op_arg_dat(rk[j][0], -1, OP_ID, 15, "double", OP_RW),
+        op_arg_dat(rk[j][1], -1, OP_ID, 15, "double", OP_RW),
+        op_arg_dat(rk[j][2], -1, OP_ID, 15, "double", OP_RW),
+        op_arg_dat(rk[j][3], -1, OP_ID, 15, "double", OP_RW)
+      };
+      op_mpi_halo_exchanges_cuda(cells, 8, face_fluxes_args);
+      face_fluxes_matrices(cublas_handle, numCells, (double *)flux[0]->data_d,
+                           (double *)flux[1]->data_d, (double *)flux[2]->data_d,
+                           (double *)flux[3]->data_d, (double *)rk[j][0]->data_d,
+                           (double *)rk[j][1]->data_d, (double *)rk[j][2]->data_d,
+                           (double *)rk[j][3]->data_d);
+
+      // Check this
+      op_mpi_set_dirtybit_cuda(8, face_fluxes_args);
       // rk[j]->dirty_hd = 2;
       op_timers(&cpu_loop_2, &wall_loop_2);
       face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
