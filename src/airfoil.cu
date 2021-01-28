@@ -22,6 +22,7 @@
 #include "load_mesh.h"
 #include "save_solution.h"
 #include "airfoil_cuda_matrices.h"
+#include "airfoil_data.h"
 
 // Include kernels
 // #include "init_grid.h"
@@ -93,7 +94,7 @@ int main(int argc, char **argv) {
     bc_u = sin((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
     bc_v = cos((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
     //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
-    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u);
+    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u + bc_v * bc_v);
   } else {
     gam = 1.4;
     bc_mach = 0.4;
@@ -116,35 +117,7 @@ int main(int argc, char **argv) {
   cout << "bc_e: " << bc_e << endl;
 
   // Declare memory for data that will be calculated in initialisation kernel
-  double *nodeX_data = (double*)malloc(3 * numCells * sizeof(double));
-  double *nodeY_data = (double*)malloc(3 * numCells * sizeof(double));
-  double *x_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *y_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *xr_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *yr_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *xs_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *ys_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *rx_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *ry_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *sx_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *sy_data = (double *)malloc(15 * numCells * sizeof(double));
-  double *nx_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
-  double *ny_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
-  double *fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
-  double *q_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *F_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *G_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *dFdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *dFds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *dGdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *dGds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
-  double *flux_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
-  // RK4 data
-  double *rk1_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *rk2_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  double *rk3_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  AirfoilData *data = new AirfoilData(numCells);
 
   // Declare OP2 sets
   op_set nodes  = op_decl_set(numNodes, "nodes");
@@ -163,42 +136,42 @@ int main(int argc, char **argv) {
     // Structure: {x, y}
   op_dat node_coords = op_decl_dat(nodes, 2, "double", coords, "node_coords");
     // Coords of nodes per cell
-  op_dat nodeX = op_decl_dat(cells, 3, "double", nodeX_data, "nodeX");
-  op_dat nodeY = op_decl_dat(cells, 3, "double", nodeY_data, "nodeY");
+  op_dat nodeX = op_decl_dat(cells, 3, "double", data->nodeX_data, "nodeX");
+  op_dat nodeY = op_decl_dat(cells, 3, "double", data->nodeY_data, "nodeY");
     // The x and y coordinates of all the solution points in a cell
-  op_dat x = op_decl_dat(cells, 15, "double", x_data, "x");
-  op_dat y = op_decl_dat(cells, 15, "double", y_data, "y");
+  op_dat x = op_decl_dat(cells, 15, "double", data->x_data, "x");
+  op_dat y = op_decl_dat(cells, 15, "double", data->y_data, "y");
     // Geometric factors that relate to mapping between global and local (cell) coordinates
-  op_dat xr = op_decl_dat(cells, 15, "double", xr_data, "xr");
-  op_dat yr = op_decl_dat(cells, 15, "double", yr_data, "yr");
-  op_dat xs = op_decl_dat(cells, 15, "double", xs_data, "xs");
-  op_dat ys = op_decl_dat(cells, 15, "double", ys_data, "ys");
-  op_dat rx = op_decl_dat(cells, 15, "double", rx_data, "rx");
-  op_dat ry = op_decl_dat(cells, 15, "double", ry_data, "ry");
-  op_dat sx = op_decl_dat(cells, 15, "double", sx_data, "sx");
-  op_dat sy = op_decl_dat(cells, 15, "double", sy_data, "sy");
+  op_dat xr = op_decl_dat(cells, 15, "double", data->xr_data, "xr");
+  op_dat yr = op_decl_dat(cells, 15, "double", data->yr_data, "yr");
+  op_dat xs = op_decl_dat(cells, 15, "double", data->xs_data, "xs");
+  op_dat ys = op_decl_dat(cells, 15, "double", data->ys_data, "ys");
+  op_dat rx = op_decl_dat(cells, 15, "double", data->rx_data, "rx");
+  op_dat ry = op_decl_dat(cells, 15, "double", data->ry_data, "ry");
+  op_dat sx = op_decl_dat(cells, 15, "double", data->sx_data, "sx");
+  op_dat sy = op_decl_dat(cells, 15, "double", data->sy_data, "sy");
     // Normals for each cell (calculated for each node on each edge, nodes can appear on multiple edges)
-  op_dat nx = op_decl_dat(cells, 3 * 5, "double", nx_data, "nx");
-  op_dat ny = op_decl_dat(cells, 3 * 5, "double", ny_data, "ny");
+  op_dat nx = op_decl_dat(cells, 3 * 5, "double", data->nx_data, "nx");
+  op_dat ny = op_decl_dat(cells, 3 * 5, "double", data->ny_data, "ny");
     // surface Jacobian / Jacobian (used when lifting the boundary fluxes)
-  op_dat fscale = op_decl_dat(cells, 3 * 5, "double", fscale_data, "fscale");
+  op_dat fscale = op_decl_dat(cells, 3 * 5, "double", data->fscale_data, "fscale");
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
-  op_dat q    = op_decl_dat(cells, 4 * 15, "double", q_data, "q");
-  op_dat F    = op_decl_dat(cells, 4 * 15, "double", F_data, "F");
-  op_dat G    = op_decl_dat(cells, 4 * 15, "double", G_data, "G");
-  op_dat dFdr = op_decl_dat(cells, 4 * 15, "double", dFdr_data, "dFdr");
-  op_dat dFds = op_decl_dat(cells, 4 * 15, "double", dFds_data, "dFds");
-  op_dat dGdr = op_decl_dat(cells, 4 * 15, "double", dGdr_data, "dGdr");
-  op_dat dGds = op_decl_dat(cells, 4 * 15, "double", dGds_data, "dGds");
-  op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", workingQ_data, "workingQ");
+  op_dat q    = op_decl_dat(cells, 4 * 15, "double", data->q_data, "q");
+  op_dat F    = op_decl_dat(cells, 4 * 15, "double", data->F_data, "F");
+  op_dat G    = op_decl_dat(cells, 4 * 15, "double", data->G_data, "G");
+  op_dat dFdr = op_decl_dat(cells, 4 * 15, "double", data->dFdr_data, "dFdr");
+  op_dat dFds = op_decl_dat(cells, 4 * 15, "double", data->dFds_data, "dFds");
+  op_dat dGdr = op_decl_dat(cells, 4 * 15, "double", data->dGdr_data, "dGdr");
+  op_dat dGds = op_decl_dat(cells, 4 * 15, "double", data->dGds_data, "dGds");
+  op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", data->workingQ_data, "workingQ");
   op_dat rk[3];
-  rk[0] = op_decl_dat(cells, 4 * 15, "double", rk1_data, "rk1");
-  rk[1] = op_decl_dat(cells, 4 * 15, "double", rk2_data, "rk2");
-  rk[2] = op_decl_dat(cells, 4 * 15, "double", rk3_data, "rk3");
+  rk[0] = op_decl_dat(cells, 4 * 15, "double", data->rk1_data, "rk1");
+  rk[1] = op_decl_dat(cells, 4 * 15, "double", data->rk2_data, "rk2");
+  rk[2] = op_decl_dat(cells, 4 * 15, "double", data->rk3_data, "rk3");
     // Holds neighbouring values of Q for nodes on faces
-  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", exteriorQ_data, "exteriorQ");
-  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", flux_data, "flux");
+  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", data->exteriorQ_data, "exteriorQ");
+  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", data->flux_data, "flux");
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -497,41 +470,15 @@ int main(int argc, char **argv) {
 
   free(coords);
   free(cgnsCells);
-  free(nodeX_data);
-  free(nodeY_data);
-  free(x_data);
-  free(y_data);
-  free(xr_data);
-  free(yr_data);
-  free(xs_data);
-  free(ys_data);
-  free(rx_data);
-  free(ry_data);
-  free(sx_data);
-  free(sy_data);
-  free(nx_data);
-  free(ny_data);
-  free(fscale_data);
-  free(q_data);
-  free(workingQ_data);
   free(edge2node_data);
   free(edge2cell_data);
   free(bedge2node_data);
   free(bedge2cell_data);
-  free(exteriorQ_data);
-  free(rk1_data);
-  free(rk2_data);
-  free(rk3_data);
   free(edgeNum_data);
   free(bedgeNum_data);
   free(bedge_type_data);
-  free(F_data);
-  free(G_data);
-  free(dFdr_data);
-  free(dFds_data);
-  free(dGdr_data);
-  free(dGds_data);
-  free(flux_data);
+
+  delete data;
 
   cublasDestroy(cublas_handle);
 }
