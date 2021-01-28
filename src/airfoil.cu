@@ -157,21 +157,22 @@ int main(int argc, char **argv) {
   op_dat fscale = op_decl_dat(cells, 3 * 5, "double", data->fscale_data, "fscale");
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
-  op_dat q    = op_decl_dat(cells, 4 * 15, "double", data->q_data, "q");
-  op_dat F    = op_decl_dat(cells, 4 * 15, "double", data->F_data, "F");
-  op_dat G    = op_decl_dat(cells, 4 * 15, "double", data->G_data, "G");
-  op_dat dFdr = op_decl_dat(cells, 4 * 15, "double", data->dFdr_data, "dFdr");
-  op_dat dFds = op_decl_dat(cells, 4 * 15, "double", data->dFds_data, "dFds");
-  op_dat dGdr = op_decl_dat(cells, 4 * 15, "double", data->dGdr_data, "dGdr");
-  op_dat dGds = op_decl_dat(cells, 4 * 15, "double", data->dGds_data, "dGds");
-  op_dat workingQ = op_decl_dat(cells, 4 * 15, "double", data->workingQ_data, "workingQ");
-  op_dat rk[3];
-  rk[0] = op_decl_dat(cells, 4 * 15, "double", data->rk1_data, "rk1");
-  rk[1] = op_decl_dat(cells, 4 * 15, "double", data->rk2_data, "rk2");
-  rk[2] = op_decl_dat(cells, 4 * 15, "double", data->rk3_data, "rk3");
-    // Holds neighbouring values of Q for nodes on faces
-  op_dat exteriorQ = op_decl_dat(cells, 4 * 3 * 5, "double", data->exteriorQ_data, "exteriorQ");
-  op_dat flux = op_decl_dat(cells, 4 * 3 * 5, "double", data->flux_data, "flux");
+  op_dat Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4], exteriorQ[4], flux[4], rk[3][4];
+  for(int i = 0; i < 4; i++) {
+    op_dat Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    op_dat F[i] = op_decl_dat(cells, 15, "double", data->F_data[i], "F" + i);
+    op_dat G[i] = op_decl_dat(cells, 15, "double", data->G_data[i], "G" + i);
+    op_dat dFdr[i] = op_decl_dat(cells, 15, "double", data->dFdr_data[i], "dFdr" + i);
+    op_dat dFds[i] = op_decl_dat(cells, 15, "double", data->dFds_data[i], "dFds" + i);
+    op_dat dGdr[i] = op_decl_dat(cells, 15, "double", data->dGdr_data[i], "dGdr" + i);
+    op_dat dGds[i] = op_decl_dat(cells, 15, "double", data->dGds_data[i], "dGds" + i);
+    op_dat workingQ[i] = op_decl_dat(cells, 15, "double", data->workingQ_data[i], "workingQ" + i);
+    op_dat exteriorQ[i] = op_decl_dat(cells, 3 * 5, "double", data->exteriorQ_data[i], "exteriorQ" + i);
+    op_dat flux[i] = op_decl_dat(cells, 3 * 5, "double", data->flux_data[i], "flux" + i);
+    rk[0][i] = op_decl_dat(cells, 15, "double", data->rk1_data[i], "rk1" + i);
+    rk[1][i] = op_decl_dat(cells, 15, "double", data->rk2_data[i], "rk2" + i);
+    rk[2][i] = op_decl_dat(cells, 15, "double", data->rk3_data[i], "rk3" + i);
+  }
   op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -240,8 +241,14 @@ int main(int argc, char **argv) {
 
 
   op_par_loop(set_ic, "set_ic", cells,
-              op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-              op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+              op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_WRITE));
 
   op_par_loop(neighbour_zero, "neighbour_zero", cells,
               op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));

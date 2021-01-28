@@ -20,19 +20,19 @@ public:
   double *nx_data;
   double *ny_data;
   double *fscale_data;
-  double *q_data;
-  double *F_data;
-  double *G_data;
-  double *dFdr_data;
-  double *dFds_data;
-  double *dGdr_data;
-  double *dGds_data;
-  double *workingQ_data;
-  double *exteriorQ_data;
-  double *flux_data;
-  double *rk1_data;
-  double *rk2_data;
-  double *rk3_data;
+  double *Q_data[4];
+  double *F_data[4];
+  double *G_data[4];
+  double *dFdr_data[4];
+  double *dFds_data[4];
+  double *dGdr_data[4];
+  double *dGds_data[4];
+  double *workingQ_data[4];
+  double *exteriorQ_data[4];
+  double *flux_data[4];
+  double *rk1_data[4];
+  double *rk2_data[4];
+  double *rk3_data[4];
 };
 
 #endif

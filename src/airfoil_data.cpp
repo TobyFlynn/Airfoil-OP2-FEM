@@ -18,19 +18,21 @@ AirfoilData::AirfoilData(int numCells) {
   nx_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   ny_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
-  q_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  F_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  G_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  dFdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  dFds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  dGdr_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  dGds_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  workingQ_data  = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  exteriorQ_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
-  flux_data = (double *)malloc(4 * 3 * 5 * numCells * sizeof(double));
-  rk1_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  rk2_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
-  rk3_data = (double *)malloc(4 * 15 * numCells * sizeof(double));
+  for(int i = 0; i < 4; i++) {
+    Q_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    F_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    G_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    dFdr_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    dFds_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    dGdr_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    dGds_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    workingQ_data[i]  = (double *)malloc(15 * numCells * sizeof(double));
+    exteriorQ_data[i] = (double *)malloc(3 * 5 * numCells * sizeof(double));
+    flux_data[i] = (double *)malloc(3 * 5 * numCells * sizeof(double));
+    rk1_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    rk2_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    rk3_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+  }
 }
 
 AirfoilData::~AirfoilData() {
@@ -49,17 +51,19 @@ AirfoilData::~AirfoilData() {
   free(nx_data);
   free(ny_data);
   free(fscale_data);
-  free(q_data);
-  free(F_data);
-  free(G_data);
-  free(dFdr_data);
-  free(dFds_data);
-  free(dGdr_data);
-  free(dGds_data);
-  free(workingQ_data);
-  free(exteriorQ_data);
-  free(flux_data);
-  free(rk1_data);
-  free(rk2_data);
-  free(rk3_data);
+  for(int i = 0; i < 4; i++) {
+    free(Q_data[i]);
+    free(F_data[i]);
+    free(G_data[i]);
+    free(dFdr_data[i]);
+    free(dFds_data[i]);
+    free(dGdr_data[i]);
+    free(dGds_data[i]);
+    free(workingQ_data[i]);
+    free(exteriorQ_data[i]);
+    free(flux_data[i]);
+    free(rk1_data[i]);
+    free(rk2_data[i]);
+    free(rk3_data[i]);
+  }
 }
