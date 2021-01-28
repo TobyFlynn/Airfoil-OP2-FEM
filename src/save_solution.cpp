@@ -28,8 +28,8 @@ void save_solution(std::string filename, int numPts, int numCells, double *q0,
     int node2 = cellMap[i * 3 + 2];
 
     rho[node0]  = q0[qCellInd + qNode0Ind];
-    velX[node0] = q1[qCellInd + qNode0Ind + 1] / rho[node0];
-    velY[node0] = q2[qCellInd + qNode0Ind + 2] / rho[node0];
+    velX[node0] = q1[qCellInd + qNode0Ind] / rho[node0];
+    velY[node0] = q2[qCellInd + qNode0Ind] / rho[node0];
     p[node0]    = (gam - 1) * (q3[qCellInd + qNode0Ind] - 0.5 * (q1[qCellInd + qNode0Ind] * velX[node0] + q2[qCellInd + qNode0Ind] * velY[node0]));
 
     rho[node1]  = q0[qCellInd + qNode1Ind];
