@@ -22,7 +22,7 @@ void save_solution(std::string filename, int numPts, int numCells, double *q0,
   int qNode2Ind = 14;
 
   for(int i = 0; i < numCells; i++) {
-    int qCellInd = i * 4 * 15;
+    int qCellInd = i * 15;
     int node0 = cellMap[i * 3];
     int node1 = cellMap[i * 3 + 1];
     int node2 = cellMap[i * 3 + 2];
