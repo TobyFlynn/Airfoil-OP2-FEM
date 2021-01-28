@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
     bc_u = sin((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
     bc_v = cos((M_PI/2.0) - (bc_alpha * M_PI / 180.0)) * sqrt(gam * bc_p / bc_r) * bc_mach;
     //bc_e = bc_p / (bc_r * (gam - 1.0)) + 0.5f * bc_u * bc_u;
-    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u);
+    bc_e = bc_p / (gam - 1.0) + 0.5 * bc_r * (bc_u * bc_u + bc_v * bc_v);
   } else {
     gam = 1.4;
     bc_mach = 0.4;

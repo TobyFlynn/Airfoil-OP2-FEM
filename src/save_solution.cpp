@@ -30,16 +30,19 @@ void save_solution(string filename, int numPts, int numCells, double *q, int *ce
     velX[node0] = q[qCellInd + 4 * qNode0Ind + 1] / rho[node0];
     velY[node0] = q[qCellInd + 4 * qNode0Ind + 2] / rho[node0];
     p[node0]    = (gam - 1) * (q[qCellInd + 4 * qNode0Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode0Ind + 1] * velX[node0] + q[qCellInd + 4 * qNode0Ind + 2] * velY[node0]));
+    // p[node0]    = q[qCellInd + 4 * qNode0Ind + 3];
 
     rho[node1]  = q[qCellInd + 4 * qNode1Ind];
     velX[node1] = q[qCellInd + 4 * qNode1Ind + 1] / rho[node1];
     velY[node1] = q[qCellInd + 4 * qNode1Ind + 2] / rho[node1];
     p[node1]    = (gam - 1) * (q[qCellInd + 4 * qNode1Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode1Ind + 1] * velX[node1] + q[qCellInd + 4 * qNode1Ind + 2] * velY[node1]));
+    // p[node1]    = q[qCellInd + 4 * qNode1Ind + 3];
 
     rho[node2]  = q[qCellInd + 4 * qNode2Ind];
     velX[node2] = q[qCellInd + 4 * qNode2Ind + 1] / rho[node2];
     velY[node2] = q[qCellInd + 4 * qNode2Ind + 2] / rho[node2];
     p[node2]    = (gam - 1) * (q[qCellInd + 4 * qNode2Ind + 3] - 0.5 * (q[qCellInd + 4 * qNode2Ind + 1] * velX[node2] + q[qCellInd + 4 * qNode2Ind + 2] * velY[node2]));
+    // p[node2]    = q[qCellInd + 4 * qNode2Ind + 3];
   }
 
   // Write out CGNS file
