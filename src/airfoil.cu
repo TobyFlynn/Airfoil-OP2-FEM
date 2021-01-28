@@ -33,7 +33,6 @@
 // #include "set_workingQ.h"
 // #include "update_Q.h"
 // #include "calc_dt.h"
-// #include "neighbour_zero.h"
 // #include "internal_fluxes.h"
 
 using namespace std;
@@ -248,14 +247,18 @@ int main(int argc, char **argv) {
               op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_WRITE),
               op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_WRITE),
               op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_WRITE),
-              op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_WRITE));
-
-  op_par_loop(neighbour_zero, "neighbour_zero", cells,
-              op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE));
+              op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_WRITE),
+              op_arg_dat(exteriorQ[0], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+              op_arg_dat(exteriorQ[1], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+              op_arg_dat(exteriorQ[2], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+              op_arg_dat(exteriorQ[3], -1, OP_ID, 3 * 5, "double", OP_WRITE),);
 
   double dt1 = 0.0;
   op_par_loop(calc_dt, "calc_dt", cells,
-              op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
+              op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
+              op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_READ),
+              op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_READ),
+              op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_READ),
               op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
               op_arg_gbl(&dt1, 1, "double", OP_MAX));
 
@@ -287,10 +290,22 @@ int main(int argc, char **argv) {
                   op_arg_dat(nodeY, 0, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeX, 1, edge2cells, 3, "double", OP_READ),
                   op_arg_dat(nodeY, 1, edge2cells, 3, "double", OP_READ),
-                  op_arg_dat(workingQ, 0, edge2cells, 4 * 15, "double", OP_READ),
-                  op_arg_dat(workingQ, 1, edge2cells, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, edge2cells, 4 * 3 * 5, "double", OP_INC),
-                  op_arg_dat(exteriorQ, 1, edge2cells, 4 * 3 * 5, "double", OP_INC));
+                  op_arg_dat(workingQ[0], 0, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[1], 0, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[2], 0, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[3], 0, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[0], 1, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[1], 1, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[2], 1, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[3], 1, edge2cells, 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ[0], 0, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[1], 0, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[2], 0, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[3], 0, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[0], 1, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[1], 1, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[2], 1, edge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[3], 1, edge2cells, 3 * 5, "double", OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_neighbour_q_t += wall_loop_2 - wall_loop_1;
 
@@ -301,16 +316,31 @@ int main(int argc, char **argv) {
                   op_arg_dat(bedgeNum, -1, OP_ID, 1, "int", OP_READ),
                   op_arg_dat(nx, 0, bedge2cells, 3 * 5, "double", OP_READ),
                   op_arg_dat(ny, 0, bedge2cells, 3 * 5, "double", OP_READ),
-                  op_arg_dat(workingQ, 0, bedge2cells, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, 0, bedge2cells, 4 * 3 * 5, "double", OP_INC));
+                  op_arg_dat(workingQ[0], 0, bedge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[1], 0, bedge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[2], 0, bedge2cells, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[3], 0, bedge2cells, 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ[0], 0, bedge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[1], 0, bedge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[2], 0, bedge2cells, 3 * 5, "double", OP_INC),
+                  op_arg_dat(exteriorQ[3], 0, bedge2cells, 3 * 5, "double", OP_INC));
       op_timers(&cpu_loop_2, &wall_loop_2);
       get_bedge_q_t += wall_loop_2 - wall_loop_1;
 
       op_timers(&cpu_loop_1, &wall_loop_1);
       op_par_loop(internal_fluxes, "internal_fluxes", cells,
-                  op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(F, -1, OP_ID, 4 * 15, "double", OP_WRITE),
-                  op_arg_dat(G, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+                  op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(F[0], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(F[1], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(F[2], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(F[3], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(G[0], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(G[1], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(G[2], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(G[3], -1, OP_ID, 15, "double", OP_WRITE));
       op_timers(&cpu_loop_2, &wall_loop_2);
       internal_fluxes_t += wall_loop_2 - wall_loop_1;
 
@@ -343,8 +373,14 @@ int main(int argc, char **argv) {
       op_timers(&cpu_loop_1, &wall_loop_1);
 
       op_par_loop(euler_rhs, "euler_rhs", cells,
-                  op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(exteriorQ, -1, OP_ID, 4 * 3 * 5, "double", OP_RW),
+                  op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(exteriorQ[0], -1, OP_ID, 3 * 5, "double", OP_RW),
+                  op_arg_dat(exteriorQ[1], -1, OP_ID, 3 * 5, "double", OP_RW),
+                  op_arg_dat(exteriorQ[2], -1, OP_ID, 3 * 5, "double", OP_RW),
+                  op_arg_dat(exteriorQ[3], -1, OP_ID, 3 * 5, "double", OP_RW),
                   op_arg_dat(rx, -1, OP_ID, 15, "double", OP_READ),
                   op_arg_dat(ry, -1, OP_ID, 15, "double", OP_READ),
                   op_arg_dat(sx, -1, OP_ID, 15, "double", OP_READ),
@@ -352,12 +388,30 @@ int main(int argc, char **argv) {
                   op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
                   op_arg_dat(nx, -1, OP_ID, 3 * 5, "double", OP_READ),
                   op_arg_dat(ny, -1, OP_ID, 3 * 5, "double", OP_READ),
-                  op_arg_dat(dFdr, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(dFds, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(dGdr, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(dGds, -1, OP_ID, 4 * 15, "double", OP_READ),
-                  op_arg_dat(flux, -1, OP_ID, 4 * 3 * 5, "double", OP_WRITE),
-                  op_arg_dat(rk[j], -1, OP_ID, 4 * 15, "double", OP_WRITE));
+                  op_arg_dat(dFdr[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFdr[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFdr[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFdr[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFds[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFds[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFds[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dFds[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGdr[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGdr[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGdr[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGdr[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGds[0], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGds[1], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGds[2], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(dGds[3], -1, OP_ID, 15, "double", OP_READ),
+                  op_arg_dat(flux[0], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+                  op_arg_dat(flux[1], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+                  op_arg_dat(flux[2], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+                  op_arg_dat(flux[3], -1, OP_ID, 3 * 5, "double", OP_WRITE),
+                  op_arg_dat(rk[j][0], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(rk[j][1], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(rk[j][2], -1, OP_ID, 15, "double", OP_WRITE),
+                  op_arg_dat(rk[j][3], -1, OP_ID, 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         euler_rhs_t += wall_loop_2 - wall_loop_1;
 
@@ -382,10 +436,22 @@ int main(int argc, char **argv) {
         op_par_loop(set_workingQ, "set_workingQ", cells,
                     op_arg_gbl(&dt, 1, "double", OP_READ),
                     op_arg_gbl(&j, 1, "int", OP_READ),
-                    op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
-                    op_arg_dat(rk[0], -1, OP_ID, 4 * 15, "double", OP_READ),
-                    op_arg_dat(rk[1], -1, OP_ID, 4 * 15, "double", OP_READ),
-                    op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+                    op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[0][0], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[0][1], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[0][2], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[0][3], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[1][0], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[1][1], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[1][2], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(rk[1][3], -1, OP_ID, 15, "double", OP_READ),
+                    op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_WRITE),
+                    op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_WRITE),
+                    op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_WRITE),
+                    op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_WRITE));
         op_timers(&cpu_loop_2, &wall_loop_2);
         set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
@@ -393,11 +459,26 @@ int main(int argc, char **argv) {
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop(update_Q, "update_Q", cells,
                 op_arg_gbl(&dt, 1, "double", OP_READ),
-                op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_RW),
-                op_arg_dat(rk[0], -1, OP_ID, 4 * 15, "double", OP_READ),
-                op_arg_dat(rk[1], -1, OP_ID, 4 * 15, "double", OP_READ),
-                op_arg_dat(rk[2], -1, OP_ID, 4 * 15, "double", OP_READ),
-                op_arg_dat(workingQ, -1, OP_ID, 4 * 15, "double", OP_WRITE));
+                op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_RW),
+                op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_RW),
+                op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_RW),
+                op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_RW),
+                op_arg_dat(rk[0][0], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[0][1], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[0][2], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[0][3], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[1][0], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[1][1], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[1][2], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[1][3], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[2][0], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[2][1], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[2][2], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(rk[2][3], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(workingQ[0], -1, OP_ID, 15, "double", OP_WRITE),
+                op_arg_dat(workingQ[1], -1, OP_ID, 15, "double", OP_WRITE),
+                op_arg_dat(workingQ[2], -1, OP_ID, 15, "double", OP_WRITE),
+                op_arg_dat(workingQ[3], -1, OP_ID, 15, "double", OP_WRITE));
     op_timers(&cpu_loop_2, &wall_loop_2);
     update_Q_t += wall_loop_2 - wall_loop_1;
 
@@ -405,7 +486,10 @@ int main(int argc, char **argv) {
     dt1 = 0.0;
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop(calc_dt, "calc_dt", cells,
-                op_arg_dat(q, -1, OP_ID, 4 * 15, "double", OP_READ),
+                op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_READ),
+                op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_READ),
                 op_arg_dat(fscale, -1, OP_ID, 3 * 5, "double", OP_READ),
                 op_arg_gbl(&dt1, 1, "double", OP_MAX));
     op_timers(&cpu_loop_2, &wall_loop_2);

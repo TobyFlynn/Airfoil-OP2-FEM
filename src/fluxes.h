@@ -3,58 +3,67 @@
 
 using namespace std;
 
-__device__ void euler_flux(const double *q, double *F, double *G, double *rho,
-                       double *u, double *v, double *p) {
+__device__ void euler_flux(const double q0, const double q1, const double q2,
+                           const double q3, double *f0, double *f1, double *f2,
+                           double *f3, double *g0, double *g1, double *g2,
+                           double *g3, double *rho, double *u, double *v,
+                           double *p) {
   double gam = 1.4;
-  *rho = q[0];
-  *u = q[1] / (*rho);
-  *v = q[2] / (*rho);
-  *p = (gam - 1) * (q[3] - 0.5 * (q[1] * (*u) + q[2] * (*v)));
+  *rho = q0;
+  *u = q1 / (*rho);
+  *v = q2 / (*rho);
+  *p = (gam - 1) * (q3 - 0.5 * (q1 * (*u) + q2 * (*v)));
 
-  F[0] = q[1];
-  F[1] = q[1] * (*u) + (*p);
-  F[2] = q[2] * (*u);
-  F[3] = (*u) * (q[3] + (*p));
+  *f0 = q1;
+  *f1 = q1 * (*u) + (*p);
+  *f2 = q2 * (*u);
+  *f3 = (*u) * (q3 + (*p));
 
-  G[0] = q[2];
-  G[1] = q[1] * (*v);
-  G[2] = q[2] * (*v) + (*p);
-  G[3] = (*v) * (q[3] + (*p));
+  *g0 = q2;
+  *g1 = q1 * (*v);
+  *g2 = q2 * (*v) + (*p);
+  *g3 = (*v) * (q3 + (*p));
 }
 
-__device__ void lax_friedrichs(double *flux, const double *nx, const double *ny,
-                           const double *fscale, const double *q,
-                           const double *pQ) {
+__device__ void lax_friedrichs(double *flux0, double *flux1, double *flux2, double *flux3,
+                    const double *nx, const double *ny, const double *fscale,
+                    const double *q0, const double *q1, const double *q2,
+                    const double *q3, const double *pQ0, const double *pQ1,
+                    const double *pQ2, const double *pQ3) {
   double gam = 1.4;
   int FMASK[15] = {0, 1, 2, 3, 4, 4, 8, 11, 13, 14, 14, 12, 9, 5, 0};
   // Compute primative variables and flux functions for interior points on edges
-  double mQ[4 * 3 * 5];
-  double mF[4 * 3 * 5];
-  double mG[4 * 3 * 5];
+  double mQ0[3 * 5]; double mQ1[3 * 5]; double mQ2[3 * 5]; double mQ3[3 * 5];
+  double mF0[3 * 5]; double mF1[3 * 5]; double mF2[3 * 5]; double mF3[3 * 5];
+  double mG0[3 * 5]; double mG1[3 * 5]; double mG2[3 * 5]; double mG3[3 * 5];
   double mRho[3 * 5];
   double mU[3 * 5];
   double mV[3 * 5];
   double mP[3 * 5];
 
   for(int i = 0; i < 3 * 5; i++) {
-    int ind = FMASK[i] * 4;
-    mQ[i * 4]     = q[ind];
-    mQ[i * 4 + 1] = q[ind + 1];
-    mQ[i * 4 + 2] = q[ind + 2];
-    mQ[i * 4 + 3] = q[ind + 3];
+    int ind = FMASK[i];
+    mQ0[i] = q0[ind];
+    mQ1[i] = q1[ind];
+    mQ2[i] = q2[ind];
+    mQ3[i] = q3[ind];
 
-    euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
+    euler_flux(mQ0[i], mQ1[i], mQ2[i], mQ3[i], &mF0[i], &mF1[i], &mF2[i],
+               &mF3[i], &mG0[i], &mG1[i], &mG2[i], &mG3[i], &mRho[i], &mU[i],
+               &mV[i], &mP[i]);
   }
 
   // Compute primative variables and flux functions for exterior points on edges
-  double pF[4 * 3 * 5];
-  double pG[4 * 3 * 5];
+  double pF0[3 * 5]; double pF1[3 * 5]; double pF2[3 * 5]; double pF3[3 * 5];
+  double pG0[3 * 5]; double pG1[3 * 5]; double pG2[3 * 5]; double pG3[3 * 5];
   double pRho[3 * 5];
   double pU[3 * 5];
   double pV[3 * 5];
   double pP[3 * 5];
   for(int i = 0; i < 3 * 5; i++) {
-    euler_flux(&pQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
+    euler_flux(pQ0[i], pQ1[i], pQ2[i], pQ3[i], &pF0[i], &pF1[i], &pF2[i],
+               &pF3[i], &pG0[i], &pG1[i], &pG2[i], &pG3[i], &pRho[i], &pU[i],
+               &pV[i], &pP[i]);
   }
 
   // Compute local Lax-Friedrichs flux
@@ -100,84 +109,99 @@ __device__ void lax_friedrichs(double *flux, const double *nx, const double *ny,
     maxLamda[i] = maxL;
   }
 
-  // double maxLamda[3 * 5];
-  // for(int i = 0; i < 5; i++) {
-  //   double m = sqrt(mU[i] * mU[i] + mV[i] * mV[i]) + sqrt(abs(gam * mP[i] / mRho[i]));
-  //   double p = sqrt(pU[i] * pU[i] + pV[i] * pV[i]) + sqrt(abs(gam * pP[i] / pRho[i]));
-  //   maxLamda[i] = max(m, p);
-  // }
+  for(int j = 0; j < 3 * 5; j++) {
+    flux0[j] = nx[j] * (pF0[j] + mF0[j]) + ny[j] * (pG0[j] + mG0[j])
+               + maxLamda[j] * (mQ0[j] - pQ0[j]);
+    flux0[j] *= fscale[j] * 0.5;
+  }
 
-  // Lift fluxes
-  for(int i = 0; i < 4; i++) {
-    double nflux[3 * 5];
-    for(int j = 0; j < 3 * 5; j++) {
-      flux[i + 4 * j] = nx[j] * (pF[i + 4 * j] + mF[i + 4 * j])
-                      + ny[j] * (pG[i + 4 * j] + mG[i + 4 * j])
-                      + maxLamda[j] * (mQ[i + j * 4] - pQ[i + j * 4]);
-      flux[i + 4 * j] *= fscale[j] * 0.5;
-    }
+  for(int j = 0; j < 3 * 5; j++) {
+    flux1[j] = nx[j] * (pF1[j] + mF1[j]) + ny[j] * (pG1[j] + mG1[j])
+               + maxLamda[j] * (mQ1[j] - pQ1[j]);
+    flux1[j] *= fscale[j] * 0.5;
+  }
+
+  for(int j = 0; j < 3 * 5; j++) {
+    flux2[j] = nx[j] * (pF2[j] + mF2[j]) + ny[j] * (pG2[j] + mG2[j])
+               + maxLamda[j] * (mQ2[j] - pQ2[j]);
+    flux2[j] *= fscale[j] * 0.5;
+  }
+
+  for(int j = 0; j < 3 * 5; j++) {
+    flux3[j] = nx[j] * (pF3[j] + mF3[j]) + ny[j] * (pG3[j] + mG3[j])
+               + maxLamda[j] * (mQ3[j] - pQ3[j]);
+    flux3[j] *= fscale[j] * 0.5;
   }
 }
 
-__device__ void roe(double *flux, const double *nx, const double *ny,
-                const double *fscale, const double *q, const double *pQ) {
+__device__ void roe(double *flux0, double *flux1, double *flux2, double *flux3,
+                    const double *nx, const double *ny, const double *fscale,
+                    const double *q0, const double *q1, const double *q2,
+                    const double *q3, const double *pQ0, const double *pQ1,
+                    const double *pQ2, const double *pQ3) {
   double gam = 1.4;
   int FMASK[15] = {0, 1, 2, 3, 4, 4, 8, 11, 13, 14, 14, 12, 9, 5, 0};
   // Compute primative variables and flux functions for interior points on edges
-  double mQ[4 * 3 * 5];
-  double mF[4 * 3 * 5];
-  double mG[4 * 3 * 5];
+  double mQ0[3 * 5]; double mQ1[3 * 5]; double mQ2[3 * 5]; double mQ3[3 * 5];
+  double mF0[3 * 5]; double mF1[3 * 5]; double mF2[3 * 5]; double mF3[3 * 5];
+  double mG0[3 * 5]; double mG1[3 * 5]; double mG2[3 * 5]; double mG3[3 * 5];
   double mRho[3 * 5];
   double mU[3 * 5];
   double mV[3 * 5];
   double mP[3 * 5];
 
   for(int i = 0; i < 3 * 5; i++) {
-    int ind = FMASK[i] * 4;
-    mQ[i * 4]     = q[ind];
-    mQ[i * 4 + 1] = q[ind + 1];
-    mQ[i * 4 + 2] = q[ind + 2];
-    mQ[i * 4 + 3] = q[ind + 3];
+    int ind = FMASK[i];
+    mQ0[i] = q0[ind];
+    mQ1[i] = q1[ind];
+    mQ2[i] = q2[ind];
+    mQ3[i] = q3[ind];
 
-    euler_flux(&mQ[i * 4], &mF[i * 4], &mG[i * 4], &mRho[i], &mU[i], &mV[i], &mP[i]);
+    euler_flux(mQ0[i], mQ1[i], mQ2[i], mQ3[i], &mF0[i], &mF1[i], &mF2[i],
+               &mF3[i], &mG0[i], &mG1[i], &mG2[i], &mG3[i], &mRho[i], &mU[i],
+               &mV[i], &mP[i]);
   }
 
   // Compute primative variables and flux functions for exterior points on edges
-  double pF[4 * 3 * 5];
-  double pG[4 * 3 * 5];
+  double pF0[3 * 5]; double pF1[3 * 5]; double pF2[3 * 5]; double pF3[3 * 5];
+  double pG0[3 * 5]; double pG1[3 * 5]; double pG2[3 * 5]; double pG3[3 * 5];
   double pRho[3 * 5];
   double pU[3 * 5];
   double pV[3 * 5];
   double pP[3 * 5];
   for(int i = 0; i < 3 * 5; i++) {
-    euler_flux(&pQ[i * 4], &pF[i * 4], &pG[i * 4], &pRho[i], &pU[i], &pV[i], &pP[i]);
+    euler_flux(pQ0[i], pQ1[i], pQ2[i], pQ3[i], &pF0[i], &pF1[i], &pF2[i],
+               &pF3[i], &pG0[i], &pG1[i], &pG2[i], &pG3[i], &pRho[i], &pU[i],
+               &pV[i], &pP[i]);
   }
 
   for(int i = 0; i < 3 * 5; i++) {
-    double mRoeQ[4];
-    mRoeQ[0] = mQ[i * 4];
-    mRoeQ[1] = nx[i] * mQ[i * 4 + 1] + ny[i] * mQ[i * 4 + 2];
-    mRoeQ[2] = -ny[i] * mQ[i * 4 + 1] + nx[i] * mQ[i * 4 + 2];
-    mRoeQ[3] = mQ[i * 4 + 3];
+    double mRoeQ0 = mQ0[i];
+    double mRoeQ1 = nx[i] * mQ1[i] + ny[i] * mQ2[i];
+    double mRoeQ2 = -ny[i] * mQ1[i] + nx[i] * mQ2[i];
+    double mRoeQ3 = mQ3[i];
 
-    double pRoeQ[4];
-    pRoeQ[0] = pQ[i * 4];
-    pRoeQ[1] = nx[i] * pQ[i * 4 + 1] + ny[i] * pQ[i * 4 + 2];
-    pRoeQ[2] = -ny[i] * pQ[i * 4 + 1] + nx[i] * pQ[i * 4 + 2];
-    pRoeQ[3] = pQ[i * 4 + 3];
+    double pRoeQ0 = pQ0[i];
+    double pRoeQ1 = nx[i] * pQ1[i] + ny[i] * pQ2[i];
+    double pRoeQ2 = -ny[i] * pQ1[i] + nx[i] * pQ2[i];
+    double pRoeQ3 = pQ3[i];
 
-    double fxMQ[4];
-    double fyMQ[4];
+    double fxMQ0, fxMQ1, fxMQ2, fxMQ3;
+    double fyMQ0, fyMQ1, fyMQ2, fyMQ3;
     double mRoeRho, mRoeU, mRoeV, mRoeP;
-    euler_flux(&mRoeQ[0], &fxMQ[0], &fyMQ[0], &mRoeRho, &mRoeU, &mRoeV, &mRoeP);
+    euler_flux(mRoeQ0, mRoeQ1, mRoeQ2, mRoeQ3, &fxMQ0, &fxMQ1, &fxMQ2, &fxMQ3,
+               &fyMQ0, &fyMQ1, &fyMQ2, &fyMQ3, &mRoeRho, &mRoeU, &mRoeV,
+               &mRoeP);
 
-    double fxPQ[4];
-    double fyPQ[4];
+    double fxPQ0, fxPQ1, fxPQ2, fxPQ3;
+    double fyPQ0, fyPQ1, fyPQ2, fyPQ3;
     double pRoeRho, pRoeU, pRoeV, pRoeP;
-    euler_flux(&pRoeQ[0], &fxPQ[0], &fyPQ[0], &pRoeRho, &pRoeU, &pRoeV, &pRoeP);
+    euler_flux(pRoeQ0, pRoeQ1, pRoeQ2, pRoeQ3, &fxPQ0, &fxPQ1, &fxPQ2, &fxPQ3,
+               &fyPQ0, &fyPQ1, &fyPQ2, &fyPQ3, &pRoeRho, &pRoeU, &pRoeV,
+               &pRoeP);
 
-    double mH = (mRoeQ[3] + mRoeP) / mRoeRho;
-    double pH = (pRoeQ[3] + pRoeP) / pRoeRho;
+    double mH = (mRoeQ3 + mRoeP) / mRoeRho;
+    double pH = (pRoeQ3 + pRoeP) / pRoeRho;
 
     double mRoeRhoSqrt = sqrt(mRoeRho);
     double pRoeRhoSqrt = sqrt(pRoeRho);
@@ -201,25 +225,25 @@ __device__ void roe(double *flux, const double *nx, const double *ny,
     dW4 = fabs(u + c) * dW4;
 
     double fx[4];
-    fx[0] = (fxMQ[0] + fxPQ[0]) / 2.0;
-    fx[1] = (fxMQ[1] + fxPQ[1]) / 2.0;
-    fx[2] = (fxMQ[2] + fxPQ[2]) / 2.0;
-    fx[3] = (fxMQ[3] + fxPQ[3]) / 2.0;
+    fx[0] = (fxMQ0 + fxPQ0) / 2.0;
+    fx[1] = (fxMQ1 + fxPQ1) / 2.0;
+    fx[2] = (fxMQ2 + fxPQ2) / 2.0;
+    fx[3] = (fxMQ3 + fxPQ3) / 2.0;
 
     fx[0] = fx[0] - (dW1 + dW2 + dW4) / 2.0;
     fx[1] = fx[1] - (dW1 * (u - c) + dW2 * u + dW4 * (u + c)) / 2.0;
     fx[2] = fx[2] - (dW1 * v + dW2 * v + dW3 + dW4 * v) / 2.0;
     fx[3] = fx[3] - (dW1 * (H - u * c) + dW2 * (u * u + v * v) + dW3 * v + dW4 * (H + u * c)) / 2.0;
 
-    flux[i * 4]     = fx[0];
-    flux[i * 4 + 1] = nx[i] * fx[1] - ny[i] * fx[2];
-    flux[i * 4 + 2] = ny[i] * fx[1] + nx[i] * fx[2];
-    flux[i * 4 + 3] = fx[3];
+    flux0[i] = fx[0];
+    flux1[i] = nx[i] * fx[1] - ny[i] * fx[2];
+    flux2[i] = ny[i] * fx[1] + nx[i] * fx[2];
+    flux3[i] = fx[3];
 
-    flux[i * 4]     *= fscale[i];
-    flux[i * 4 + 1] *= fscale[i];
-    flux[i * 4 + 2] *= fscale[i];
-    flux[i * 4 + 3] *= fscale[i];
+    flux0[i] *= fscale[i];
+    flux1[i] *= fscale[i];
+    flux2[i] *= fscale[i];
+    flux3[i] *= fscale[i];
   }
 }
 

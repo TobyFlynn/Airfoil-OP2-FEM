@@ -1,7 +1,14 @@
 inline void get_neighbour_q(const int *edgeNum, const double *xL,
-                            const double *yL, const double *xR, const double *yR,
-                            const double *qL, const double *qR,
-                            double *exteriorQL, double *exteriorQR) {
+                            const double *yL, const double *xR,
+                            const double *yR, const double *qL0,
+                            const double *qL1, const double *qL2,
+                            const double *qL3, const double *qR0,
+                            const double *qR1, const double *qR2,
+                            const double *qR3, double *exteriorQL0,
+                            double *exteriorQL1, double *exteriorQL2,
+                            double *exteriorQL3, double *exteriorQR0,
+                            double *exteriorQR1, double *exteriorQR2,
+                            double *exteriorQR3) {
   // Work out which edge for each element
   int edgeL = edgeNum[0];
   int edgeR = edgeNum[1];
@@ -35,8 +42,8 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
 
   // Copy data from R to L
   int exInd = 0;
-  if(edgeL == 1) exInd = 4 * 5;
-  else if(edgeL == 2) exInd = 2 * 4 * 5;
+  if(edgeL == 1) exInd = 5;
+  else if(edgeL == 2) exInd = 2 * 5;
 
   int *fmask;
 
@@ -51,20 +58,20 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
   for(int i = 0; i < 5; i++) {
     int rInd;
     if(reverse) {
-      rInd = 4 * fmask[5 - i - 1];
+      rInd = fmask[5 - i - 1];
     } else {
-      rInd = 4 * fmask[i];
+      rInd = fmask[i];
     }
-    exteriorQL[exInd + 4 * i]     += qR[rInd];
-    exteriorQL[exInd + 4 * i + 1] += qR[rInd + 1];
-    exteriorQL[exInd + 4 * i + 2] += qR[rInd + 2];
-    exteriorQL[exInd + 4 * i + 3] += qR[rInd + 3];
+    exteriorQL0[exInd + i] += qR0[rInd];
+    exteriorQL1[exInd + i] += qR1[rInd];
+    exteriorQL2[exInd + i] += qR2[rInd];
+    exteriorQL3[exInd + i] += qR3[rInd];
   }
 
   // Copy data from L to R
   exInd = 0;
-  if(edgeR == 1) exInd = 4 * 5;
-  else if(edgeR == 2) exInd = 2 * 4 * 5;
+  if(edgeR == 1) exInd = 5;
+  else if(edgeR == 2) exInd = 2 * 5;
 
   if(edgeL == 0) {
     fmask = FMASK;
@@ -77,13 +84,13 @@ inline void get_neighbour_q(const int *edgeNum, const double *xL,
   for(int i = 0; i < 5; i++) {
     int lInd;
     if(reverse) {
-      lInd = 4 * fmask[5 - i - 1];
+      lInd = fmask[5 - i - 1];
     } else {
-      lInd = 4 * fmask[i];
+      lInd = fmask[i];
     }
-    exteriorQR[exInd + 4 * i]     += qL[lInd];
-    exteriorQR[exInd + 4 * i + 1] += qL[lInd + 1];
-    exteriorQR[exInd + 4 * i + 2] += qL[lInd + 2];
-    exteriorQR[exInd + 4 * i + 3] += qL[lInd + 3];
+    exteriorQR0[exInd + i] += qL0[lInd];
+    exteriorQR1[exInd + i] += qL1[lInd];
+    exteriorQR2[exInd + i] += qL2[lInd];
+    exteriorQR3[exInd + i] += qL3[lInd];
   }
 }

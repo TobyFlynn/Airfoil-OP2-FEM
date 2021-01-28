@@ -1,14 +1,13 @@
 inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
-                        const double *nx, const double *ny,
-                        const double *q, double *exteriorQ) {
+                        const double *nx, const double *ny, const double *q0,
+                        const double *q1, const double *q2, const double *q3,
+                        double *exteriorQ0, double *exteriorQ1,
+                        double *exteriorQ2, double *exteriorQ3) {
   int exInd = 0;
-  int nInd = 0;
   if(*bedgeNum == 1) {
-    exInd = 4 * 5;
-    nInd = 5;
+    exInd = 5;
   } else if(*bedgeNum == 2) {
-    exInd = 2 * 4 * 5;
-    nInd = 2 * 5;
+    exInd = 2 * 5;
   }
 
   int *fmask;
@@ -24,28 +23,28 @@ inline void get_bedge_q(const int *bedge_type, const int *bedgeNum,
   if(*bedge_type == 0) {
     // Inflow
     for(int i = 0; i < 5; i++) {
-      exteriorQ[exInd + i * 4]     += bc_r;
-      exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
-      exteriorQ[exInd + i * 4 + 2] += bc_r * bc_v;
-      exteriorQ[exInd + i * 4 + 3] += bc_e;
+      exteriorQ0[exInd + i] += bc_r;
+      exteriorQ1[exInd + i] += bc_r * bc_u;
+      exteriorQ2[exInd + i] += bc_r * bc_v;
+      exteriorQ3[exInd + i] += bc_e;
     }
   } else if(*bedge_type == 1) {
     // Outflow
     for(int i = 0; i < 5; i++) {
-      int qInd = fmask[i] * 4;
-      exteriorQ[exInd + i * 4]     += bc_r;
-      exteriorQ[exInd + i * 4 + 1] += bc_r * bc_u;
-      exteriorQ[exInd + i * 4 + 2] += bc_r * bc_v;
-      exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+      int qInd = fmask[i];
+      exteriorQ0[exInd] += bc_r;
+      exteriorQ1[exInd] += bc_r * bc_u;
+      exteriorQ2[exInd] += bc_r * bc_v;
+      exteriorQ3[exInd] += q3[qInd];
     }
   } else {
     // Wall
     for(int i = 0; i < 5; i++) {
-      int qInd = fmask[i] * 4;
-      exteriorQ[exInd + i * 4]     += q[qInd];
-      exteriorQ[exInd + i * 4 + 1] += q[qInd + 1] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * nx[nInd + i];
-      exteriorQ[exInd + i * 4 + 2] += q[qInd + 2] - 2 * (nx[nInd + i] * q[qInd + 1] + ny[nInd + i] * q[qInd + 2]) * ny[nInd + i];
-      exteriorQ[exInd + i * 4 + 3] += q[qInd + 3];
+      int qInd = fmask[i];
+      exteriorQ0[exInd] += q0[qInd];
+      exteriorQ1[exInd] += q1[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * nx[exInd + i];
+      exteriorQ2[exInd] += q2[qInd] - 2 * (nx[exInd + i] * q1[qInd] + ny[exInd + i] * q2[qInd]) * ny[exInd + i];
+      exteriorQ3[exInd] += q3[qInd];
     }
   }
 }
