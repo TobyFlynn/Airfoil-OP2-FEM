@@ -203,6 +203,7 @@ void op_par_loop_update_Q(char const *, op_set,
 #include <cmath>
 #include <getopt.h>
 
+#include "petscksp.h"
 #include "cublas_v2.h"
 
 #include "constants/constant_r.h"
@@ -241,9 +242,18 @@ static struct option options[] = {
 };
 
 int main(int argc, char **argv) {
+  // Initialise cuBLAS
   cublasHandle_t cublas_handle;
   cublasCreate(&cublas_handle);
   cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
+
+  // Initialise PETSc
+  char help[] = "TODO";
+  int ierr = PetscInitialize(&argc, &argv, (char *)0, help);
+  if(ierr) {
+    cout << "Error initialising PETSc" << endl;
+    return ierr;
+  }
 
   double cpu_1, wall_1, cpu_2, wall_2;
 
@@ -812,4 +822,7 @@ int main(int argc, char **argv) {
   delete data;
 
   cublasDestroy(cublas_handle);
+
+  ierr = PetscFinalize();
+  return ierr;
 }
