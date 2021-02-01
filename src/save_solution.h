@@ -3,6 +3,6 @@
 
 #include <string>
 
-void save_solution(std::string filename, int numPts, int numCells, double *q, int *cellMap, int gam);
+void save_solution(std::string filename, int numPts, int numCells, double *q, int *cellMap, double gam);
 
 #endif

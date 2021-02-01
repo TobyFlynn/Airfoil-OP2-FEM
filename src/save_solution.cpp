@@ -10,7 +10,7 @@
 
 using namespace std;
 
-void save_solution(string filename, int numPts, int numCells, double *q, int *cellMap, int gam) {
+void save_solution(string filename, int numPts, int numCells, double *q, int *cellMap, double gam) {
   vector<double> velX(numPts);
   vector<double> velY(numPts);
   vector<double> rho(numPts);
