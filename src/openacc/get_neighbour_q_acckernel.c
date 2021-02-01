@@ -151,10 +151,10 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
 
   // initialise timers
   double cpu_t1, cpu_t2, wall_t1, wall_t2;
-  op_timing_realloc(3);
+  op_timing_realloc(5);
   op_timers_core(&cpu_t1, &wall_t1);
-  OP_kernels[3].name      = name;
-  OP_kernels[3].count    += 1;
+  OP_kernels[5].name      = name;
+  OP_kernels[5].count    += 1;
 
   int  ninds   = 10;
   int  inds[21] = {-1,0,1,0,1,2,3,4,5,2,3,4,5,6,7,8,9,6,7,8,9};
@@ -164,8 +164,8 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
   }
 
   // get plan
-  #ifdef OP_PART_SIZE_3
-    int part_size = OP_PART_SIZE_3;
+  #ifdef OP_PART_SIZE_5
+    int part_size = OP_PART_SIZE_5;
   #else
     int part_size = OP_part_size;
   #endif
@@ -240,8 +240,8 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
       }
 
     }
-    OP_kernels[3].transfer  += Plan->transfer;
-    OP_kernels[3].transfer2 += Plan->transfer2;
+    OP_kernels[5].transfer  += Plan->transfer;
+    OP_kernels[5].transfer2 += Plan->transfer2;
   }
 
   if (set_size == 0 || set_size == set->core_size || ncolors == 1) {
@@ -252,5 +252,5 @@ void op_par_loop_get_neighbour_q(char const *name, op_set set,
 
   // update kernel record
   op_timers_core(&cpu_t2, &wall_t2);
-  OP_kernels[3].time     += wall_t2 - wall_t1;
+  OP_kernels[5].time     += wall_t2 - wall_t1;
 }

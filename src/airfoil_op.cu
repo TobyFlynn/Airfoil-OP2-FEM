@@ -54,6 +54,49 @@ void op_par_loop_calc_dt(char const *, op_set,
   op_arg,
   op_arg );
 
+void op_par_loop_set_workingQ(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg );
+
+void op_par_loop_update_Q(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg );
+
 void op_par_loop_get_neighbour_q(char const *, op_set,
   op_arg,
   op_arg,
@@ -145,49 +188,6 @@ void op_par_loop_euler_rhs(char const *, op_set,
   op_arg,
   op_arg,
   op_arg );
-
-void op_par_loop_set_workingQ(char const *, op_set,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg );
-
-void op_par_loop_update_Q(char const *, op_set,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg,
-  op_arg );
 #ifdef OPENACC
 #ifdef __cplusplus
 }
@@ -240,6 +240,12 @@ static struct option options[] = {
   {"alpha", required_argument, 0, 0},
   {0,    0,                  0,  0}
 };
+
+inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op_set bedges, op_map edge2cells, op_map bedge2cells,
+                    op_dat edgeNum, op_dat nodeX, op_dat nodeY, op_dat *workingQ, op_dat *exteriorQ,
+                    op_dat bedge_type, op_dat bedgeNum, op_dat nx, op_dat ny,
+                    op_dat *F, op_dat *G, op_dat *dFdr, op_dat *dFds, op_dat *dGdr, op_dat *dGds,
+                    op_dat rx, op_dat ry, op_dat sx, op_dat sy, op_dat fscale, op_dat *flux, op_dat *rk, op_dat *Q);
 
 int main(int argc, char **argv) {
   // Initialise cuBLAS
@@ -486,193 +492,13 @@ int main(int argc, char **argv) {
   // Run the simulation
   for(int i = 0; i < iter; i++) {
     for(int j = 0; j < 3; j++) {
-      // Get neighbouring values of q on internal edges
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_par_loop_get_neighbour_q("get_neighbour_q",edges,
-                  op_arg_dat(edgeNum,-1,OP_ID,2,"int",OP_READ),
-                  op_arg_dat(nodeX,0,edge2cells,3,"double",OP_READ),
-                  op_arg_dat(nodeY,0,edge2cells,3,"double",OP_READ),
-                  op_arg_dat(nodeX,1,edge2cells,3,"double",OP_READ),
-                  op_arg_dat(nodeY,1,edge2cells,3,"double",OP_READ),
-                  op_arg_dat(workingQ[0],0,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[1],0,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[2],0,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[3],0,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[0],1,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[1],1,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[2],1,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[3],1,edge2cells,15,"double",OP_READ),
-                  op_arg_dat(exteriorQ[0],0,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[1],0,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[2],0,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[3],0,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[0],1,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[1],1,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[2],1,edge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[3],1,edge2cells,15,"double",OP_INC));
-      op_timers(&cpu_loop_2, &wall_loop_2);
-      get_neighbour_q_t += wall_loop_2 - wall_loop_1;
-
-      // Enforce boundary conditions
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_par_loop_get_bedge_q("get_bedge_q",bedges,
-                  op_arg_dat(bedge_type,-1,OP_ID,1,"int",OP_READ),
-                  op_arg_dat(bedgeNum,-1,OP_ID,1,"int",OP_READ),
-                  op_arg_dat(nx,0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(ny,0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[0],0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[1],0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[2],0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(workingQ[3],0,bedge2cells,15,"double",OP_READ),
-                  op_arg_dat(exteriorQ[0],0,bedge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[1],0,bedge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[2],0,bedge2cells,15,"double",OP_INC),
-                  op_arg_dat(exteriorQ[3],0,bedge2cells,15,"double",OP_INC));
-      op_timers(&cpu_loop_2, &wall_loop_2);
-      get_bedge_q_t += wall_loop_2 - wall_loop_1;
-
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_par_loop_internal_fluxes("internal_fluxes",cells,
-                  op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(F[0],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(F[1],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(F[2],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(F[3],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(G[0],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(G[1],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(G[2],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(G[3],-1,OP_ID,15,"double",OP_WRITE));
-      op_timers(&cpu_loop_2, &wall_loop_2);
-      internal_fluxes_t += wall_loop_2 - wall_loop_1;
-
-      // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg internal_fluxes_args[] = {
-        op_arg_dat(F[0], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(F[1], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(F[2], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(F[3], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(G[0], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(G[1], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(G[2], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(G[3], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(dFdr[0], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFdr[1], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFdr[2], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFdr[3], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFds[0], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFds[1], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFds[2], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dFds[3], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGdr[0], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGdr[1], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGdr[2], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGdr[3], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGds[0], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGds[1], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGds[2], -1, OP_ID, 15, "double", OP_WRITE),
-        op_arg_dat(dGds[3], -1, OP_ID, 15, "double", OP_WRITE)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 24, internal_fluxes_args);
-      internal_fluxes_matrices(cublas_handle, numCells, (double *)F[0]->data_d,
-                               (double *)F[1]->data_d, (double *)F[2]->data_d,
-                               (double *)F[3]->data_d, (double *)G[0]->data_d,
-                               (double *)G[1]->data_d, (double *)G[2]->data_d,
-                               (double *)G[3]->data_d, (double *)dFdr[0]->data_d,
-                               (double *)dFdr[1]->data_d, (double *)dFdr[2]->data_d,
-                               (double *)dFdr[3]->data_d, (double *)dFds[0]->data_d,
-                               (double *)dFds[1]->data_d, (double *)dFds[2]->data_d,
-                               (double *)dFds[3]->data_d, (double *)dGdr[0]->data_d,
-                               (double *)dGdr[1]->data_d, (double *)dGdr[2]->data_d,
-                               (double *)dGdr[3]->data_d, (double *)dGds[0]->data_d,
-                               (double *)dGds[1]->data_d, (double *)dGds[2]->data_d,
-                               (double *)dGds[3]->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(24, internal_fluxes_args);
-      // dFdr->dirty_hd = 2;
-      // dFds->dirty_hd = 2;
-      // dGdr->dirty_hd = 2;
-      // dGds->dirty_hd = 2;
-      op_timers(&cpu_loop_2, &wall_loop_2);
-      internal_fluxes_mat_t += wall_loop_2 - wall_loop_1;
-
-      // Calculate vectors F an G from q for each cell
-      op_timers(&cpu_loop_1, &wall_loop_1);
-
-      op_par_loop_euler_rhs("euler_rhs",cells,
-                  op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(exteriorQ[0],-1,OP_ID,15,"double",OP_RW),
-                  op_arg_dat(exteriorQ[1],-1,OP_ID,15,"double",OP_RW),
-                  op_arg_dat(exteriorQ[2],-1,OP_ID,15,"double",OP_RW),
-                  op_arg_dat(exteriorQ[3],-1,OP_ID,15,"double",OP_RW),
-                  op_arg_dat(rx,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(ry,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(sx,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(sy,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(nx,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(ny,-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFdr[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFdr[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFdr[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFdr[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFds[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFds[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFds[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dFds[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGdr[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGdr[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGdr[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGdr[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGds[0],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGds[1],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGds[2],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(dGds[3],-1,OP_ID,15,"double",OP_READ),
-                  op_arg_dat(flux[0],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(flux[1],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(flux[2],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(flux[3],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(rk[j][0],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(rk[j][1],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(rk[j][2],-1,OP_ID,15,"double",OP_WRITE),
-                  op_arg_dat(rk[j][3],-1,OP_ID,15,"double",OP_WRITE));
-        op_timers(&cpu_loop_2, &wall_loop_2);
-        euler_rhs_t += wall_loop_2 - wall_loop_1;
-
-      // TODO matrix mult
-      op_timers(&cpu_loop_1, &wall_loop_1);
-      op_arg face_fluxes_args[] = {
-        op_arg_dat(flux[0], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(flux[1], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(flux[2], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(flux[3], -1, OP_ID, 15, "double", OP_READ),
-        op_arg_dat(rk[j][0], -1, OP_ID, 15, "double", OP_RW),
-        op_arg_dat(rk[j][1], -1, OP_ID, 15, "double", OP_RW),
-        op_arg_dat(rk[j][2], -1, OP_ID, 15, "double", OP_RW),
-        op_arg_dat(rk[j][3], -1, OP_ID, 15, "double", OP_RW)
-      };
-      op_mpi_halo_exchanges_cuda(cells, 8, face_fluxes_args);
-      face_fluxes_matrices(cublas_handle, numCells, (double *)flux[0]->data_d,
-                           (double *)flux[1]->data_d, (double *)flux[2]->data_d,
-                           (double *)flux[3]->data_d, (double *)rk[j][0]->data_d,
-                           (double *)rk[j][1]->data_d, (double *)rk[j][2]->data_d,
-                           (double *)rk[j][3]->data_d);
-
-      // Check this
-      op_mpi_set_dirtybit_cuda(8, face_fluxes_args);
-      // rk[j]->dirty_hd = 2;
-      op_timers(&cpu_loop_2, &wall_loop_2);
-      face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
+      get_RHS(cublas_handle, cells, edges, bedges, edge2cells, bedge2cells,
+              edgeNum, nodeX, nodeY, workingQ, exteriorQ, bedge_type, bedgeNum,
+              nx, ny, F, G, dFdr, dFds, dGdr, dGds, rx, ry, sx, sy, fscale, flux,
+              rk[j], Q);
 
       if(j != 2) {
-        op_timers(&cpu_loop_1, &wall_loop_1);
+        // op_timers(&cpu_loop_1, &wall_loop_1);
         op_par_loop_set_workingQ("set_workingQ",cells,
                     op_arg_gbl(&dt,1,"double",OP_READ),
                     op_arg_gbl(&j,1,"int",OP_READ),
@@ -692,10 +518,11 @@ int main(int argc, char **argv) {
                     op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_WRITE),
                     op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_WRITE),
                     op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_WRITE));
-        op_timers(&cpu_loop_2, &wall_loop_2);
-        set_workingQ_t += wall_loop_2 - wall_loop_1;
+        // op_timers(&cpu_loop_2, &wall_loop_2);
+        // set_workingQ_t += wall_loop_2 - wall_loop_1;
       }
     }
+
     op_timers(&cpu_loop_1, &wall_loop_1);
     op_par_loop_update_Q("update_Q",cells,
                 op_arg_gbl(&dt,1,"double",OP_READ),
@@ -825,4 +652,196 @@ int main(int argc, char **argv) {
 
   ierr = PetscFinalize();
   return ierr;
+}
+
+inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op_set bedges, op_map edge2cells, op_map bedge2cells,
+                    op_dat edgeNum, op_dat nodeX, op_dat nodeY, op_dat *workingQ, op_dat *exteriorQ,
+                    op_dat bedge_type, op_dat bedgeNum, op_dat nx, op_dat ny,
+                    op_dat *F, op_dat *G, op_dat *dFdr, op_dat *dFds, op_dat *dGdr, op_dat *dGds,
+                    op_dat rx, op_dat ry, op_dat sx, op_dat sy, op_dat fscale, op_dat *flux, op_dat *rk, op_dat *Q) {
+  int numCells = op_get_size(cells);
+  // Get neighbouring values of q on internal edges
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+  op_par_loop_get_neighbour_q("get_neighbour_q",edges,
+              op_arg_dat(edgeNum,-1,OP_ID,2,"int",OP_READ),
+              op_arg_dat(nodeX,0,edge2cells,3,"double",OP_READ),
+              op_arg_dat(nodeY,0,edge2cells,3,"double",OP_READ),
+              op_arg_dat(nodeX,1,edge2cells,3,"double",OP_READ),
+              op_arg_dat(nodeY,1,edge2cells,3,"double",OP_READ),
+              op_arg_dat(workingQ[0],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[1],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[2],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[3],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[0],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[1],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[2],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[3],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(exteriorQ[0],0,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[1],0,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[2],0,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[3],0,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[0],1,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[1],1,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[2],1,edge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[3],1,edge2cells,15,"double",OP_INC));
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // get_neighbour_q_t += wall_loop_2 - wall_loop_1;
+
+  // Enforce boundary conditions
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+  op_par_loop_get_bedge_q("get_bedge_q",bedges,
+              op_arg_dat(bedge_type,-1,OP_ID,1,"int",OP_READ),
+              op_arg_dat(bedgeNum,-1,OP_ID,1,"int",OP_READ),
+              op_arg_dat(nx,0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(ny,0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[0],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[1],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[2],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(workingQ[3],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(exteriorQ[0],0,bedge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[1],0,bedge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[2],0,bedge2cells,15,"double",OP_INC),
+              op_arg_dat(exteriorQ[3],0,bedge2cells,15,"double",OP_INC));
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // get_bedge_q_t += wall_loop_2 - wall_loop_1;
+
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+  op_par_loop_internal_fluxes("internal_fluxes",cells,
+              op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(F[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(F[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(F[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(F[3],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(G[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(G[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(G[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(G[3],-1,OP_ID,15,"double",OP_WRITE));
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // internal_fluxes_t += wall_loop_2 - wall_loop_1;
+
+  // TODO matrix mult
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+  op_arg internal_fluxes_args[] = {
+    op_arg_dat(F[0], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(F[1], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(F[2], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(F[3], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(G[0], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(G[1], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(G[2], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(G[3], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(dFdr[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFdr[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFdr[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFdr[3], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFds[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFds[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFds[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dFds[3], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGdr[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGdr[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGdr[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGdr[3], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGds[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGds[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGds[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(dGds[3], -1, OP_ID, 15, "double", OP_WRITE)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 24, internal_fluxes_args);
+  internal_fluxes_matrices(cublas_handle, numCells, (double *)F[0]->data_d,
+                           (double *)F[1]->data_d, (double *)F[2]->data_d,
+                           (double *)F[3]->data_d, (double *)G[0]->data_d,
+                           (double *)G[1]->data_d, (double *)G[2]->data_d,
+                           (double *)G[3]->data_d, (double *)dFdr[0]->data_d,
+                           (double *)dFdr[1]->data_d, (double *)dFdr[2]->data_d,
+                           (double *)dFdr[3]->data_d, (double *)dFds[0]->data_d,
+                           (double *)dFds[1]->data_d, (double *)dFds[2]->data_d,
+                           (double *)dFds[3]->data_d, (double *)dGdr[0]->data_d,
+                           (double *)dGdr[1]->data_d, (double *)dGdr[2]->data_d,
+                           (double *)dGdr[3]->data_d, (double *)dGds[0]->data_d,
+                           (double *)dGds[1]->data_d, (double *)dGds[2]->data_d,
+                           (double *)dGds[3]->data_d);
+
+  // Check this
+  op_mpi_set_dirtybit_cuda(24, internal_fluxes_args);
+  // dFdr->dirty_hd = 2;
+  // dFds->dirty_hd = 2;
+  // dGdr->dirty_hd = 2;
+  // dGds->dirty_hd = 2;
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // internal_fluxes_mat_t += wall_loop_2 - wall_loop_1;
+
+  // Calculate vectors F an G from q for each cell
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+
+  op_par_loop_euler_rhs("euler_rhs",cells,
+              op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(exteriorQ[0],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(exteriorQ[1],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(exteriorQ[2],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(exteriorQ[3],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(rx,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(ry,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(sx,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(sy,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(fscale,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(nx,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(ny,-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFdr[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFdr[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFdr[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFdr[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFds[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFds[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFds[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dFds[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGdr[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGdr[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGdr[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGdr[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGds[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGds[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGds[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(dGds[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(flux[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(flux[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(flux[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(flux[3],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rk[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rk[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rk[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rk[3],-1,OP_ID,15,"double",OP_WRITE));
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // euler_rhs_t += wall_loop_2 - wall_loop_1;
+
+  // TODO matrix mult
+  // op_timers(&cpu_loop_1, &wall_loop_1);
+  op_arg face_fluxes_args[] = {
+    op_arg_dat(flux[0], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(flux[1], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(flux[2], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(flux[3], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(rk[0], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rk[1], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rk[2], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rk[3], -1, OP_ID, 15, "double", OP_RW)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 8, face_fluxes_args);
+  face_fluxes_matrices(cublas_handle, numCells, (double *)flux[0]->data_d,
+                       (double *)flux[1]->data_d, (double *)flux[2]->data_d,
+                       (double *)flux[3]->data_d, (double *)rk[0]->data_d,
+                       (double *)rk[1]->data_d, (double *)rk[2]->data_d,
+                       (double *)rk[3]->data_d);
+
+  // Check this
+  op_mpi_set_dirtybit_cuda(8, face_fluxes_args);
+  // rk[j]->dirty_hd = 2;
+  // op_timers(&cpu_loop_2, &wall_loop_2);
+  // face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
 }
