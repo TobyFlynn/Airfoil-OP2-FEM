@@ -15,3 +15,4 @@
 #include "get_bedge_q_omp4kernel.cpp"
 #include "internal_fluxes_omp4kernel.cpp"
 #include "euler_rhs_omp4kernel.cpp"
+#include "backwards_euler_update_Q_omp4kernel.cpp"

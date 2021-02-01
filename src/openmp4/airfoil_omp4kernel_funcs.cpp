@@ -89,3 +89,4 @@ void op_decl_const_char(int dim, char const *type,
 #include "get_bedge_q_omp4kernel_func.cpp"
 #include "internal_fluxes_omp4kernel_func.cpp"
 #include "euler_rhs_omp4kernel_func.cpp"
+#include "backwards_euler_update_Q_omp4kernel_func.cpp"

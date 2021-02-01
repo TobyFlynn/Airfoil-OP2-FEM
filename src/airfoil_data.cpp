@@ -20,6 +20,7 @@ AirfoilData::AirfoilData(int numCells) {
   fscale_data = (double *)malloc(3 * 5 * numCells * sizeof(double));
   for(int i = 0; i < 4; i++) {
     Q_data[i] = (double *)malloc(15 * numCells * sizeof(double));
+    rhs_data[i] = (double *)malloc(15 * numCells * sizeof(double));
     F_data[i] = (double *)malloc(15 * numCells * sizeof(double));
     G_data[i] = (double *)malloc(15 * numCells * sizeof(double));
     dFdr_data[i] = (double *)malloc(15 * numCells * sizeof(double));
@@ -53,6 +54,7 @@ AirfoilData::~AirfoilData() {
   free(fscale_data);
   for(int i = 0; i < 4; i++) {
     free(Q_data[i]);
+    free(rhs_data[i]);
     free(F_data[i]);
     free(G_data[i]);
     free(dFdr_data[i]);

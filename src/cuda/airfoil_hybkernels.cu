@@ -13,6 +13,7 @@
 #define op_par_loop_get_bedge_q op_par_loop_get_bedge_q_gpu
 #define op_par_loop_internal_fluxes op_par_loop_internal_fluxes_gpu
 #define op_par_loop_euler_rhs op_par_loop_euler_rhs_gpu
+#define op_par_loop_backwards_euler_update_Q op_par_loop_backwards_euler_update_Q_gpu
 #include "airfoil_kernels.cu"
 #undef op_par_loop_init_grid
 #undef op_par_loop_set_ic
@@ -23,6 +24,7 @@
 #undef op_par_loop_get_bedge_q
 #undef op_par_loop_internal_fluxes
 #undef op_par_loop_euler_rhs
+#undef op_par_loop_backwards_euler_update_Q
 #else
 #define op_par_loop_init_grid op_par_loop_init_grid_cpu
 #define op_par_loop_set_ic op_par_loop_set_ic_cpu
@@ -33,6 +35,7 @@
 #define op_par_loop_get_bedge_q op_par_loop_get_bedge_q_cpu
 #define op_par_loop_internal_fluxes op_par_loop_internal_fluxes_cpu
 #define op_par_loop_euler_rhs op_par_loop_euler_rhs_cpu
+#define op_par_loop_backwards_euler_update_Q op_par_loop_backwards_euler_update_Q_cpu
 #include "../openmp/airfoil_kernels.cpp"
 #undef op_par_loop_init_grid
 #undef op_par_loop_set_ic
@@ -43,6 +46,7 @@
 #undef op_par_loop_get_bedge_q
 #undef op_par_loop_internal_fluxes
 #undef op_par_loop_euler_rhs
+#undef op_par_loop_backwards_euler_update_Q
 
 //user kernel files
 
@@ -1182,6 +1186,82 @@ void op_par_loop_euler_rhs(char const *name, op_set set,
     arg36,
     arg37,
     arg38);
+
+  }
+#endif //OP_HYBRID_GPU
+
+void op_par_loop_backwards_euler_update_Q_gpu(char const *name, op_set set,
+  op_arg arg0,
+  op_arg arg1,
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8);
+
+//GPU host stub function
+#if OP_HYBRID_GPU
+void op_par_loop_backwards_euler_update_Q(char const *name, op_set set,
+  op_arg arg0,
+  op_arg arg1,
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8){
+
+  if (OP_hybrid_gpu) {
+    op_par_loop_backwards_euler_update_Q_gpu(name, set,
+      arg0,
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+      arg7,
+      arg8);
+
+    }else{
+    op_par_loop_backwards_euler_update_Q_cpu(name, set,
+      arg0,
+      arg1,
+      arg2,
+      arg3,
+      arg4,
+      arg5,
+      arg6,
+      arg7,
+      arg8);
+
+  }
+}
+#else
+void op_par_loop_backwards_euler_update_Q(char const *name, op_set set,
+  op_arg arg0,
+  op_arg arg1,
+  op_arg arg2,
+  op_arg arg3,
+  op_arg arg4,
+  op_arg arg5,
+  op_arg arg6,
+  op_arg arg7,
+  op_arg arg8){
+
+  op_par_loop_backwards_euler_update_Q_gpu(name, set,
+    arg0,
+    arg1,
+    arg2,
+    arg3,
+    arg4,
+    arg5,
+    arg6,
+    arg7,
+    arg8);
 
   }
 #endif //OP_HYBRID_GPU

@@ -188,6 +188,17 @@ void op_par_loop_euler_rhs(char const *, op_set,
   op_arg,
   op_arg,
   op_arg );
+
+void op_par_loop_backwards_euler_update_Q(char const *, op_set,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg,
+  op_arg );
 #ifdef OPENACC
 #ifdef __cplusplus
 }
@@ -204,6 +215,7 @@ void op_par_loop_euler_rhs(char const *, op_set,
 #include <getopt.h>
 
 #include "petscksp.h"
+#include "petscvec.h"
 #include "cublas_v2.h"
 
 #include "constants/constant_r.h"
@@ -241,15 +253,24 @@ static struct option options[] = {
   {0,    0,                  0,  0}
 };
 
-inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op_set bedges, op_map edge2cells, op_map bedge2cells,
-                    op_dat edgeNum, op_dat nodeX, op_dat nodeY, op_dat *workingQ, op_dat *exteriorQ,
-                    op_dat bedge_type, op_dat bedgeNum, op_dat nx, op_dat ny,
-                    op_dat *F, op_dat *G, op_dat *dFdr, op_dat *dFds, op_dat *dGdr, op_dat *dGds,
-                    op_dat rx, op_dat ry, op_dat sx, op_dat sy, op_dat fscale, op_dat *flux, op_dat *rk, op_dat *Q);
+PetscErrorCode matAMult(Mat A, Vec x, Vec y);
+
+inline void get_RHS(op_dat *Q, op_dat *rhs);
+
+// Global OP2 sets
+op_set nodes, cells, edges, bedges;
+
+// Global OP2 maps
+op_map cell2nodes, edge2nodes, edge2cells, bedge2nodes, bedge2cells;
+
+// Global OP2 datasets
+op_dat node_coords, nodeX, nodeY, x, y, xr, yr, xs, ys, rx, ry, sx, sy, nx, ny, fscale, bedge_type, edgeNum, bedgeNum;
+op_dat rhs[4], Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4], exteriorQ[4], flux[4], rk[3][4];
+
+cublasHandle_t cublas_handle;
 
 int main(int argc, char **argv) {
   // Initialise cuBLAS
-  cublasHandle_t cublas_handle;
   cublasCreate(&cublas_handle);
   cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
 
@@ -329,46 +350,45 @@ int main(int argc, char **argv) {
   AirfoilData *data = new AirfoilData(numCells);
 
   // Declare OP2 sets
-  op_set nodes  = op_decl_set(numNodes, "nodes");
-  op_set cells  = op_decl_set(numCells, "cells");
-  op_set edges  = op_decl_set(numEdges, "edges");
-  op_set bedges = op_decl_set(numBoundaryEdges, "bedges");
+  nodes  = op_decl_set(numNodes, "nodes");
+  cells  = op_decl_set(numCells, "cells");
+  edges  = op_decl_set(numEdges, "edges");
+  bedges = op_decl_set(numBoundaryEdges, "bedges");
 
   // Declare OP2 maps
-  op_map cell2nodes  = op_decl_map(cells, nodes, 3, cgnsCells, "cell2nodes");
-  op_map edge2nodes  = op_decl_map(edges, nodes, 2, edge2node_data, "edge2nodes");
-  op_map edge2cells  = op_decl_map(edges, cells, 2, edge2cell_data, "edge2cells");
-  op_map bedge2nodes = op_decl_map(bedges, nodes, 2, bedge2node_data, "bedge2nodes");
-  op_map bedge2cells = op_decl_map(bedges, cells, 1, bedge2cell_data, "bedge2cells");
+  cell2nodes  = op_decl_map(cells, nodes, 3, cgnsCells, "cell2nodes");
+  edge2nodes  = op_decl_map(edges, nodes, 2, edge2node_data, "edge2nodes");
+  edge2cells  = op_decl_map(edges, cells, 2, edge2cell_data, "edge2cells");
+  bedge2nodes = op_decl_map(bedges, nodes, 2, bedge2node_data, "bedge2nodes");
+  bedge2cells = op_decl_map(bedges, cells, 1, bedge2cell_data, "bedge2cells");
 
   // Declare OP2 datasets
     // Structure: {x, y}
-  op_dat node_coords = op_decl_dat(nodes, 2, "double", coords, "node_coords");
+  node_coords = op_decl_dat(nodes, 2, "double", coords, "node_coords");
     // Coords of nodes per cell
-  op_dat nodeX = op_decl_dat(cells, 3, "double", data->nodeX_data, "nodeX");
-  op_dat nodeY = op_decl_dat(cells, 3, "double", data->nodeY_data, "nodeY");
+  nodeX = op_decl_dat(cells, 3, "double", data->nodeX_data, "nodeX");
+  nodeY = op_decl_dat(cells, 3, "double", data->nodeY_data, "nodeY");
     // The x and y coordinates of all the solution points in a cell
-  op_dat x = op_decl_dat(cells, 15, "double", data->x_data, "x");
-  op_dat y = op_decl_dat(cells, 15, "double", data->y_data, "y");
+  x = op_decl_dat(cells, 15, "double", data->x_data, "x");
+  y = op_decl_dat(cells, 15, "double", data->y_data, "y");
     // Geometric factors that relate to mapping between global and local (cell) coordinates
-  op_dat xr = op_decl_dat(cells, 15, "double", data->xr_data, "xr");
-  op_dat yr = op_decl_dat(cells, 15, "double", data->yr_data, "yr");
-  op_dat xs = op_decl_dat(cells, 15, "double", data->xs_data, "xs");
-  op_dat ys = op_decl_dat(cells, 15, "double", data->ys_data, "ys");
-  op_dat rx = op_decl_dat(cells, 15, "double", data->rx_data, "rx");
-  op_dat ry = op_decl_dat(cells, 15, "double", data->ry_data, "ry");
-  op_dat sx = op_decl_dat(cells, 15, "double", data->sx_data, "sx");
-  op_dat sy = op_decl_dat(cells, 15, "double", data->sy_data, "sy");
+  xr = op_decl_dat(cells, 15, "double", data->xr_data, "xr");
+  yr = op_decl_dat(cells, 15, "double", data->yr_data, "yr");
+  xs = op_decl_dat(cells, 15, "double", data->xs_data, "xs");
+  ys = op_decl_dat(cells, 15, "double", data->ys_data, "ys");
+  rx = op_decl_dat(cells, 15, "double", data->rx_data, "rx");
+  ry = op_decl_dat(cells, 15, "double", data->ry_data, "ry");
+  sx = op_decl_dat(cells, 15, "double", data->sx_data, "sx");
+  sy = op_decl_dat(cells, 15, "double", data->sy_data, "sy");
     // Normals for each cell (calculated for each node on each edge, nodes can appear on multiple edges)
-  op_dat nx = op_decl_dat(cells, 3 * 5, "double", data->nx_data, "nx");
-  op_dat ny = op_decl_dat(cells, 3 * 5, "double", data->ny_data, "ny");
+  nx = op_decl_dat(cells, 3 * 5, "double", data->nx_data, "nx");
+  ny = op_decl_dat(cells, 3 * 5, "double", data->ny_data, "ny");
     // surface Jacobian / Jacobian (used when lifting the boundary fluxes)
-  op_dat fscale = op_decl_dat(cells, 3 * 5, "double", data->fscale_data, "fscale");
+  fscale = op_decl_dat(cells, 3 * 5, "double", data->fscale_data, "fscale");
     // Values for compressible Euler equations in vectors
     // Structure: {q0_0, q1_0, q2_0, q3_0, q0_1, q1_1, ..., q3_15}
-  op_dat Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4], exteriorQ[4], flux[4], rk[3][4];
   for(int i = 0; i < 4; i++) {
-    Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    // Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
     F[i] = op_decl_dat(cells, 15, "double", data->F_data[i], "F" + i);
     G[i] = op_decl_dat(cells, 15, "double", data->G_data[i], "G" + i);
     dFdr[i] = op_decl_dat(cells, 15, "double", data->dFdr_data[i], "dFdr" + i);
@@ -381,10 +401,12 @@ int main(int argc, char **argv) {
     rk[0][i] = op_decl_dat(cells, 15, "double", data->rk1_data[i], "rk1" + i);
     rk[1][i] = op_decl_dat(cells, 15, "double", data->rk2_data[i], "rk2" + i);
     rk[2][i] = op_decl_dat(cells, 15, "double", data->rk3_data[i], "rk3" + i);
+    Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    rhs[i] = op_decl_dat(cells, 15, "double", data->rhs_data[i], "rhs" + i);
   }
-  op_dat bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
-  op_dat edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
-  op_dat bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
+  bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
+  edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
+  bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
 
   // Declare OP2 constants
   op_decl_const2("gam",1,"double",&gam);
@@ -489,13 +511,81 @@ int main(int argc, char **argv) {
   double internal_fluxes_mat_t = 0.0;
   double face_fluxes_mat_t = 0.0;
   op_timers(&cpu_loop_start, &wall_loop_start);
-  // Run the simulation
+
+  Vec q;
+  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &q);
+  double *q_d;
+  VecCUDAGetArray(q, &q_d);
+  op_arg q_vec_petsc_args[] = {
+    op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_READ)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 4, q_vec_petsc_args);
+  cudaMemcpy(q_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, q_vec_petsc_args);
+  VecCUDARestoreArray(q, &q_d);
+  Vec q1;
+  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &q1);
+  double *q1_d;
+  VecCUDAGetArray(q1, &q1_d);
+  op_mpi_halo_exchanges_cuda(cells, 4, q_vec_petsc_args);
+  cudaMemcpy(q1_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, q_vec_petsc_args);
+  VecCUDARestoreArray(q1, &q1_d);
+  // Create A matrix
+  Mat Amat;
+  MatCreateShell(PETSC_COMM_SELF, 4 * 15 * numCells, 4 * 15 * numCells, PETSC_DETERMINE, PETSC_DETERMINE, NULL, &Amat);
+  MatShellSetOperation(Amat, MATOP_MULT, (void(*)(void))matAMult);
+  // Create KSP
+  KSP ksp;
+  KSPCreate(PETSC_COMM_SELF, &ksp);
+  KSPSetOperators(ksp, Amat, Amat);
+  // Backwards Euler
+  for(int i = 0; i < iter; i++) {
+    // Solve
+    KSPSolve(ksp, q, q1);
+
+    // Update solution
+    VecCUDAGetArray(q, &q_d);
+    VecCUDAGetArray(q1, &q1_d);
+
+    cudaMemcpy(q_d, q1_d, 4 * 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+
+    VecCUDARestoreArray(q, &q_d);
+    VecCUDARestoreArray(q1, &q1_d);
+  }
+  VecCUDAGetArray(q, &q_d);
+  op_arg q_write_vec_petsc_args[] = {
+    op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_WRITE)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 4, q_write_vec_petsc_args);
+  cudaMemcpy((double *)Q[0]->data_d, q_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[1]->data_d, q_d + 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[2]->data_d, q_d + 2 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[3]->data_d, q_d + 3 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, q_write_vec_petsc_args);
+  VecCUDARestoreArray(q, &q_d);
+
+  // VecDestory(q);
+  // VecDestory(q1);
+  // KSPDestory(ksp);
+
+  /*
+  // SSP RK-3
   for(int i = 0; i < iter; i++) {
     for(int j = 0; j < 3; j++) {
-      get_RHS(cublas_handle, cells, edges, bedges, edge2cells, bedge2cells,
-              edgeNum, nodeX, nodeY, workingQ, exteriorQ, bedge_type, bedgeNum,
-              nx, ny, F, G, dFdr, dFds, dGdr, dGds, rx, ry, sx, sy, fscale, flux,
-              rk[j], Q);
+      get_RHS(workingQ, rk[j]);
 
       if(j != 2) {
         // op_timers(&cpu_loop_1, &wall_loop_1);
@@ -569,6 +659,7 @@ int main(int argc, char **argv) {
   op_timers(&cpu_loop_end, &wall_loop_end);
 
   cout << "Time: " << t << endl;
+  */
 
   // Save info for python test script
   // op_fetch_data_hdf5_file(node_coords, "points.h5");
@@ -654,11 +745,7 @@ int main(int argc, char **argv) {
   return ierr;
 }
 
-inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op_set bedges, op_map edge2cells, op_map bedge2cells,
-                    op_dat edgeNum, op_dat nodeX, op_dat nodeY, op_dat *workingQ, op_dat *exteriorQ,
-                    op_dat bedge_type, op_dat bedgeNum, op_dat nx, op_dat ny,
-                    op_dat *F, op_dat *G, op_dat *dFdr, op_dat *dFds, op_dat *dGdr, op_dat *dGds,
-                    op_dat rx, op_dat ry, op_dat sx, op_dat sy, op_dat fscale, op_dat *flux, op_dat *rk, op_dat *Q) {
+inline void get_RHS(op_dat *Q, op_dat *rhs) {
   int numCells = op_get_size(cells);
   // Get neighbouring values of q on internal edges
   // op_timers(&cpu_loop_1, &wall_loop_1);
@@ -668,14 +755,14 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
               op_arg_dat(nodeY,0,edge2cells,3,"double",OP_READ),
               op_arg_dat(nodeX,1,edge2cells,3,"double",OP_READ),
               op_arg_dat(nodeY,1,edge2cells,3,"double",OP_READ),
-              op_arg_dat(workingQ[0],0,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[1],0,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[2],0,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[3],0,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[0],1,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[1],1,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[2],1,edge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[3],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[0],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[1],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[2],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[3],0,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[0],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[1],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[2],1,edge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[3],1,edge2cells,15,"double",OP_READ),
               op_arg_dat(exteriorQ[0],0,edge2cells,15,"double",OP_INC),
               op_arg_dat(exteriorQ[1],0,edge2cells,15,"double",OP_INC),
               op_arg_dat(exteriorQ[2],0,edge2cells,15,"double",OP_INC),
@@ -694,10 +781,10 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
               op_arg_dat(bedgeNum,-1,OP_ID,1,"int",OP_READ),
               op_arg_dat(nx,0,bedge2cells,15,"double",OP_READ),
               op_arg_dat(ny,0,bedge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[0],0,bedge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[1],0,bedge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[2],0,bedge2cells,15,"double",OP_READ),
-              op_arg_dat(workingQ[3],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[0],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[1],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[2],0,bedge2cells,15,"double",OP_READ),
+              op_arg_dat(Q[3],0,bedge2cells,15,"double",OP_READ),
               op_arg_dat(exteriorQ[0],0,bedge2cells,15,"double",OP_INC),
               op_arg_dat(exteriorQ[1],0,bedge2cells,15,"double",OP_INC),
               op_arg_dat(exteriorQ[2],0,bedge2cells,15,"double",OP_INC),
@@ -707,10 +794,10 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
 
   // op_timers(&cpu_loop_1, &wall_loop_1);
   op_par_loop_internal_fluxes("internal_fluxes",cells,
-              op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
               op_arg_dat(F[0],-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(F[1],-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(F[2],-1,OP_ID,15,"double",OP_WRITE),
@@ -778,10 +865,10 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
   // op_timers(&cpu_loop_1, &wall_loop_1);
 
   op_par_loop_euler_rhs("euler_rhs",cells,
-              op_arg_dat(workingQ[0],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[1],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[2],-1,OP_ID,15,"double",OP_READ),
-              op_arg_dat(workingQ[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
               op_arg_dat(exteriorQ[0],-1,OP_ID,15,"double",OP_RW),
               op_arg_dat(exteriorQ[1],-1,OP_ID,15,"double",OP_RW),
               op_arg_dat(exteriorQ[2],-1,OP_ID,15,"double",OP_RW),
@@ -813,10 +900,10 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
               op_arg_dat(flux[1],-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(flux[2],-1,OP_ID,15,"double",OP_WRITE),
               op_arg_dat(flux[3],-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(rk[0],-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(rk[1],-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(rk[2],-1,OP_ID,15,"double",OP_WRITE),
-              op_arg_dat(rk[3],-1,OP_ID,15,"double",OP_WRITE));
+              op_arg_dat(rhs[0],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rhs[1],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rhs[2],-1,OP_ID,15,"double",OP_WRITE),
+              op_arg_dat(rhs[3],-1,OP_ID,15,"double",OP_WRITE));
   // op_timers(&cpu_loop_2, &wall_loop_2);
   // euler_rhs_t += wall_loop_2 - wall_loop_1;
 
@@ -827,21 +914,85 @@ inline void get_RHS(cublasHandle_t cublas_handle, op_set cells, op_set edges, op
     op_arg_dat(flux[1], -1, OP_ID, 15, "double", OP_READ),
     op_arg_dat(flux[2], -1, OP_ID, 15, "double", OP_READ),
     op_arg_dat(flux[3], -1, OP_ID, 15, "double", OP_READ),
-    op_arg_dat(rk[0], -1, OP_ID, 15, "double", OP_RW),
-    op_arg_dat(rk[1], -1, OP_ID, 15, "double", OP_RW),
-    op_arg_dat(rk[2], -1, OP_ID, 15, "double", OP_RW),
-    op_arg_dat(rk[3], -1, OP_ID, 15, "double", OP_RW)
+    op_arg_dat(rhs[0], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rhs[1], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rhs[2], -1, OP_ID, 15, "double", OP_RW),
+    op_arg_dat(rhs[3], -1, OP_ID, 15, "double", OP_RW)
   };
   op_mpi_halo_exchanges_cuda(cells, 8, face_fluxes_args);
   face_fluxes_matrices(cublas_handle, numCells, (double *)flux[0]->data_d,
                        (double *)flux[1]->data_d, (double *)flux[2]->data_d,
-                       (double *)flux[3]->data_d, (double *)rk[0]->data_d,
-                       (double *)rk[1]->data_d, (double *)rk[2]->data_d,
-                       (double *)rk[3]->data_d);
+                       (double *)flux[3]->data_d, (double *)rhs[0]->data_d,
+                       (double *)rhs[1]->data_d, (double *)rhs[2]->data_d,
+                       (double *)rhs[3]->data_d);
 
   // Check this
   op_mpi_set_dirtybit_cuda(8, face_fluxes_args);
   // rk[j]->dirty_hd = 2;
   // op_timers(&cpu_loop_2, &wall_loop_2);
   // face_fluxes_mat_t += wall_loop_2 - wall_loop_1;
+}
+
+PetscErrorCode matAMult(Mat A, Vec x, Vec y) {
+  int numCells = op_get_size(cells);
+  // Get PETSC data on GPU
+  double *q;
+  double *q1;
+  VecCUDAGetArray(x, &q);
+  VecCUDAGetArray(y, &q1);
+
+  // Construct OP2 temp dats
+
+  // Set data for OP2 dats
+  op_arg set_temp_args[] = {
+    op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_WRITE),
+    op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_WRITE)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 4, set_temp_args);
+
+  cudaMemcpy((double *)Q[0]->data_d, q, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[1]->data_d, q + 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[2]->data_d, q + 2 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[3]->data_d, q + 3 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+
+  op_mpi_set_dirtybit_cuda(4, set_temp_args);
+
+  // Calc Euler RHS
+  get_RHS(Q, rhs);
+
+  // Set y vec
+  double dt = 1e-6;
+  op_par_loop_backwards_euler_update_Q("backwards_euler_update_Q",cells,
+              op_arg_gbl(&dt,1,"double",OP_READ),
+              op_arg_dat(Q[0],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[1],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[2],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(Q[3],-1,OP_ID,15,"double",OP_READ),
+              op_arg_dat(rhs[0],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(rhs[1],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(rhs[2],-1,OP_ID,15,"double",OP_RW),
+              op_arg_dat(rhs[3],-1,OP_ID,15,"double",OP_RW));
+
+  op_arg set_y_args[] = {
+    op_arg_dat(rhs[0], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(rhs[1], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(rhs[2], -1, OP_ID, 15, "double", OP_READ),
+    op_arg_dat(rhs[3], -1, OP_ID, 15, "double", OP_READ)
+  };
+  op_mpi_halo_exchanges_cuda(cells, 4, set_y_args);
+
+  cudaMemcpy(q1, (double *)rhs[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1 + 15 * numCells, (double *)rhs[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1 + 2 * 15 * numCells, (double *)rhs[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(q1 + 3 * 15 * numCells, (double *)rhs[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+
+  op_mpi_set_dirtybit_cuda(4, set_y_args);
+
+  // Release PETSC data
+  VecCUDARestoreArray(x, &q);
+  VecCUDARestoreArray(y, &q1);
+
+  return 0;
 }

@@ -116,3 +116,4 @@ int size, char *dat, char const *name){
 #include "get_bedge_q_kernel.cu"
 #include "internal_fluxes_kernel.cu"
 #include "euler_rhs_kernel.cu"
+#include "backwards_euler_update_Q_kernel.cu"

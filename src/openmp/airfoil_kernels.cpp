@@ -38,3 +38,4 @@ extern double LIFT[225];
 #include "get_bedge_q_kernel.cpp"
 #include "internal_fluxes_kernel.cpp"
 #include "euler_rhs_kernel.cpp"
+#include "backwards_euler_update_Q_kernel.cpp"

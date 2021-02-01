@@ -54,3 +54,4 @@ extern double LIFT[225];
 #include "get_bedge_q_veckernel.cpp"
 #include "internal_fluxes_veckernel.cpp"
 #include "euler_rhs_veckernel.cpp"
+#include "backwards_euler_update_Q_veckernel.cpp"

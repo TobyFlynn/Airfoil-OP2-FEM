@@ -36,3 +36,4 @@ int size, char *dat, char const *name){}
 #include "get_bedge_q_acckernel.c"
 #include "internal_fluxes_acckernel.c"
 #include "euler_rhs_acckernel.c"
+#include "backwards_euler_update_Q_acckernel.c"

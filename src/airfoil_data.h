@@ -33,6 +33,7 @@ public:
   double *rk1_data[4];
   double *rk2_data[4];
   double *rk3_data[4];
+  double *rhs_data[4];
 };
 
 #endif

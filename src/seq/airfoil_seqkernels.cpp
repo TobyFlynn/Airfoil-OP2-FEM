@@ -34,3 +34,4 @@ extern double LIFT[225];
 #include "get_bedge_q_seqkernel.cpp"
 #include "internal_fluxes_seqkernel.cpp"
 #include "euler_rhs_seqkernel.cpp"
+#include "backwards_euler_update_Q_seqkernel.cpp"
