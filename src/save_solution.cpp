@@ -11,7 +11,7 @@
 using namespace std;
 
 void save_solution(std::string filename, int numPts, int numCells, double *q0,
-                   double *q1, double *q2, double *q3, int *cellMap, int gam) {
+                   double *q1, double *q2, double *q3, int *cellMap, double gam) {
   vector<double> velX(numPts);
   vector<double> velY(numPts);
   vector<double> rho(numPts);

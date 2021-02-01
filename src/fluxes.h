@@ -12,7 +12,7 @@ __device__ void euler_flux(const double q0, const double q1, const double q2,
   *rho = q0;
   *u = q1 / (*rho);
   *v = q2 / (*rho);
-  *p = (gam - 1) * (q3 - 0.5 * (q1 * (*u) + q2 * (*v)));
+  *p = (gam - 1.0) * (q3 - 0.5 * (q1 * (*u) + q2 * (*v)));
 
   *f0 = q1;
   *f1 = q1 * (*u) + (*p);
