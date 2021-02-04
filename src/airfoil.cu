@@ -64,7 +64,10 @@ op_dat rhs[4], Q[4], F[4], G[4], dFdr[4], dFds[4], dGdr[4], dGds[4], workingQ[4]
 
 cublasHandle_t cublas_handle;
 
+int mult_calls;
+
 int main(int argc, char **argv) {
+  mult_calls = 0;
   // Initialise cuBLAS
   cublasCreate(&cublas_handle);
   cublasSetPointerMode(cublas_handle, CUBLAS_POINTER_MODE_HOST);
@@ -196,9 +199,19 @@ int main(int argc, char **argv) {
     rk[0][i] = op_decl_dat(cells, 15, "double", data->rk1_data[i], "rk1" + i);
     rk[1][i] = op_decl_dat(cells, 15, "double", data->rk2_data[i], "rk2" + i);
     rk[2][i] = op_decl_dat(cells, 15, "double", data->rk3_data[i], "rk3" + i);
-    Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q" + i);
+    // Q[i] = op_decl_dat(cells, 15, "double", data->Q_data[i], "Q");
     rhs[i] = op_decl_dat(cells, 15, "double", data->rhs_data[i], "rhs" + i);
   }
+  Q[0] = op_decl_dat(cells, 15, "double", data->Q_data[0], "Q0");
+  Q[1] = op_decl_dat(cells, 15, "double", data->Q_data[1], "Q1");
+  Q[2] = op_decl_dat(cells, 15, "double", data->Q_data[2], "Q2");
+  Q[3] = op_decl_dat(cells, 15, "double", data->Q_data[3], "Q3");
+
+  rhs[0] = op_decl_dat(cells, 15, "double", data->rhs_data[0], "rhs0");
+  rhs[1] = op_decl_dat(cells, 15, "double", data->rhs_data[1], "rhs1");
+  rhs[2] = op_decl_dat(cells, 15, "double", data->rhs_data[2], "rhs2");
+  rhs[3] = op_decl_dat(cells, 15, "double", data->rhs_data[3], "rhs3");
+
   bedge_type = op_decl_dat(bedges, 1, "int", bedge_type_data, "bedge_type");
   edgeNum = op_decl_dat(edges, 2, "int", edgeNum_data, "edgeNum");
   bedgeNum  = op_decl_dat(bedges, 1, "int", bedgeNum_data, "bedgeNum");
@@ -307,34 +320,34 @@ int main(int argc, char **argv) {
   double face_fluxes_mat_t = 0.0;
   op_timers(&cpu_loop_start, &wall_loop_start);
 
-  Vec q;
-  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &q);
-  double *q_d;
-  VecCUDAGetArray(q, &q_d);
-  op_arg q_vec_petsc_args[] = {
+  Vec b;
+  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &b);
+  double *b_d;
+  VecCUDAGetArray(b, &b_d);
+  op_arg b_vec_petsc_args[] = {
     op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
     op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_READ),
     op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_READ),
     op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_READ)
   };
-  op_mpi_halo_exchanges_cuda(cells, 4, q_vec_petsc_args);
-  cudaMemcpy(q_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  op_mpi_set_dirtybit_cuda(4, q_vec_petsc_args);
-  VecCUDARestoreArray(q, &q_d);
-  Vec q1;
-  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &q1);
-  double *q1_d;
-  VecCUDAGetArray(q1, &q1_d);
-  op_mpi_halo_exchanges_cuda(cells, 4, q_vec_petsc_args);
-  cudaMemcpy(q1_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  op_mpi_set_dirtybit_cuda(4, q_vec_petsc_args);
-  VecCUDARestoreArray(q1, &q1_d);
+  op_mpi_halo_exchanges_cuda(cells, 4, b_vec_petsc_args);
+  cudaMemcpy(b_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(b_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(b_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(b_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, b_vec_petsc_args);
+  VecCUDARestoreArray(b, &b_d);
+  Vec x;
+  VecCreateSeqCUDA(PETSC_COMM_SELF, 4 * 15 * numCells, &x);
+  double *x_d;
+  VecCUDAGetArray(x, &x_d);
+  op_mpi_halo_exchanges_cuda(cells, 4, b_vec_petsc_args);
+  cudaMemcpy(x_d, (double *)Q[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(x_d + 15 *numCells, (double *)Q[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(x_d + 2 * 15 *numCells, (double *)Q[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(x_d + 3 * 15 *numCells, (double *)Q[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, b_vec_petsc_args);
+  VecCUDARestoreArray(x, &x_d);
   // Create A matrix
   Mat Amat;
   MatCreateShell(PETSC_COMM_SELF, 4 * 15 * numCells, 4 * 15 * numCells, PETSC_DETERMINE, PETSC_DETERMINE, NULL, &Amat);
@@ -342,35 +355,59 @@ int main(int argc, char **argv) {
   // Create KSP
   KSP ksp;
   KSPCreate(PETSC_COMM_SELF, &ksp);
+  // KSPSetType(ksp, KSPGMRES);
+  KSPSetType(ksp, KSPCG);
+  // KSPSetTolerances(ksp, 1e-14, 1e-50, 1e5, 1e4);
   KSPSetOperators(ksp, Amat, Amat);
+  // PC pc;
+  // KSPGetPC(ksp, &pc);
+  // PCSetType(pc, PCNONE);
+  KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
+  KSPSetNormType(ksp, KSP_NORM_UNPRECONDITIONED);
   // Backwards Euler
   for(int i = 0; i < iter; i++) {
     // Solve
-    KSPSolve(ksp, q, q1);
+    KSPSolve(ksp, b, x);
+    int numIt;
+    KSPGetIterationNumber(ksp, &numIt);
+    KSPConvergedReason reason;
+    KSPGetConvergedReason(ksp, &reason);
+    cout << "Number of iterations for linear solver: " << numIt << endl;
+    cout << "Converged reason: " << reason << endl;
 
     // Update solution
-    VecCUDAGetArray(q, &q_d);
-    VecCUDAGetArray(q1, &q1_d);
+    Vec solution;
+    KSPGetSolution(ksp, &solution);
+    double *sol_d;
+    VecCUDAGetArray(b, &b_d);
+    VecCUDAGetArray(x, &x_d);
+    VecCUDAGetArray(solution, &sol_d);
 
-    cudaMemcpy(q_d, q1_d, 4 * 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(b_d, sol_d, 4 * 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(x_d, sol_d, 4 * 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+    cudaDeviceSynchronize();
 
-    VecCUDARestoreArray(q, &q_d);
-    VecCUDARestoreArray(q1, &q1_d);
+    VecCUDARestoreArray(solution, &sol_d);
+    VecCUDARestoreArray(x, &x_d);
+    VecCUDARestoreArray(b, &b_d);
   }
-  VecCUDAGetArray(q, &q_d);
-  op_arg q_write_vec_petsc_args[] = {
+  Vec solution;
+  KSPGetSolution(ksp, &solution);
+  double *sol_d;
+  VecCUDAGetArray(solution, &sol_d);
+  op_arg sol_write_vec_petsc_args[] = {
     op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_WRITE),
     op_arg_dat(Q[1], -1, OP_ID, 15, "double", OP_WRITE),
     op_arg_dat(Q[2], -1, OP_ID, 15, "double", OP_WRITE),
     op_arg_dat(Q[3], -1, OP_ID, 15, "double", OP_WRITE)
   };
-  op_mpi_halo_exchanges_cuda(cells, 4, q_write_vec_petsc_args);
-  cudaMemcpy((double *)Q[0]->data_d, q_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[1]->data_d, q_d + 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[2]->data_d, q_d + 2 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[3]->data_d, q_d + 3 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  op_mpi_set_dirtybit_cuda(4, q_write_vec_petsc_args);
-  VecCUDARestoreArray(q, &q_d);
+  op_mpi_halo_exchanges_cuda(cells, 4, sol_write_vec_petsc_args);
+  cudaMemcpy((double *)Q[0]->data_d, sol_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[1]->data_d, sol_d + 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[2]->data_d, sol_d + 2 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[3]->data_d, sol_d + 3 * 15 *numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  op_mpi_set_dirtybit_cuda(4, sol_write_vec_petsc_args);
+  VecCUDARestoreArray(solution, &sol_d);
 
   // VecDestory(q);
   // VecDestory(q1);
@@ -451,10 +488,11 @@ int main(int argc, char **argv) {
     if(i % 1000 == 0)
       cout << "iter: " << i << " time: " << t <<  " dt: " << dt << endl;
   }
+  */
   op_timers(&cpu_loop_end, &wall_loop_end);
 
   cout << "Time: " << t << endl;
-  */
+
 
   // Save info for python test script
   // op_fetch_data_hdf5_file(node_coords, "points.h5");
@@ -731,10 +769,10 @@ inline void get_RHS(op_dat *Q, op_dat *rhs) {
 PetscErrorCode matAMult(Mat A, Vec x, Vec y) {
   int numCells = op_get_size(cells);
   // Get PETSC data on GPU
-  double *q;
-  double *q1;
-  VecCUDAGetArray(x, &q);
-  VecCUDAGetArray(y, &q1);
+  double *x_d;
+  double *y_d;
+  VecCUDAGetArray(x, &x_d);
+  VecCUDAGetArray(y, &y_d);
 
   // Construct OP2 temp dats
 
@@ -747,18 +785,34 @@ PetscErrorCode matAMult(Mat A, Vec x, Vec y) {
   };
   op_mpi_halo_exchanges_cuda(cells, 4, set_temp_args);
 
-  cudaMemcpy((double *)Q[0]->data_d, q, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[1]->data_d, q + 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[2]->data_d, q + 2 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy((double *)Q[3]->data_d, q + 3 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[0]->data_d, x_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[1]->data_d, x_d + 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[2]->data_d, x_d + 2 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy((double *)Q[3]->data_d, x_d + 3 * 15 * numCells, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
 
   op_mpi_set_dirtybit_cuda(4, set_temp_args);
+
+  string h5string = "Q";
+  h5string += to_string(mult_calls);
+  h5string += ".h5";
+  op_fetch_data_hdf5_file(Q[0], h5string.c_str());
+  op_fetch_data_hdf5_file(Q[1], h5string.c_str());
+  op_fetch_data_hdf5_file(Q[2], h5string.c_str());
+  op_fetch_data_hdf5_file(Q[3], h5string.c_str());
 
   // Calc Euler RHS
   get_RHS(Q, rhs);
 
+  h5string = "rhs";
+  h5string += to_string(mult_calls);
+  h5string += ".h5";
+  op_fetch_data_hdf5_file(rhs[0], h5string.c_str());
+  op_fetch_data_hdf5_file(rhs[1], h5string.c_str());
+  op_fetch_data_hdf5_file(rhs[2], h5string.c_str());
+  op_fetch_data_hdf5_file(rhs[3], h5string.c_str());
+
   // Set y vec
-  double dt = 1e-6;
+  double dt = 1e-5;
   op_par_loop(backwards_euler_update_Q, "backwards_euler_update_Q", cells,
               op_arg_gbl(&dt, 1, "double", OP_READ),
               op_arg_dat(Q[0], -1, OP_ID, 15, "double", OP_READ),
@@ -778,16 +832,18 @@ PetscErrorCode matAMult(Mat A, Vec x, Vec y) {
   };
   op_mpi_halo_exchanges_cuda(cells, 4, set_y_args);
 
-  cudaMemcpy(q1, (double *)rhs[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1 + 15 * numCells, (double *)rhs[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1 + 2 * 15 * numCells, (double *)rhs[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(q1 + 3 * 15 * numCells, (double *)rhs[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(y_d, (double *)rhs[0]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(y_d + 15 * numCells, (double *)rhs[1]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(y_d + 2 * 15 * numCells, (double *)rhs[2]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(y_d + 3 * 15 * numCells, (double *)rhs[3]->data_d, 15 * numCells * sizeof(double), cudaMemcpyDeviceToDevice);
 
   op_mpi_set_dirtybit_cuda(4, set_y_args);
 
   // Release PETSC data
-  VecCUDARestoreArray(x, &q);
-  VecCUDARestoreArray(y, &q1);
+  VecCUDARestoreArray(x, &x_d);
+  VecCUDARestoreArray(y, &y_d);
+
+  mult_calls++;
 
   return 0;
 }
