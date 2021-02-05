@@ -5,8 +5,8 @@ Solves the same problem that the Airfoil sample application included in OP2 solv
 Dependencies:
 - OP2
 - CGNS
-- OpenBLAS
 - VTK
+- OpenBLAS
 
 Directory structure:
 - The 'src' directory contains the code for the Airfoil application.
@@ -23,3 +23,19 @@ make
 ```
 
 CMakeLists.txt sets the locations of libraries to what I have on my system but you can change these by passing the following flags to the CMake command: `OP2_DIR`, `CGNS_DIR` and `OPENBLAS_DIR`.
+
+Creating CGNS grid:
+```
+cd build/tools
+cp ../../naca0012.vtk .
+./vtk2CGNS
+```
+
+Running Airfoil:
+```
+cd build/src
+cp ../tools/naca0012.cgns .
+./airfoil_openmp -iter 1000 -alpha 0.0
+```
+
+You can then use Paraview to view the result stored in `naca0012.cgns`.
